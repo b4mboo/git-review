@@ -36,7 +36,7 @@ class GitPulls
 
   def help
     puts "No command: #{@command}"
-    puts "Try: update, list, show, merge, browse"
+    puts "Try: update, list, show, merge, browse, create"
     puts "or call with '-h' for usage information"
   end
 
@@ -47,6 +47,7 @@ Usage: git pulls update
    or: git pulls show <number> [--full]
    or: git pulls browse <number>
    or: git pulls merge <number>
+   or: git pulls create
     USAGE
   end
 
@@ -151,6 +152,10 @@ Usage: git pulls update
     cache_pull_info
     fetch_stale_forks
     list
+  end
+
+  def create
+    puts "Creating a new pull request"
   end
 
   def fetch_stale_forks

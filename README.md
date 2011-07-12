@@ -29,6 +29,9 @@ Makes it easy to list and merge GitHub pull requests.
 
     $ git pulls merge 1
     > merge pull request #1
+
+    $ git pulls create
+    > create a new pull request
     
 Private repositories
 ----------------
