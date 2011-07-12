@@ -3,6 +3,6 @@ require 'rubygems'
 
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
-require 'git-pulls'
+require 'git-review'
 
-GitPulls.start(ARGV)
+GitReview.start(ARGV)

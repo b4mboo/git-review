@@ -2,9 +2,9 @@ require 'json'
 require 'launchy'
 require 'octokit'
 
-class GitPulls
+class GitReview
 
-  PULLS_CACHE_FILE = '.git/pulls_cache.json'
+  REVIEW_CACHE_FILE = '.git/review_cache.json'
 
   def initialize(args)
     @command = args.shift
@@ -13,7 +13,7 @@ class GitPulls
   end
 
   def self.start(args)
-    GitPulls.new(args).run
+    GitReview.new(args).run
   end
 
   def run
@@ -38,12 +38,11 @@ class GitPulls
 
   def usage
     puts <<-USAGE
-Usage: git pulls update
-   or: git pulls list [--reverse]
-   or: git pulls show <number> [--full]
-   or: git pulls browse <number>
-   or: git pulls merge <number>
-   or: git pulls create
+Usage: git review list [--reverse]
+   or: git review show <number> [--full]
+   or: git review browse <number>
+   or: git review merge <number>
+   or: git review create
     USAGE
   end
 
@@ -57,7 +56,7 @@ Usage: git pulls update
       else # they deleted the source repo
         o = p['head']['user']['login']
         purl = p['patch_url']
-        puts "Sorry, #{o} deleted the source repository, git-pulls doesn't support this."
+        puts "Sorry, #{o} deleted the source repository, git-review doesn't support this."
         puts "You can manually patch your repo by running:"
         puts
         puts "  curl #{purl} | git am"
@@ -247,7 +246,7 @@ Usage: git pulls update
   end
 
   def get_pull_info
-    get_data(PULLS_CACHE_FILE)['pulls']
+    get_data(REVIEW_CACHE_FILE)['review']
   end
 
   def get_data(file)
@@ -256,7 +255,7 @@ Usage: git pulls update
 
   def cache_pull_info
     response = Octokit.pull_requests("#{@user}/#{@repo}")
-    save_data({'pulls' => response}, PULLS_CACHE_FILE)
+    save_data({'review' => response}, REVIEW_CACHE_FILE)
   end
 
   def save_data(data, file)
