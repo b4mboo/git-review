@@ -19,11 +19,7 @@ class GitPulls
   def run
     configure
     if @command && self.respond_to?(@command)
-      # If the cache file doesn't exist, make sure we run update
-      # before any other command. git-pulls will otherwise crash
-      # with an exception.
-      update unless File.exists?(PULLS_CACHE_FILE) || @command == 'update'
-
+      update  
       self.send @command
     elsif %w(-h --help).include?(@command)
       usage
@@ -148,10 +144,8 @@ Usage: git pulls update
   end
 
   def update
-    puts "Updating #{@user}/#{@repo}"
     cache_pull_info
     fetch_stale_forks
-    list
   end
 
   def create
@@ -169,7 +163,6 @@ Usage: git pulls update
   end
 
   def fetch_stale_forks
-    puts "Checking for forks in need of fetching"
     pulls = get_pull_info
     repos = {}
     pulls.each do |pull|
@@ -188,7 +181,7 @@ Usage: git pulls update
       endpoint = github_endpoint + "/"
     end
     repos.each do |repo, bool|
-      puts "  fetching #{repo}"
+      puts "fetching #{repo}"
       git("fetch #{endpoint}#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
   end
