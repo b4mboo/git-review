@@ -56,6 +56,6 @@ Installation
 
 Simply install it via Rubygems:
 
-    gem install git-pulls
+    gem install suse-git-pulls
 
 (Prefix with `sudo` if necessary)
