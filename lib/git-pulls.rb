@@ -305,7 +305,9 @@ Usage: git pulls update
     [user, proj]
   end
 
-  def git(command)
-    `git #{command}`.chomp
+  def git(command, chomp=true)
+    s = `git #{command}`
+    s.chomp! if chomp
+    s
   end
 end
