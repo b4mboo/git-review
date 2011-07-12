@@ -156,6 +156,11 @@ Usage: git pulls update
 
   def create
     puts "Creating a new pull request"
+    Octokit.create_pull_request("#{@user}/#{@repo}", 'master', from_branch, 'my title', "my body")
+  end
+  
+  def from_branch
+    git('branch', false).match(/\*(.*)/)[0][2..-1]
   end
 
   def fetch_stale_forks
