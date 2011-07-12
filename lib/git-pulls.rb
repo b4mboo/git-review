@@ -155,11 +155,16 @@ Usage: git pulls update
   end
 
   def create
-    puts "Creating a new pull request"
-    Octokit.create_pull_request("#{@user}/#{@repo}", 'master', from_branch, 'my title', "my body")
+    repo = "#{@user}/#{@repo}"
+    to_branch = 'master'
+    from_branch = get_from_branch_title
+    title = 'my title'
+    body = 'my body'
+    
+    Octokit.create_pull_request(repo, to_branch, from_branch, title, body)
   end
   
-  def from_branch
+  def get_from_branch_title
     git('branch', false).match(/\*(.*)/)[0][2..-1]
   end
 
