@@ -32,17 +32,17 @@ class GitReview
 
   def help
     puts "No command: #{@command}"
-    puts "Try: update, list, show, merge, browse, create"
+    puts "Try: browse, create, list, merge, show"
     puts "or call with '-h' for usage information"
   end
 
   def usage
     puts <<-USAGE
-Usage: git review list [--reverse]
-   or: git review show <number> [--full]
-   or: git review browse <number>
-   or: git review merge <number>
+   Usage: git review browse <number>
    or: git review create
+   or: git review list [--reverse]
+   or: git review merge <number>
+   or: git review show <number> [--full]
     USAGE
   end
 
