@@ -1,36 +1,33 @@
-git-pulls
+git-review
 ==============
 
-Makes it easy to list and merge GitHub pull requests.
+Makes it easy to manage code review on GitHub.
 
-    $ git pulls update
-    [fetches needed data for all pull requests]
-
-    $ git pulls list
+    $ git review list
     Open Pull Requests for schacon/git-reference
     19   10/26 0  Fix tag book link    ComputerDruid:fix-ta
     18   10/21 0  Some typos fixing.   mashingan:master    
     
-    $ git pulls list --reverse
+    $ git review list --reverse
     Open Pull Requests for schacon/git-reference
     18   10/21 0  Some typos fixing.   mashingan:master    
     19   10/26 0  Fix tag book link    ComputerDruid:fix-ta
 
-    $ git pulls show 1
+    $ git review show 1
     > [summary]
     > [diffstat]
 
-    $ git pulls show 1 --full
+    $ git review show 1 --full
     > [summary]
     > [full diff]
 
-    $ git pulls browse 1
-    > go to web page (mac only)
+    $ git review browse 1
+    > go to web page
 
-    $ git pulls merge 1
+    $ git review merge 1
     > merge pull request #1
 
-    $ git pulls create
+    $ git review create
     > create a new pull request
     
 Private repositories
@@ -43,10 +40,10 @@ To manage pull requests for your private repositories you have set up your git c
     
 You can find your API token on the [account](https://github.com/account) page.
 
-Using git-pulls with GitHub Enterprise
+Using git-review with GitHub Enterprise
 --------------------------------------
 
-If you want to use the git-pulls script with a private GitHub install, set the
+If you want to use the git-review script with a private GitHub install, set the
 github.host config value to your internal host.
 
     $ git config --global github.host github.mycompany.com
@@ -56,6 +53,6 @@ Installation
 
 Simply install it via Rubygems:
 
-    gem install suse-git-pulls
+    gem install git-review
 
 (Prefix with `sudo` if necessary)
