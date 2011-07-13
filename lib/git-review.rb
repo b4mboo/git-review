@@ -9,13 +9,15 @@ class GitReview
   ## COMMANDS ##
 
   def help
-    puts '  Usage: git review <command>'
-    puts '  Available commands:'
-    puts '    list [--reverse]'
-    puts '    show <number> [--full]'
-    puts '    browse <number>'
-    puts '    create'
-    puts '    merge <number>'
+    puts 'Usage: git review <command>'
+    puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
+    puts ''
+    puts 'Available commands:'
+    puts '   list [--reverse]          List all open requests'
+    puts '   show <number> [--full]    Show details of a single request'
+    puts '   browse <number>           Open a browser window and review a specified request'
+    puts '   create                    Create a new request'
+    puts '   merge <number>            Sign off a specified request by merging it into master'
   end
 
   def merge
@@ -133,7 +135,9 @@ class GitReview
       update
       self.send command
     else
-      puts "Unknown command. Please provide a valid command.\n\n" unless %w(-h --help).include?(command)
+      unless command.blank? or %w(-h --help).include?(command)
+        puts "git-review: '#{command}' is not a valid command.\n\n"
+      end
       help
     end
   end
@@ -236,7 +240,7 @@ class GitReview
   end
 
   def get_data(file)
-    data = JSON.parse(File.read(file))
+    JSON.parse(File.read(file))
   end
 
   def cache_pull_info
@@ -298,4 +302,5 @@ class GitReview
     s.chomp! if chomp
     s
   end
+
 end
