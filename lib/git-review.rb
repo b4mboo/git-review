@@ -48,41 +48,32 @@ class GitReview
 
   # Show details of a single request.
   def show
-    num = @args.shift
+    return unless review_exists?
     option = @args.shift
-    if p = pull_num(num)
-      puts "Number   : #{p['number']}"
-      puts "Label    : #{p['head']['label']}"
-      puts "Created  : #{p['created_at']}"
-      puts "Votes    : #{p['votes']}"
-      puts "Comments : #{p['comments']}"
-      puts
-      puts "Title    : #{p['title']}"
-      puts "Body     :"
-      puts
-      puts p['body']
-      puts
-      puts '------------'
-      puts
-      if option == '--full'
-        exec "git diff --color=always HEAD...#{p['head']['sha']}"
-      else
-        puts "cmd: git diff HEAD...#{p['head']['sha']}"
-        puts git("diff --stat --color=always HEAD...#{p['head']['sha']}")
-      end
+    puts "Number   : #{@review['number']}"
+    puts "Label    : #{@review['head']['label']}"
+    puts "Created  : #{@review['created_at']}"
+    puts "Votes    : #{@review['votes']}"
+    puts "Comments : #{@review['comments']}"
+    puts
+    puts "Title    : #{@review['title']}"
+    puts "Body     :"
+    puts
+    puts @review['body']
+    puts
+    puts '------------'
+    puts
+    if option == '--full'
+      exec "git diff --color=always HEAD...#{@review['head']['sha']}"
     else
-      puts "No such number"
+      puts "cmd: git diff HEAD...#{@review['head']['sha']}"
+      puts git("diff --stat --color=always HEAD...#{@review['head']['sha']}")
     end
   end
 
   # Open a browser window and review a specified request.
   def browse
-    num = @args.shift
-    if p = pull_num(num)
-      Launchy.open(p['html_url'])
-    else
-      puts "No such number"
-    end
+    Launchy.open(@review['html_url']) if review_exists?
   end
 
   # Create a new request.
@@ -101,37 +92,41 @@ class GitReview
 
   # Sign off a specified request by merging it into master.
   def merge
-    num = @args.shift
+    return unless review_exists?
     option = @args.shift
-    if p = pull_num(num)
-      if p['head']['repository']
-        o = p['head']['repository']['owner']
-        r = p['head']['repository']['name']
-      else # they deleted the source repo
-        o = p['head']['user']['login']
-        purl = p['patch_url']
-        puts "Sorry, #{o} deleted the source repository, git-review doesn't support this."
-        puts "You can manually patch your repo by running:"
-        puts
-        puts "  curl #{purl} | git am"
-        puts
-        puts "Tell the contributor not to do this."
-        return false
-      end
-      s = p['head']['sha']
-
-      message = "Merge pull request ##{num} from #{o}/#{r}\n\n---\n\n"
-      message += p['body'].gsub("'", '')
-      if option == '--log'
-        message += "\n\n---\n\nMerge Log:\n"
-        puts cmd = "git merge --no-ff --log -m '#{message}' #{s}"
-      else
-        puts cmd = "git merge --no-ff -m '#{message}' #{s}"
-      end
-      exec(cmd)
-    else
-      puts "No such number"
+    if @review['head']['repository']
+      o = @review['head']['repository']['owner']
+      r = @review['head']['repository']['name']
+    else # they deleted the source repo
+      o = @review['head']['user']['login']
+      purl = @review['patch_url']
+      puts "Sorry, #{o} deleted the source repository, git-review doesn't support this."
+      puts "You can manually patch your repo by running:"
+      puts
+      puts "  curl #{purl} | git am"
+      puts
+      puts "Tell the contributor not to do this."
+      return false
     end
+    s = @review['head']['sha']
+    message = "Merge pull request ##{@review['number']} from #{o}/#{r}\n\n---\n\n"
+    message += @review['body'].gsub("'", '')
+    if option == '--log'
+      message += "\n\n---\n\nMerge Log:\n"
+      puts cmd = "git merge --no-ff --log -m '#{message}' #{s}"
+    else
+      puts cmd = "git merge --no-ff -m '#{message}' #{s}"
+    end
+    exec(cmd)
+  end
+
+  # Start a console session (used for debugging).
+  def console
+    puts 'Entering debug console.'
+    require 'ruby-debug'
+    Debugger.start
+    debugger
+    puts 'Leaving debug console.'
   end
 
   private
@@ -157,6 +152,21 @@ class GitReview
   def update
     cache_pull_info
     fetch_stale_forks
+  end
+
+  # Check existence of specified review and assign @review.
+  def review_exists?
+    review_id = @args.shift.to_i
+    @review = get_pull_info.find{ |review| review['number'] == review_id}
+    puts "Review '#{review_id}' does not exist." unless @review
+    not @review.nil?
+  end
+
+  # System call to 'git'.
+  def git(command, chomp=true)
+    s = `git #{command}`
+    s.chomp! if chomp
+    s
   end
 
   def get_from_branch_title
@@ -266,11 +276,6 @@ class GitReview
     end
   end
 
-  def pull_num(num)
-    data = get_pull_info
-    data.select { |p| p['number'].to_s == num.to_s }.first
-  end
-
   def github_insteadof_matching(c, u)
     first = c.collect {|k,v| [v, /url\.(.*github\.com.*)\.insteadof/.match(k)]}.
               find {|v,m| u.index(v) and m != nil}
@@ -307,12 +312,6 @@ class GitReview
       end
     end
     [user, proj]
-  end
-
-  def git(command, chomp=true)
-    s = `git #{command}`
-    s.chomp! if chomp
-    s
   end
 
 end
