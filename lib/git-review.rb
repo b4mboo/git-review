@@ -30,11 +30,11 @@ class GitReview
     count = 0
     open_requests.each do |pull|
       line = []
-      line << l(pull['number'], 4)
-      line << l(Date.parse(pull['created_at']).strftime("%m/%d"), 5)
-      line << l(pull['comments'], 2)
-      line << l(pull['title'], 35)
-      line << l(pull['head']['label'], 20)
+      line << format_text(pull['number'], 4)
+      line << format_text(Date.parse(pull['created_at']).strftime("%m/%d"), 5)
+      line << format_text(pull['comments'], 2)
+      line << format_text(pull['title'], 35)
+      line << format_text(pull['head']['label'], 20)
       sha = pull['head']['sha']
       if not_merged?(sha)
         puts line.join ' '
@@ -129,6 +129,7 @@ class GitReview
     puts 'Leaving debug console.'
   end
 
+
   private
 
   # Setup variables and call actual commands.
@@ -169,6 +170,11 @@ class GitReview
     s
   end
 
+  # Display helper to make output more beautiful.
+  def format_text(info, size)
+    info.to_s.gsub("\n", ' ')[0, size].ljust(size)
+  end
+
   def get_from_branch_title
     git('branch', false).match(/\*(.*)/)[0][2..-1]
   end
@@ -205,20 +211,6 @@ class GitReview
   def not_merged?(sha)
     commits = git("rev-list #{sha} ^HEAD 2>&1")
     commits.split("\n").size > 0
-  end
-
-  # DISPLAY HELPER FUNCTIONS #
-
-  def l(info, size)
-    clean(info)[0, size].ljust(size)
-  end
-
-  def r(info, size)
-    clean(info)[0, size].rjust(size)
-  end
-
-  def clean(info)
-    info.to_s.gsub("\n", ' ')
   end
 
   # PRIVATE REPOSITORIES ACCESS
