@@ -5,4 +5,4 @@ $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
 require 'git-review'
 
-GitReview.start(ARGV)
+GitReview.new(ARGV)

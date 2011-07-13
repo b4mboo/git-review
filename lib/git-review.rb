@@ -6,44 +6,16 @@ class GitReview
 
   REVIEW_CACHE_FILE = '.git/review_cache.json'
 
-  def initialize(args)
-    @command = args.shift
-    @user, @repo = repo_info
-    @args = args
-  end
-
-  def self.start(args)
-    GitReview.new(args).run
-  end
-
-  def run
-    configure
-    if @command && self.respond_to?(@command)
-      update  
-      self.send @command
-    elsif %w(-h --help).include?(@command)
-      usage
-    else
-      help
-    end
-  end
-
   ## COMMANDS ##
 
   def help
-    puts "No command: #{@command}"
-    puts "Try: browse, create, list, merge, show"
-    puts "or call with '-h' for usage information"
-  end
-
-  def usage
-    puts <<-USAGE
-   Usage: git review browse <number>
-   or: git review create
-   or: git review list [--reverse]
-   or: git review merge <number>
-   or: git review show <number> [--full]
-    USAGE
+    puts '  Usage: git review <command>'
+    puts '  Available commands:'
+    puts '    list [--reverse]'
+    puts '    show <number> [--full]'
+    puts '    browse <number>'
+    puts '    create'
+    puts '    merge <number>'
   end
 
   def merge
@@ -68,7 +40,6 @@ class GitReview
 
       message = "Merge pull request ##{num} from #{o}/#{r}\n\n---\n\n"
       message += p['body'].gsub("'", '')
-      cmd = ''
       if option == '--log'
         message += "\n\n---\n\nMerge Log:\n"
         puts cmd = "git merge --no-ff --log -m '#{message}' #{s}"
@@ -142,21 +113,36 @@ class GitReview
     end
   end
 
-  def update
-    cache_pull_info
-    fetch_stale_forks
-  end
-
   def create
     repo = "#{@user}/#{@repo}"
     to_branch = 'master'
     from_branch = get_from_branch_title
     title = 'my title'
     body = 'my body'
-    
     Octokit.create_pull_request(repo, to_branch, from_branch, title, body)
   end
-  
+
+  private
+
+  def initialize(args)
+    command = args.shift
+    @user, @repo = repo_info
+    @args = args
+    configure
+    if command && self.respond_to?(command)
+      update
+      self.send command
+    else
+      puts "Unknown command. Please provide a valid command.\n\n" unless %w(-h --help).include?(command)
+      help
+    end
+  end
+
+  def update
+    cache_pull_info
+    fetch_stale_forks
+  end
+
   def get_from_branch_title
     git('branch', false).match(/\*(.*)/)[0][2..-1]
   end
