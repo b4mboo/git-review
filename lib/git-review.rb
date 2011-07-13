@@ -8,18 +8,98 @@ class GitReview
 
   ## COMMANDS ##
 
+  # Default command to show a quick reference of available commands.
   def help
     puts 'Usage: git review <command>'
     puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
     puts ''
     puts 'Available commands:'
-    puts '   list [--reverse]          List all open requests'
-    puts '   show <number> [--full]    Show details of a single request'
-    puts '   browse <number>           Open a browser window and review a specified request'
-    puts '   create                    Create a new request'
-    puts '   merge <number>            Sign off a specified request by merging it into master'
+    puts '   list [--reverse]          List all open requests.'
+    puts '   show <number> [--full]    Show details of a single request.'
+    puts '   browse <number>           Open a browser window and review a specified request.'
+    puts '   create                    Create a new request.'
+    puts '   merge <number>            Sign off a specified request by merging it into master.'
   end
 
+  # List all open requests.
+  def list
+    puts "Open Pull Requests for #{@user}/#{@repo}"
+    option = @args.shift
+    open_requests = get_pull_info
+    open_requests.reverse! if option == '--reverse'
+    count = 0
+    open_requests.each do |pull|
+      line = []
+      line << l(pull['number'], 4)
+      line << l(Date.parse(pull['created_at']).strftime("%m/%d"), 5)
+      line << l(pull['comments'], 2)
+      line << l(pull['title'], 35)
+      line << l(pull['head']['label'], 20)
+      sha = pull['head']['sha']
+      if not_merged?(sha)
+        puts line.join ' '
+        count += 1
+      end
+    end
+    if count == 0
+      puts ' -- no open pull requests --'
+    end
+  end
+
+  # Show details of a single request.
+  def show
+    num = @args.shift
+    option = @args.shift
+    if p = pull_num(num)
+      puts "Number   : #{p['number']}"
+      puts "Label    : #{p['head']['label']}"
+      puts "Created  : #{p['created_at']}"
+      puts "Votes    : #{p['votes']}"
+      puts "Comments : #{p['comments']}"
+      puts
+      puts "Title    : #{p['title']}"
+      puts "Body     :"
+      puts
+      puts p['body']
+      puts
+      puts '------------'
+      puts
+      if option == '--full'
+        exec "git diff --color=always HEAD...#{p['head']['sha']}"
+      else
+        puts "cmd: git diff HEAD...#{p['head']['sha']}"
+        puts git("diff --stat --color=always HEAD...#{p['head']['sha']}")
+      end
+    else
+      puts "No such number"
+    end
+  end
+
+  # Open a browser window and review a specified request.
+  def browse
+    num = @args.shift
+    if p = pull_num(num)
+      Launchy.open(p['html_url'])
+    else
+      puts "No such number"
+    end
+  end
+
+  # Create a new request.
+  def create
+    repo = "#{@user}/#{@repo}"
+    to_branch = 'master'
+    from_branch = get_from_branch_title
+    # TODO: Insert user- and repository-name into title.
+    title = 'my title'
+    # TODO: Insert commit messages into body (since this will be displayed inside the mail that is sent out).
+    body = 'my body'
+    Octokit.create_pull_request(repo, to_branch, from_branch, title, body)
+    # TODO: Show success or failure message.
+    # TODO: Switch branch back to master.
+  end
+
+  # Sign off a specified request by merging it into master.
   def merge
     num = @args.shift
     option = @args.shift
@@ -54,78 +134,9 @@ class GitReview
     end
   end
 
-  def show
-    num = @args.shift
-    option = @args.shift
-    if p = pull_num(num)
-      puts "Number   : #{p['number']}"
-      puts "Label    : #{p['head']['label']}"
-      puts "Created  : #{p['created_at']}"
-      puts "Votes    : #{p['votes']}"
-      puts "Comments : #{p['comments']}"
-      puts
-      puts "Title    : #{p['title']}"
-      puts "Body     :"
-      puts
-      puts p['body']
-      puts
-      puts '------------'
-      puts
-      if option == '--full'
-        exec "git diff --color=always HEAD...#{p['head']['sha']}"
-      else
-        puts "cmd: git diff HEAD...#{p['head']['sha']}"
-        puts git("diff --stat --color=always HEAD...#{p['head']['sha']}")
-      end
-    else
-      puts "No such number"
-    end
-  end
-
-  def browse
-    num = @args.shift
-    if p = pull_num(num)
-      Launchy.open(p['html_url'])
-    else
-      puts "No such number"
-    end
-  end
-
-  def list
-    option = @args.shift
-    puts "Open Pull Requests for #{@user}/#{@repo}"
-    pulls = get_pull_info
-    pulls.reverse! if option == '--reverse'
-    count = 0
-    pulls.each do |pull|
-      line = []
-      line << l(pull['number'], 4)
-      line << l(Date.parse(pull['created_at']).strftime("%m/%d"), 5)
-      line << l(pull['comments'], 2)
-      line << l(pull['title'], 35)
-      line << l(pull['head']['label'], 20)
-      sha = pull['head']['sha']
-      if not_merged?(sha)
-        puts line.join ' '
-        count += 1
-      end
-    end
-    if count == 0
-      puts ' -- no open pull requests --'
-    end
-  end
-
-  def create
-    repo = "#{@user}/#{@repo}"
-    to_branch = 'master'
-    from_branch = get_from_branch_title
-    title = 'my title'
-    body = 'my body'
-    Octokit.create_pull_request(repo, to_branch, from_branch, title, body)
-  end
-
   private
 
+  # Setup variables and call actual commands.
   def initialize(args)
     command = args.shift
     @user, @repo = repo_info
@@ -142,6 +153,7 @@ class GitReview
     end
   end
 
+  # Get latest changes from GitHub.
   def update
     cache_pull_info
     fetch_stale_forks
