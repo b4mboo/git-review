@@ -79,13 +79,12 @@ class GitReview
   # Create a new request.
   def create
     repo = "#{@user}/#{@repo}"
-    to_branch = 'master'
-    from_branch = get_from_branch_title
-    # TODO: Insert user- and repository-name into title.
-    title = 'my title'
-    # TODO: Insert commit messages into body (since this will be displayed inside the mail that is sent out).
+    target_branch = 'master'
+    source_branch = git('branch', false).match(/\*(.*)/)[0][2..-1]
+    title = "Review request: #{github_login} wants to merge changes from '#{source_branch}' into #{repo}'s branch '#{target_branch}'."
+    # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
     body = 'my body'
-    Octokit.create_pull_request(repo, to_branch, from_branch, title, body)
+    Octokit.create_pull_request(repo, target_branch, source_branch, title, body)
     # TODO: Show success or failure message.
     # TODO: Switch branch back to master.
   end
@@ -173,10 +172,6 @@ class GitReview
   # Display helper to make output more beautiful.
   def format_text(info, size)
     info.to_s.gsub("\n", ' ')[0, size].ljust(size)
-  end
-
-  def get_from_branch_title
-    git('branch', false).match(/\*(.*)/)[0][2..-1]
   end
 
   def fetch_stale_forks
