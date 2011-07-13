@@ -78,15 +78,25 @@ class GitReview
 
   # Create a new request.
   def create
-    repo = "#{@user}/#{@repo}"
+    # Gather information.
+    last_review_id = get_pull_info.collect{|review| review['number']}.sort.last
+    target_repo = "#{@user}/#{@repo}"
     target_branch = 'master'
     source_branch = git('branch', false).match(/\*(.*)/)[0][2..-1]
-    title = "Review request: #{github_login} wants to merge changes from '#{source_branch}' into #{repo}'s branch '#{target_branch}'."
+    title = "Review request: #{github_login} wants to merge changes from '#{source_branch}' into #{target_repo}'s branch '#{target_branch}'."
     # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
     body = 'my body'
-    Octokit.create_pull_request(repo, target_branch, source_branch, title, body)
-    # TODO: Show success or failure message.
-    # TODO: Switch branch back to master.
+    # Create the actual pull request.
+    Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
+    # Switch back to target_branch and check for success.
+    git "co #{target_branch}"
+    update
+    potential_new_review = get_pull_info.find{ |review| review['title'] == title}
+    if potential_new_review['number'] > last_review_id
+      puts 'Review request successfully created.'
+    else
+      puts 'Creating new review request failed.'
+    end
   end
 
   # Sign off a specified request by merging it into master.
