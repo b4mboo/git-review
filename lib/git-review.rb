@@ -18,9 +18,9 @@ class GitReview
     puts '   show <number> [--full]    Show details of a single request.'
     puts '   browse <number>           Open a browser window and review a specified request.'
     # puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
-    puts '   create                    Create a new request.'
-    puts '   merge <number>            Sign off a specified request by merging it into master.'
+    puts '   accept <number>           Accept a specified request by merging it into master.'
     puts '   decline <number>          Decline and close a specified request.'
+    puts '   create                    Create a new request.'
   end
 
   # List all open requests.
@@ -29,6 +29,7 @@ class GitReview
     option = @args.shift
     open_requests = get_pull_info
     open_requests.reverse! if option == '--reverse'
+    # TODO: Refactor to get rid of unnecessary variables and computation.
     count = 0
     puts 'ID     Date       Comments   Title'
     open_requests.each do |pull|
@@ -44,7 +45,7 @@ class GitReview
       end
     end
     if count == 0
-      puts ' -- no open pull requests --'
+      puts ' -- No open requests. --'
     end
   end
 
@@ -84,27 +85,8 @@ class GitReview
     puts 'Under construction... ;-)'
   end
 
-  # Create a new request.
-  # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
-  def create
-    # TODO: Create and push to a remote branch if necessary.
-    # Gather information.
-    last_review_id = get_pull_info.collect{|review| review['number']}.sort.last.to_i
-    title = "[Review] Request from '#{github_login}' @ '#{source_repo}/#{source_branch}'"
-    # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
-    body = "You are requested to review the following changes:"
-    # Create the actual pull request.
-    Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
-    # Switch back to target_branch and check for success.
-    git "co #{target_branch}"
-    update
-    potential_new_review = get_pull_info.find{ |review| review['title'] == title}
-    puts 'Review request successfully created.' if potential_new_review['number'] > last_review_id
-  end
-
-  # Sign off a specified request by merging it into master.
-  # TODO: Rename into accept or sth. similar that is more speaking regarding the workflow of reviewing other peoples patches.
-  def merge
+  # Accept a specified request by merging it into master.
+  def accept
     return unless review_exists?
     option = @args.shift
     if @review['head']['repository']
@@ -122,7 +104,7 @@ class GitReview
       return false
     end
     s = @review['head']['sha']
-    message = "Merge pull request ##{@review['number']} from #{o}/#{r}\n\n---\n\n"
+    message = "Accepting request ##{@review['number']} from #{o}/#{r}\n\n---\n\n"
     message += @review['body'].gsub("'", '')
     if option == '--log'
       message += "\n\n---\n\nMerge Log:\n"
@@ -138,6 +120,24 @@ class GitReview
     return unless review_exists?
     Octokit.post("issues/close/#{source_repo}/#{@review['number']}")
     puts "Successfully declined request." unless review_exists?(@review['number'])
+  end
+
+  # Create a new request.
+  # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
+  def create
+    # TODO: Create and push to a remote branch if necessary.
+    # Gather information.
+    last_review_id = get_pull_info.collect{|review| review['number']}.sort.last.to_i
+    title = "[Review] Request from '#{github_login}' @ '#{source_repo}/#{source_branch}'"
+    # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
+    body = "You are requested to review the following changes:"
+    # Create the actual pull request.
+    Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
+    # Switch back to target_branch and check for success.
+    git "co #{target_branch}"
+    update
+    potential_new_review = get_pull_info.find{ |review| review['title'] == title}
+    puts 'Review request successfully created.' if potential_new_review['number'] > last_review_id
   end
 
   # Start a console session (used for debugging).
