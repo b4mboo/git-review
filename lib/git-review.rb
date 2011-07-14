@@ -20,12 +20,12 @@ class GitReview
     # puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
     puts '   create                    Create a new request.'
     puts '   merge <number>            Sign off a specified request by merging it into master.'
-    # puts '   decline <number>          Decline and close a specified request.'
+    puts '   decline <number>          Decline and close a specified request.'
   end
 
   # List all open requests.
   def list
-    puts "Open Pull Requests for #{@user}/#{@repo}"
+    puts "Open Pull Requests for '#{target_repo}'"
     option = @args.shift
     open_requests = get_pull_info
     open_requests.reverse! if option == '--reverse'
@@ -78,7 +78,7 @@ class GitReview
     Launchy.open(@review['html_url']) if review_exists?
   end
 
-  # Checkout a specified request\'s changes to your local repository.
+  # Checkout a specified request's changes to your local repository.
   # TODO: Implement this.
   def checkout
     puts 'Under construction... ;-)'
@@ -87,10 +87,9 @@ class GitReview
   # Create a new request.
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
-    # TODO: Create remote branch if necessary.
+    # TODO: Create and push to a remote branch if necessary.
     # Gather information.
     last_review_id = get_pull_info.collect{|review| review['number']}.sort.last
-    target_repo = "#{@user}/#{@repo}"
     target_branch = 'master'
     source_branch = git('branch', false).match(/\*(.*)/)[0][2..-1]
     title = "Review request: #{github_login} wants to merge changes from '#{source_branch}' into #{target_repo}'s branch '#{target_branch}'."
@@ -102,16 +101,11 @@ class GitReview
     git "co #{target_branch}"
     update
     potential_new_review = get_pull_info.find{ |review| review['title'] == title}
-    if potential_new_review['number'] > last_review_id
-      puts 'Review request successfully created.'
-    else
-      puts 'Creating new review request failed.'
-    end
+    puts 'Review request successfully created.' if potential_new_review['number'] > last_review_id
   end
 
   # Sign off a specified request by merging it into master.
-  # TODO: Rename into accept or sth. similar that is more speaking regarding the
-  # workflow of reviewing other peoples patches.
+  # TODO: Rename into accept or sth. similar that is more speaking regarding the workflow of reviewing other peoples patches.
   def merge
     return unless review_exists?
     option = @args.shift
@@ -142,9 +136,10 @@ class GitReview
   end
 
   # Decline and close a specified request.
-  # TODO: Implement this.
   def decline
-    puts 'Under construction... ;-)'
+    return unless review_exists?
+    Octokit.post("issues/close/#{target_repo}/#{@review['number']}")
+    puts "Successfully declined request." unless review_exists?(@review['number'])
   end
 
   # Start a console session (used for debugging).
@@ -183,8 +178,7 @@ class GitReview
   end
 
   # Check existence of specified review and assign @review.
-  def review_exists?
-    review_id = @args.shift.to_i
+  def review_exists?(review_id = @args.shift.to_i)
     @review = get_pull_info.find{ |review| review['number'] == review_id}
     puts "Review '#{review_id}' does not exist." unless @review
     not @review.nil?
@@ -200,6 +194,12 @@ class GitReview
   # Display helper to make output more beautiful.
   def format_text(info, size)
     info.to_s.gsub("\n", ' ')[0, size].ljust(size)
+  end
+
+  # Returns a string that specifies the target repo.
+  # TODO: Enable possibility to manually override this and set arbitrary repositories.
+  def target_repo
+    "#{@user}/#{@repo}"
   end
 
   def fetch_stale_forks
@@ -281,7 +281,7 @@ class GitReview
   end
 
   def cache_pull_info
-    response = Octokit.pull_requests("#{@user}/#{@repo}")
+    response = Octokit.pull_requests(target_repo)
     save_data({'review' => response}, REVIEW_CACHE_FILE)
   end
 
