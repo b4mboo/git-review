@@ -17,8 +17,10 @@ class GitReview
     puts '   list [--reverse]          List all open requests.'
     puts '   show <number> [--full]    Show details of a single request.'
     puts '   browse <number>           Open a browser window and review a specified request.'
+    # puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
     puts '   create                    Create a new request.'
     puts '   merge <number>            Sign off a specified request by merging it into master.'
+    # puts '   decline <number>          Decline and close a specified request.'
   end
 
   # List all open requests.
@@ -76,8 +78,16 @@ class GitReview
     Launchy.open(@review['html_url']) if review_exists?
   end
 
+  # Checkout a specified request\'s changes to your local repository.
+  # TODO: Implement this.
+  def checkout
+    puts 'Under construction... ;-)'
+  end
+
   # Create a new request.
+  # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
+    # TODO: Create remote branch if necessary.
     # Gather information.
     last_review_id = get_pull_info.collect{|review| review['number']}.sort.last
     target_repo = "#{@user}/#{@repo}"
@@ -100,6 +110,8 @@ class GitReview
   end
 
   # Sign off a specified request by merging it into master.
+  # TODO: Rename into accept or sth. similar that is more speaking regarding the
+  # workflow of reviewing other peoples patches.
   def merge
     return unless review_exists?
     option = @args.shift
@@ -127,6 +139,12 @@ class GitReview
       puts cmd = "git merge --no-ff -m '#{message}' #{s}"
     end
     exec(cmd)
+  end
+
+  # Decline and close a specified request.
+  # TODO: Implement this.
+  def decline
+    puts 'Under construction... ;-)'
   end
 
   # Start a console session (used for debugging).
