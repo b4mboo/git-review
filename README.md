@@ -26,6 +26,9 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review browse 42
     > go to web page
 
+    $ git review checkout 42
+    > checkout changes from request #42 to your local repository
+
     $ git review accept 42
     > accept request #42 by merging it
 

@@ -17,7 +17,7 @@ class GitReview
     puts '   list [--reverse]          List all open requests.'
     puts '   show <number> [--full]    Show details of a single request.'
     puts '   browse <number>           Open a browser window and review a specified request.'
-    # puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
+    puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
     puts '   accept <number>           Accept a specified request by merging it into master.'
     puts '   decline <number>          Decline and close a specified request.'
     puts '   create                    Create a new request.'
@@ -75,9 +75,9 @@ class GitReview
   end
 
   # Checkout a specified request's changes to your local repository.
-  # TODO: Implement this.
   def checkout
-    puts 'Under construction... ;-)'
+    return unless review_exists?
+    git "co origin/#{@review['head']['ref']}"
   end
 
   # Accept a specified request by merging it into master.
