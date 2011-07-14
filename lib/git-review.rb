@@ -25,27 +25,22 @@ class GitReview
 
   # List all open requests.
   def list
-    puts "Open requests for '#{source_repo}/#{source_branch}'"
-    option = @args.shift
     open_requests = get_pull_info
-    open_requests.reverse! if option == '--reverse'
-    # TODO: Refactor to get rid of unnecessary variables and computation.
-    count = 0
+    if open_requests.size == 0
+      puts "No open requests for '#{source_repo}/#{source_branch}'"
+      return
+    end
+    puts "Open requests for '#{source_repo}/#{source_branch}'"
     puts 'ID     Date       Comments   Title'
+    open_requests.reverse! if @args.shift == '--reverse'
     open_requests.each do |pull|
+      next unless not_merged?(pull['head']['sha'])
       line = []
       line << format_text(pull['number'], 6)
       line << format_text(Date.parse(pull['created_at']).strftime('%d-%b-%y'), 10)
       line << format_text(pull['comments'], 10)
       line << format_text(pull['title'], 94)
-      sha = pull['head']['sha']
-      if not_merged?(sha)
-        puts line.join ' '
-        count += 1
-      end
-    end
-    if count == 0
-      puts ' -- No open requests. --'
+      puts line.join ' '
     end
   end
 
