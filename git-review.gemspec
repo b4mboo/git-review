@@ -2,19 +2,19 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name     = "git-review"
-  s.version  = "0.4.2"
-  s.date     = Time.now.strftime('%Y-%m-%d')
-  s.summary  = "facilitates github code reviews"
+  s.version  = "0.5.0"
+  s.date     = Time.now.strftime('%d-%b-%y')
+  s.summary  = "facilitates GitHub code reviews"
   s.homepage = "http://github.com/b4mboo/git-review"
   s.email    = "bamberger.dominik@gmail.com"
-  s.authors  = ["Cristian Messel, Dominik Bamberger"]
+  s.authors  = ["Dominik Bamberger, Cristian Messel"]
 
   s.files    = %w( LICENSE )
   s.files    += Dir.glob("lib/**/*")
   s.files    += Dir.glob("bin/**/*")
 
   s.executables = %w( git-review )
-  s.description = "git-review facilitates github code reviews."
+  s.description = "Manage review workflow for projects hosted on GitHub (using pull requests)."
 
   s.add_runtime_dependency 'json'
   s.add_runtime_dependency 'launchy'

@@ -35,7 +35,7 @@ class GitReview
     open_requests.each do |pull|
       line = []
       line << format_text(pull['number'], 6)
-      line << format_text(Date.parse(pull['created_at']).strftime("%d-%b-%y"), 10)
+      line << format_text(Date.parse(pull['created_at']).strftime('%d-%b-%y'), 10)
       line << format_text(pull['comments'], 10)
       line << format_text(pull['title'], 94)
       sha = pull['head']['sha']
