@@ -25,18 +25,18 @@ class GitReview
 
   # List all open requests.
   def list
-    puts "Open Pull Requests for '#{target_repo}'"
+    puts "Open requests for '#{source_repo}/#{source_branch}'"
     option = @args.shift
     open_requests = get_pull_info
     open_requests.reverse! if option == '--reverse'
     count = 0
+    puts 'ID     Date       Comments   Title'
     open_requests.each do |pull|
       line = []
-      line << format_text(pull['number'], 4)
-      line << format_text(Date.parse(pull['created_at']).strftime("%m/%d"), 5)
-      line << format_text(pull['comments'], 2)
-      line << format_text(pull['title'], 35)
-      line << format_text(pull['head']['label'], 20)
+      line << format_text(pull['number'], 6)
+      line << format_text(Date.parse(pull['created_at']).strftime("%d-%b-%y"), 10)
+      line << format_text(pull['comments'], 10)
+      line << format_text(pull['title'], 94)
       sha = pull['head']['sha']
       if not_merged?(sha)
         puts line.join ' '
@@ -89,12 +89,10 @@ class GitReview
   def create
     # TODO: Create and push to a remote branch if necessary.
     # Gather information.
-    last_review_id = get_pull_info.collect{|review| review['number']}.sort.last
-    target_branch = 'master'
-    source_branch = git('branch', false).match(/\*(.*)/)[0][2..-1]
-    title = "Review request: #{github_login} wants to merge changes from '#{source_branch}' into #{target_repo}'s branch '#{target_branch}'."
+    last_review_id = get_pull_info.collect{|review| review['number']}.sort.last.to_i
+    title = "[Review] Request from '#{github_login}' @ '#{source_repo}/#{source_branch}'"
     # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
-    body = 'my body'
+    body = "You are requested to review the following changes:"
     # Create the actual pull request.
     Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
     # Switch back to target_branch and check for success.
@@ -138,7 +136,7 @@ class GitReview
   # Decline and close a specified request.
   def decline
     return unless review_exists?
-    Octokit.post("issues/close/#{target_repo}/#{@review['number']}")
+    Octokit.post("issues/close/#{source_repo}/#{@review['number']}")
     puts "Successfully declined request." unless review_exists?(@review['number'])
   end
 
@@ -178,7 +176,15 @@ class GitReview
   end
 
   # Check existence of specified review and assign @review.
-  def review_exists?(review_id = @args.shift.to_i)
+  def review_exists?(review_id = nil)
+    # NOTE: If review_id is not set explicitly we might need to update to get the
+    # latest changes from GitHub, as this is called from within another method.
+    update if review_id.nil?
+    review_id ||= @args.shift.to_i
+    if review_id == 0
+      puts "Please specify a valid ID."
+      return false
+    end
     @review = get_pull_info.find{ |review| review['number'] == review_id}
     puts "Review '#{review_id}' does not exist." unless @review
     not @review.nil?
@@ -196,10 +202,26 @@ class GitReview
     info.to_s.gsub("\n", ' ')[0, size].ljust(size)
   end
 
-  # Returns a string that specifies the target repo.
-  # TODO: Enable possibility to manually override this and set arbitrary repositories.
-  def target_repo
+  # Returns a string that specifies the source repo.
+  def source_repo
     "#{@user}/#{@repo}"
+  end
+
+  # Returns a string that specifies the source branch.
+  def source_branch
+    git('branch', false).match(/\*(.*)/)[0][2..-1]
+  end
+
+  # Returns a string that specifies the target repo.
+  def target_repo
+    # TODO: Enable possibility to manually override this and set arbitrary repositories.
+    source_repo
+  end
+
+  # Returns a string that specifies the target branch.
+  def target_branch
+    # TODO: Enable possibility to manually override this and set arbitrary branches.
+    'master'
   end
 
   def fetch_stale_forks
@@ -281,7 +303,7 @@ class GitReview
   end
 
   def cache_pull_info
-    response = Octokit.pull_requests(target_repo)
+    response = Octokit.pull_requests(source_repo)
     save_data({'review' => response}, REVIEW_CACHE_FILE)
   end
 
