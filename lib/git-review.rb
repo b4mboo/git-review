@@ -1,10 +1,9 @@
-require 'json'
-require 'launchy'
+# Octokit is used to access GitHub's API.
 require 'octokit'
+# Launchy is used in 'browse' to open a browser.
+require 'launchy'
 
 class GitReview
-
-  REVIEW_CACHE_FILE = '.git/review_cache.json'
 
   ## COMMANDS ##
 
@@ -14,7 +13,7 @@ class GitReview
     puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
     puts ''
     puts 'Available commands:'
-    puts '   list [--reverse]          List all open requests.'
+    puts '   list [--reverse]          List all pending requests.'
     puts '   show <number> [--full]    Show details of a single request.'
     puts '   browse <number>           Open a browser window and review a specified request.'
     puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
@@ -23,17 +22,16 @@ class GitReview
     puts '   create                    Create a new request.'
   end
 
-  # List all open requests.
+  # List all pending requests.
   def list
-    open_requests = get_pull_info
-    if open_requests.size == 0
-      puts "No open requests for '#{source_repo}/#{source_branch}'"
+    if @pending_requests.size == 0
+      puts "No pending requests for '#{source_repo}/#{source_branch}'"
       return
     end
-    puts "Open requests for '#{source_repo}/#{source_branch}'"
+    puts "Pending requests for '#{source_repo}/#{source_branch}'"
     puts 'ID     Date       Comments   Title'
-    open_requests.reverse! if @args.shift == '--reverse'
-    open_requests.each do |pull|
+    @pending_requests.reverse! if @args.shift == '--reverse'
+    @pending_requests.each do |pull|
       next unless not_merged?(pull['head']['sha'])
       line = []
       line << format_text(pull['number'], 6)
@@ -46,50 +44,50 @@ class GitReview
 
   # Show details of a single request.
   def show
-    return unless review_exists?
+    return unless request_exists?
     option = @args.shift
-    puts "Number   : #{@review['number']}"
-    puts "Label    : #{@review['head']['label']}"
-    puts "Created  : #{@review['created_at']}"
-    puts "Votes    : #{@review['votes']}"
-    puts "Comments : #{@review['comments']}"
+    puts "Number   : #{@pending_request['number']}"
+    puts "Label    : #{@pending_request['head']['label']}"
+    puts "Created  : #{@pending_request['created_at']}"
+    puts "Votes    : #{@pending_request['votes']}"
+    puts "Comments : #{@pending_request['comments']}"
     puts
-    puts "Title    : #{@review['title']}"
+    puts "Title    : #{@pending_request['title']}"
     puts "Body     :"
     puts
-    puts @review['body']
+    puts @pending_request['body']
     puts
     puts '------------'
     puts
     if option == '--full'
-      exec "git diff --color=always HEAD...#{@review['head']['sha']}"
+      exec "git diff --color=always HEAD...#{@pending_request['head']['sha']}"
     else
-      puts "cmd: git diff HEAD...#{@review['head']['sha']}"
-      puts git("diff --stat --color=always HEAD...#{@review['head']['sha']}")
+      puts "cmd: git diff HEAD...#{@pending_request['head']['sha']}"
+      puts git("diff --stat --color=always HEAD...#{@pending_request['head']['sha']}")
     end
   end
 
   # Open a browser window and review a specified request.
   def browse
-    Launchy.open(@review['html_url']) if review_exists?
+    Launchy.open(@pending_request['html_url']) if request_exists?
   end
 
   # Checkout a specified request's changes to your local repository.
   def checkout
-    return unless review_exists?
-    git "co origin/#{@review['head']['ref']}"
+    return unless request_exists?
+    git "co origin/#{@pending_request['head']['ref']}"
   end
 
   # Accept a specified request by merging it into master.
   def accept
-    return unless review_exists?
+    return unless request_exists?
     option = @args.shift
-    if @review['head']['repository']
-      o = @review['head']['repository']['owner']
-      r = @review['head']['repository']['name']
+    if @pending_request['head']['repository']
+      o = @pending_request['head']['repository']['owner']
+      r = @pending_request['head']['repository']['name']
     else # they deleted the source repo
-      o = @review['head']['user']['login']
-      purl = @review['patch_url']
+      o = @pending_request['head']['user']['login']
+      purl = @pending_request['patch_url']
       puts "Sorry, #{o} deleted the source repository, git-review doesn't support this."
       puts "You can manually patch your repo by running:"
       puts
@@ -98,9 +96,9 @@ class GitReview
       puts "Tell the contributor not to do this."
       return false
     end
-    s = @review['head']['sha']
-    message = "Accepting request ##{@review['number']} from #{o}/#{r}\n\n---\n\n"
-    message += @review['body'].gsub("'", '')
+    s = @pending_request['head']['sha']
+    message = "Accepting request ##{@pending_request['number']} from #{o}/#{r}\n\n---\n\n"
+    message += @pending_request['body'].gsub("'", '')
     if option == '--log'
       message += "\n\n---\n\nMerge Log:\n"
       puts cmd = "git merge --no-ff --log -m '#{message}' #{s}"
@@ -112,9 +110,9 @@ class GitReview
 
   # Decline and close a specified request.
   def decline
-    return unless review_exists?
-    Octokit.post("issues/close/#{source_repo}/#{@review['number']}")
-    puts "Successfully declined request." unless review_exists?(@review['number'])
+    return unless request_exists?
+    Octokit.post("issues/close/#{source_repo}/#{@pending_request['number']}")
+    puts "Successfully declined request." unless request_exists?(@pending_request['number'])
   end
 
   # Create a new request.
@@ -122,7 +120,7 @@ class GitReview
   def create
     # TODO: Create and push to a remote branch if necessary.
     # Gather information.
-    last_review_id = get_pull_info.collect{|review| review['number']}.sort.last.to_i
+    last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{github_login}' @ '#{source_repo}/#{source_branch}'"
     # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
     body = "You are requested to review the following changes:"
@@ -131,8 +129,8 @@ class GitReview
     # Switch back to target_branch and check for success.
     git "co #{target_branch}"
     update
-    potential_new_review = get_pull_info.find{ |review| review['title'] == title}
-    puts 'Review request successfully created.' if potential_new_review['number'] > last_review_id
+    potential_new_request = @pending_requests.find{ |req| req['title'] == title }
+    puts 'Successfully created new request.' if potential_new_request['number'] > last_request_id
   end
 
   # Start a console session (used for debugging).
@@ -164,25 +162,44 @@ class GitReview
     end
   end
 
-  # Get latest changes from GitHub.
-  def update
-    cache_pull_info
-    fetch_stale_forks
-  end
-
-  # Check existence of specified review and assign @review.
-  def review_exists?(review_id = nil)
-    # NOTE: If review_id is not set explicitly we might need to update to get the
+  # Check existence of specified request and assign @pending_request.
+  def request_exists?(request_id = nil)
+    # NOTE: If request_id is not set explicitly we might need to update to get the
     # latest changes from GitHub, as this is called from within another method.
-    update if review_id.nil?
-    review_id ||= @args.shift.to_i
-    if review_id == 0
+    update if request_id.nil?
+    request_id ||= @args.shift.to_i
+    if request_id == 0
       puts "Please specify a valid ID."
       return false
     end
-    @review = get_pull_info.find{ |review| review['number'] == review_id}
-    puts "Review '#{review_id}' does not exist." unless @review
-    not @review.nil?
+    @pending_request = @pending_requests.find{ |req| req['number'] == request_id }
+    puts "Request '#{request_id}' does not exist." unless @pending_request
+    not @pending_request.nil?
+  end
+
+  # Get latest changes from GitHub.
+  def update
+    @pending_requests = Octokit.pull_requests(source_repo)
+    repos = {}
+    @pending_requests.each do |pull|
+      next if pull['head']['repository'].nil? # Fork has been deleted
+      o = pull['head']['repository']['owner']
+      r = pull['head']['repository']['name']
+      s = pull['head']['sha']
+      if !has_sha(s)
+        repo = "#{o}/#{r}"
+        repos[repo] = true
+      end
+    end
+    if github_credentials_provided?
+      endpoint = "git@github.com:"
+    else
+      endpoint = github_endpoint + "/"
+    end
+    repos.each do |repo, bool|
+      puts "fetching #{repo}"
+      git("fetch #{endpoint}#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
+    end
   end
 
   # System call to 'git'.
@@ -217,30 +234,6 @@ class GitReview
   def target_branch
     # TODO: Enable possibility to manually override this and set arbitrary branches.
     'master'
-  end
-
-  def fetch_stale_forks
-    pulls = get_pull_info
-    repos = {}
-    pulls.each do |pull|
-      next if pull['head']['repository'].nil? # Fork has been deleted
-      o = pull['head']['repository']['owner']
-      r = pull['head']['repository']['name']
-      s = pull['head']['sha']
-      if !has_sha(s)
-        repo = "#{o}/#{r}"
-        repos[repo] = true
-      end
-    end
-    if github_credentials_provided?
-      endpoint = "git@github.com:"
-    else
-      endpoint = github_endpoint + "/"
-    end
-    repos.each do |repo, bool|
-      puts "fetching #{repo}"
-      git("fetch #{endpoint}#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
-    end
   end
 
   def has_sha(sha)
@@ -287,25 +280,6 @@ class GitReview
       return false
     end
     true
-  end
-
-  def get_pull_info
-    get_data(REVIEW_CACHE_FILE)['review']
-  end
-
-  def get_data(file)
-    JSON.parse(File.read(file))
-  end
-
-  def cache_pull_info
-    response = Octokit.pull_requests(source_repo)
-    save_data({'review' => response}, REVIEW_CACHE_FILE)
-  end
-
-  def save_data(data, file)
-    File.open(file, "w+") do |f|
-      f.puts data.to_json
-    end
   end
 
   def github_insteadof_matching(c, u)

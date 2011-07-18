@@ -2,7 +2,7 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name     = "git-review"
-  s.version  = "0.5.1"
+  s.version  = "0.6"
   s.date     = Time.now.strftime('%d-%b-%y')
   s.summary  = "facilitates GitHub code reviews"
   s.homepage = "http://github.com/b4mboo/git-review"
@@ -16,7 +16,6 @@ Gem::Specification.new do |s|
   s.executables = %w( git-review )
   s.description = "Manage review workflow for projects hosted on GitHub (using pull requests)."
 
-  s.add_runtime_dependency 'json'
   s.add_runtime_dependency 'launchy'
   s.add_runtime_dependency 'octokit', "= 0.5.1"
 end

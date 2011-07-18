@@ -4,13 +4,13 @@ git-review
 Manage review workflow for projects hosted on GitHub (using pull requests).
 
     $ git review list
-    Open requests for 'b4mboo/git-review/master'
+    Pending requests for 'b4mboo/git-review/master'
     ID     Date       Comments   Title
     42     14-Jul-11  0          [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
     23     13-Jul-11  8          [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
 
     $ git review list --reverse
-    Open requests for 'b4mboo/git-review/master'
+    Pending requests for 'b4mboo/git-review/master'
     ID     Date       Comments   Title
     23     13-Jul-11  8          [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
     42     14-Jul-11  0          [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
