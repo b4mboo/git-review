@@ -24,47 +24,47 @@ class GitReview
 
   # List all pending requests.
   def list
-    if @pending_requests.size == 0
-      puts "No pending requests for '#{source_repo}/#{source_branch}'"
+    @pending_requests.reverse! if @args.shift == '--reverse'
+    output = @pending_requests.collect do |pending_request|
+      # Find only pending (= unmerged) requests and output summary. GitHub might
+      # still think of them as pending, as it doesn't know about local changes.
+      next if merged?(pending_request['head']['sha'])
+      line = format_text(pending_request['number'], 8)
+      date_string = Date.parse(pending_request['updated_at']).strftime('%d-%b-%y')
+      line += format_text(date_string, 11)
+      line += format_text(pending_request['comments'], 10)
+      line += format_text(pending_request['title'], 91)
+      line
+    end
+    if output.compact.empty?
+      puts "No pending requests for '#{source}'"
       return
     end
-    puts "Pending requests for '#{source_repo}/#{source_branch}'"
-    puts 'ID     Date       Comments   Title'
-    @pending_requests.reverse! if @args.shift == '--reverse'
-    @pending_requests.each do |pull|
-      next unless not_merged?(pull['head']['sha'])
-      line = []
-      line << format_text(pull['number'], 6)
-      line << format_text(Date.parse(pull['created_at']).strftime('%d-%b-%y'), 10)
-      line << format_text(pull['comments'], 10)
-      line << format_text(pull['title'], 94)
-      puts line.join ' '
-    end
+    puts "Pending requests for '#{source}'"
+    puts 'ID      Date       Comments  Title'
+    puts output.compact
   end
 
   # Show details of a single request.
   def show
     return unless request_exists?
-    option = @args.shift
+    option = @args.shift == '--full' ? '' : '--stat '
+    sha = @pending_request['head']['sha']
     puts "Number   : #{@pending_request['number']}"
     puts "Label    : #{@pending_request['head']['label']}"
     puts "Created  : #{@pending_request['created_at']}"
     puts "Votes    : #{@pending_request['votes']}"
     puts "Comments : #{@pending_request['comments']}"
-    puts
+    puts ''
     puts "Title    : #{@pending_request['title']}"
     puts "Body     :"
-    puts
+    puts ''
     puts @pending_request['body']
-    puts
+    puts ''
     puts '------------'
-    puts
-    if option == '--full'
-      exec "git diff --color=always HEAD...#{@pending_request['head']['sha']}"
-    else
-      puts "cmd: git diff HEAD...#{@pending_request['head']['sha']}"
-      puts git("diff --stat --color=always HEAD...#{@pending_request['head']['sha']}")
-    end
+    puts ''
+    puts "cmd: git diff #{option}HEAD...#{sha}"
+    puts git("diff --color=always #{option}HEAD...#{sha}")
   end
 
   # Open a browser window and review a specified request.
@@ -74,37 +74,29 @@ class GitReview
 
   # Checkout a specified request's changes to your local repository.
   def checkout
-    return unless request_exists?
-    git "co origin/#{@pending_request['head']['ref']}"
+    git "co origin/#{@pending_request['head']['ref']}" if request_exists?
   end
 
   # Accept a specified request by merging it into master.
   def accept
     return unless request_exists?
     option = @args.shift
-    if @pending_request['head']['repository']
-      o = @pending_request['head']['repository']['owner']
-      r = @pending_request['head']['repository']['name']
-    else # they deleted the source repo
-      o = @pending_request['head']['user']['login']
-      purl = @pending_request['patch_url']
-      puts "Sorry, #{o} deleted the source repository, git-review doesn't support this."
+    unless @pending_request['head']['repository']
+      # Someone deleted the source repo.
+      user = @pending_request['head']['user']['login']
+      url = @pending_request['patch_url']
+      puts "Sorry, #{user} deleted the source repository, git-review doesn't support this."
       puts "You can manually patch your repo by running:"
       puts
-      puts "  curl #{purl} | git am"
+      puts "  curl #{url} | git am"
       puts
       puts "Tell the contributor not to do this."
       return false
     end
-    s = @pending_request['head']['sha']
-    message = "Accepting request ##{@pending_request['number']} from #{o}/#{r}\n\n---\n\n"
-    message += @pending_request['body'].gsub("'", '')
-    if option == '--log'
-      message += "\n\n---\n\nMerge Log:\n"
-      puts cmd = "git merge --no-ff --log -m '#{message}' #{s}"
-    else
-      puts cmd = "git merge --no-ff -m '#{message}' #{s}"
-    end
+    message = "Accepting request and merging into '#{target}':\n\n"
+    message += "#{@pending_request['title']}\n\n"
+    message += "#{@pending_request['body']}\n\n"
+    puts cmd = "git merge --no-ff #{option} -m '#{message}' #{@pending_request['head']['sha']}"
     exec(cmd)
   end
 
@@ -121,7 +113,7 @@ class GitReview
     # TODO: Create and push to a remote branch if necessary.
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
-    title = "[Review] Request from '#{github_login}' @ '#{source_repo}/#{source_branch}'"
+    title = "[Review] Request from '#{github_login}' @ '#{source}'"
     # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
     body = "You are requested to review the following changes:"
     # Create the actual pull request.
@@ -150,12 +142,12 @@ class GitReview
     command = args.shift
     @user, @repo = repo_info
     @args = args
-    configure
+    configure_github_access
     if command && self.respond_to?(command)
       update
       self.send command
     else
-      unless command.blank? or %w(-h --help).include?(command)
+      unless command.nil? or command.empty? or %w(-h --help).include?(command)
         puts "git-review: '#{command}' is not a valid command.\n\n"
       end
       help
@@ -164,9 +156,9 @@ class GitReview
 
   # Check existence of specified request and assign @pending_request.
   def request_exists?(request_id = nil)
-    # NOTE: If request_id is not set explicitly we might need to update to get the
+    # NOTE: If request_id is set explicitly we might need to update to get the
     # latest changes from GitHub, as this is called from within another method.
-    update if request_id.nil?
+    update unless request_id.nil?
     request_id ||= @args.shift.to_i
     if request_id == 0
       puts "Please specify a valid ID."
@@ -180,25 +172,15 @@ class GitReview
   # Get latest changes from GitHub.
   def update
     @pending_requests = Octokit.pull_requests(source_repo)
-    repos = {}
-    @pending_requests.each do |pull|
-      next if pull['head']['repository'].nil? # Fork has been deleted
-      o = pull['head']['repository']['owner']
-      r = pull['head']['repository']['name']
-      s = pull['head']['sha']
-      if !has_sha(s)
-        repo = "#{o}/#{r}"
-        repos[repo] = true
-      end
+    repos = @pending_requests.collect do |req|
+      repo = req['head']['repository']
+      # Check if fork and commits still exist.
+      next if repo.nil? or not has_sha?(req['head']['sha'])
+      "#{repo['owner']}/#{repo['name']}"
     end
-    if github_credentials_provided?
-      endpoint = "git@github.com:"
-    else
-      endpoint = github_endpoint + "/"
-    end
-    repos.each do |repo, bool|
-      puts "fetching #{repo}"
-      git("fetch #{endpoint}#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
+    host = URI.parse(github_endpoint).host
+    repos.uniq.compact.each do |repo|
+      git("fetch git@#{host}:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
   end
 
@@ -209,9 +191,9 @@ class GitReview
     s
   end
 
-  # Display helper to make output more beautiful.
+  # Display helper to make output more configurable.
   def format_text(info, size)
-    info.to_s.gsub("\n", ' ')[0, size].ljust(size)
+    info.to_s.gsub("\n", ' ')[0, size-1].ljust(size)
   end
 
   # Returns a string that specifies the source repo.
@@ -222,6 +204,11 @@ class GitReview
   # Returns a string that specifies the source branch.
   def source_branch
     git('branch', false).match(/\*(.*)/)[0][2..-1]
+  end
+
+  # Returns a string consisting of source repo and branch.
+  def source
+    "#{source_repo}/#{source_branch}"
   end
 
   # Returns a string that specifies the target repo.
@@ -236,88 +223,88 @@ class GitReview
     'master'
   end
 
-  def has_sha(sha)
+  # Returns a string consisting of target repo and branch.
+  def target
+    "#{target_repo}/#{target_branch}"
+  end
+
+  # Returns a boolean stating whether a specified commit exists.
+  # TODO: Check if this is still necessary, since we don't cache anymore.
+  def has_sha?(sha)
     git("show #{sha} 2>&1")
     $?.exitstatus == 0
   end
 
-  def not_merged?(sha)
-    commits = git("rev-list #{sha} ^HEAD 2>&1")
-    commits.split("\n").size > 0
+  # Returns a boolean stating whether a specified commit has already been merged.
+  def merged?(sha)
+    not git("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
   end
 
-  # PRIVATE REPOSITORIES ACCESS
-
-  def configure
-    Octokit.configure do |config|
-      config.login = github_login
-      config.token = github_token
-      config.endpoint = github_endpoint
+  # Checks '~/.gitconfig' for credentials and
+  def configure_github_access
+    if (github_token.empty? or github_login.empty?)
+      puts 'Please update your git config and provide your GitHub user name and token.'
+      puts 'Some commands won\'t work properly without these credentials.'
+    else
+      Octokit.configure do |config|
+        config.login = github_login
+        config.token = github_token
+        config.endpoint = github_endpoint
+      end
     end
   end
 
+  # Get GitHub user name.
   def github_login
     git("config --get-all github.user")
   end
 
+  # Get GitHub token.
   def github_token
     git("config --get-all github.token")
   end
 
+  # Determine GitHub endpoint (defaults to 'https://github.com/').
   def github_endpoint
     host = git("config --get-all github.host")
-    if host.size > 0
-      host
-    else
-      'https://github.com'
-    end
-  end
-
-  # API/DATA HELPER FUNCTIONS #
-
-  def github_credentials_provided?
-    if github_token.empty? && github_login.empty?
-      return false
-    end
-    true
-  end
-
-  def github_insteadof_matching(c, u)
-    first = c.collect {|k,v| [v, /url\.(.*github\.com.*)\.insteadof/.match(k)]}.
-              find {|v,m| u.index(v) and m != nil}
-    if first
-      return first[0], first[1][1]
-    end
-    return nil, nil
-  end
-
-  def github_user_and_proj(u)
-    # Trouble getting optional ".git" at end to work, so put that logic below
-    m = /github\.com.(.*?)\/(.*)/.match(u)
-    if m
-      return m[1], m[2].sub(/\.git\Z/, "")
-    end
-    return nil, nil
+    host.empty? ? 'https://github.com/' : host
   end
 
   def repo_info
-    c = {}
+    # Read config_hash from local git config.
+    config_hash = {}
     config = git('config --list')
     config.split("\n").each do |line|
-      k, v = line.split('=')
-      c[k] = v
+      key, value = line.split('=')
+      config_hash[key] = value
     end
-    u = c['remote.origin.url']
-
-    user, proj = github_user_and_proj(u)
-    if !(user and proj)
-      short, base = github_insteadof_matching(c, u)
+    # Extract user and project name from GitHub URL.
+    url = config_hash['remote.origin.url']
+    user, project = github_user_and_project(url)
+   # If there are no results yet, look for 'insteadof' substitutions in URL and try again.
+    unless (user and project)
+      short, base = github_insteadof_matching(config_hash, url)
       if short and base
-        u = u.sub(short, base)
-        user, proj = github_user_and_proj(u)
+        url = url.sub(short, base)
+        user, project = github_user_and_project(url)
       end
     end
-    [user, proj]
+    [user, project]
+  end
+
+  def github_insteadof_matching(config_hash, url)
+    first = config_hash.collect { |key,value|
+      [value, /url\.(.*github\.com.*)\.insteadof/.match(key)]
+    }.find { |value, match|
+      url.index(value) and match != nil
+    }
+    first ? [first[0], first[1][1]] : [nil, nil]
+  end
+
+  # Extract user and project name from GitHub URL.
+  def github_user_and_project(github_url)
+    matches = /github\.com.(.*?)\/(.*)/.match(github_url)
+    matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
   end
 
 end
