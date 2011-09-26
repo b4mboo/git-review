@@ -174,9 +174,7 @@ class GitReview
     @pending_requests = Octokit.pull_requests(source_repo)
     repos = @pending_requests.collect do |req|
       repo = req['head']['repository']
-      # Check if fork and commits still exist.
-      next if repo.nil? or not has_sha?(req['head']['sha'])
-      "#{repo['owner']}/#{repo['name']}"
+      "#{repo['owner']}/#{repo['name']}" unless repo.nil?
     end
     host = URI.parse(github_endpoint).host
     repos.uniq.compact.each do |repo|
@@ -228,13 +226,6 @@ class GitReview
     "#{target_repo}/#{target_branch}"
   end
 
-  # Returns a boolean stating whether a specified commit exists.
-  # TODO: Check if this is still necessary, since we don't cache anymore.
-  def has_sha?(sha)
-    git("show #{sha} 2>&1")
-    $?.exitstatus == 0
-  end
-
   # Returns a boolean stating whether a specified commit has already been merged.
   def merged?(sha)
     not git("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
@@ -270,6 +261,7 @@ class GitReview
     host.empty? ? 'https://github.com/' : host
   end
 
+  # Returns an array consisting of information on the user and the project.
   def repo_info
     # Read config_hash from local git config.
     config_hash = {}
@@ -281,7 +273,7 @@ class GitReview
     # Extract user and project name from GitHub URL.
     url = config_hash['remote.origin.url']
     user, project = github_user_and_project(url)
-   # If there are no results yet, look for 'insteadof' substitutions in URL and try again.
+    # If there are no results yet, look for 'insteadof' substitutions in URL and try again.
     unless (user and project)
       short, base = github_insteadof_matching(config_hash, url)
       if short and base
@@ -292,6 +284,7 @@ class GitReview
     [user, project]
   end
 
+  # Looks for 'insteadof' substitutions in URL.
   def github_insteadof_matching(config_hash, url)
     first = config_hash.collect { |key,value|
       [value, /url\.(.*github\.com.*)\.insteadof/.match(key)]
