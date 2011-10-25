@@ -41,7 +41,7 @@ class GitReview
       return
     end
     puts "Pending requests for '#{source}'"
-    puts 'ID      Date       Comments  Title'
+    puts 'ID      Updated    Comments  Title'
     puts output.compact
   end
 
