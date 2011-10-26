@@ -11,7 +11,7 @@ class GitReview
   def help
     puts 'Usage: git review <command>'
     puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
-    puts ''
+    puts
     puts 'Available commands:'
     puts '   list [--reverse]          List all pending requests.'
     puts '   show <number> [--full]    Show details of a single request.'
@@ -55,15 +55,14 @@ class GitReview
     puts "Created  : #{@pending_request['created_at']}"
     puts "Votes    : #{@pending_request['votes']}"
     puts "Comments : #{@pending_request['comments']}"
-    puts ''
+    puts
     puts "Title    : #{@pending_request['title']}"
-    puts "Body     :"
-    puts ''
+    puts 'Body     :'
+    puts
     puts @pending_request['body']
-    puts ''
+    puts
     puts '------------'
-    puts ''
-    puts "cmd: git diff #{option}HEAD...#{sha}"
+    puts
     puts git("diff --color=always #{option}HEAD...#{sha}")
   end
 
@@ -74,7 +73,13 @@ class GitReview
 
   # Checkout a specified request's changes to your local repository.
   def checkout
-    git "co origin/#{@pending_request['head']['ref']}" if request_exists?
+    return unless request_exists?
+    puts 'Checking out changes to your local repository.'
+    puts 'To get back to your original state, just run:'
+    puts
+    puts '  git checkout master'
+    puts
+    git "checkout origin/#{@pending_request['head']['ref']}"
   end
 
   # Accept a specified request by merging it into master.
@@ -86,25 +91,28 @@ class GitReview
       user = @pending_request['head']['user']['login']
       url = @pending_request['patch_url']
       puts "Sorry, #{user} deleted the source repository, git-review doesn't support this."
-      puts "You can manually patch your repo by running:"
+      puts 'You can manually patch your repo by running:'
       puts
       puts "  curl #{url} | git am"
       puts
-      puts "Tell the contributor not to do this."
+      puts 'Tell the contributor not to do this.'
       return false
     end
     message = "Accepting request and merging into '#{target}':\n\n"
     message += "#{@pending_request['title']}\n\n"
     message += "#{@pending_request['body']}\n\n"
-    puts cmd = "git merge --no-ff #{option} -m '#{message}' #{@pending_request['head']['sha']}"
-    exec(cmd)
+    exec_cmd = "merge --no-ff #{option} -m '#{message}' #{@pending_request['head']['sha']}"
+    puts
+    puts "  git #{exec_cmd}"
+    puts
+    git(exec_cmd)
   end
 
   # Close a specified request.
   def close
     return unless request_exists?
     Octokit.post("issues/close/#{source_repo}/#{@pending_request['number']}")
-    puts "Successfully closed request." unless request_exists?(@pending_request['number'])
+    puts 'Successfully closed request.' unless request_exists?(@pending_request['number'])
   end
 
   # Create a new request.
@@ -115,7 +123,7 @@ class GitReview
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{github_login}' @ '#{source}'"
     # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
-    body = "You are requested to review the following changes:"
+    body = 'Please review the following changes:'
     # Create the actual pull request.
     Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
     # Switch back to target_branch and check for success.
@@ -161,7 +169,7 @@ class GitReview
     update unless request_id.nil?
     request_id ||= @args.shift.to_i
     if request_id == 0
-      puts "Please specify a valid ID."
+      puts 'Please specify a valid ID.'
       return false
     end
     @pending_request = @pending_requests.find{ |req| req['number'] == request_id }
@@ -183,7 +191,7 @@ class GitReview
   end
 
   # System call to 'git'.
-  def git(command, chomp=true)
+  def git(command, chomp = true)
     s = `git #{command}`
     s.chomp! if chomp
     s
@@ -247,17 +255,17 @@ class GitReview
 
   # Get GitHub user name.
   def github_login
-    git("config --get-all github.user")
+    git('config --get-all github.user')
   end
 
   # Get GitHub token.
   def github_token
-    git("config --get-all github.token")
+    git('config --get-all github.token')
   end
 
   # Determine GitHub endpoint (defaults to 'https://github.com/').
   def github_endpoint
-    host = git("config --get-all github.host")
+    host = git('config --get-all github.host')
     host.empty? ? 'https://github.com/' : host
   end
 
