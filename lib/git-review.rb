@@ -17,8 +17,8 @@ class GitReview
     puts '   show <number> [--full]    Show details of a single request.'
     puts '   browse <number>           Open a browser window and review a specified request.'
     puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
-    puts '   accept <number>           Accept a specified request by merging it into master.'
-    puts '   decline <number>          Decline and close a specified request.'
+    puts '   merge <number>            Accept a specified request by merging it into master.'
+    puts '   close <number>            Close a specified request.'
     puts '   create                    Create a new request.'
   end
 
@@ -78,7 +78,7 @@ class GitReview
   end
 
   # Accept a specified request by merging it into master.
-  def accept
+  def merge
     return unless request_exists?
     option = @args.shift
     unless @pending_request['head']['repository']
@@ -100,11 +100,11 @@ class GitReview
     exec(cmd)
   end
 
-  # Decline and close a specified request.
-  def decline
+  # Close a specified request.
+  def close
     return unless request_exists?
     Octokit.post("issues/close/#{source_repo}/#{@pending_request['number']}")
-    puts "Successfully declined request." unless request_exists?(@pending_request['number'])
+    puts "Successfully closed request." unless request_exists?(@pending_request['number'])
   end
 
   # Create a new request.
