@@ -1,0 +1,155 @@
+== FAQ / Motivation ==
+<dl>
+  <dt>Why code review?</dt>
+  <dd>It increases code quality as well as team collaboration and communication.</dd>
+
+  <dt>Is it possible to submit a hot fix quickly?</dt>
+  <dd>Yes, it is always possible to directly commit and push to master.</dd>
+
+  <dt>Why use GitHub for core review?</dt>
+  <dd>[[https://github.com/features/projects/codereview]]</dd>
+</dl>
+
+== Working with GitHub ==
+
+=== Without code review ===
+
+Here is an overview of git commands to work on a project without code review.
+```bash
+# checkout the project
+git clone git@github.com:user_name/repository_name.git
+
+# create your local branch to work on.
+git checkout -b new_feature
+
+# iteratively work on the feature, commit small parts
+<change code>
+git add
+git commit
+
+# pull latest changes from master
+git checkout master
+git pull
+git rebase master new_feature
+git checkout master
+
+# merge and push the feature
+git merge new_feature
+git push
+```
+
+=== With code review ===
+
+First you need to install the gem suse-git-pulls from gemcutter.
+```bash
+gem install gemcutter --source http://gemcutter.org
+gem install git-review
+```
+
+Then you need to configure your .gitconfig:
+```bash
+[github]
+  user = your_github_user_name
+  token = your_github_token
+```
+
+==== Branches of the same repository ====
+
+This assumes that all developers have write access to the project repository and therefore it is suitable for smaller projects/teams.
+The features, bugfixes... are implemented in separate branches, the code review is done by pull requests from branches to the master.
+
+```bash
+# checkout the project
+git clone git@github.com:user_name/repository_name.git
+
+# create a new feature branch
+git checkout -b new_feature
+
+# iteratively work on the feature, commit small parts
+<change the code>
+git add
+git commit
+
+# integrate latest changes from the master
+git checkout master
+git pull
+git rebase master new_feature
+
+# push the changes to GitHub
+git push origin new_feature
+
+# initiate code review by sending a pull request
+git review create
+```
+
+Now one of your co-workers should review your code:
+
+```bash
+# get a list of all open pull requests.
+git review list
+
+# review a specific pull request
+git review show ID --full
+
+# to show the pull request in the browser (and be able to add comments)
+git review browse ID
+
+# get a local copy of the code
+git review checkout ID
+
+# decline patches and close request
+git review decline ID
+
+# accept pull request
+git review accept ID
+git push
+```
+
+Once your code has been merged, you can delete obsolete branches:
+```bash
+# delete remote branch
+git push origin :new_feature
+
+# delete local branch
+git branch -D new_feature
+```
+
+==== Different forks of a project ====
+
+This is not yet implemented in git-review, but is a planned feature for future releases of the tool. Until then you'll have to use the UI that GitHub provides (which makes it quite simple to handle).
+
+* To fork the main project repository at GitHub, press the '''Fork''' button at the original project page
+* Checkout the clone locally:
+<pre>
+git clone git@github.com:user/project.git
+</pre>
+* Edit the code, commit locally and push to GitHub.
+''Note: The remote origin is your fork of the original repository, so pushing to origin/master won't affect the original project.''
+* To track the changes in the original project add it as a remote ''upstream'' project:
+```bash
+git remote add upstream git://github.com/''original_user''/''original_project''.git
+git fetch upstream
+git merge upstream/master
+```
+* Once you're done, create a pull request to get your changes into the original project.
+** Press '''Pull Request''' to start the workflow.
+** Describe your changes to a potential reviewer.
+** Think about what you just wrote. Does you're description really help to better understand your code?
+** Once you're sure everything is OK, press '''Send Pull Request'''.
+''Note: If you need to work on another feature before the request is merged, you can always create a new branch for it.''
+
+* The code reviewer will see the pull request in the original project and can start to review your code.
+** read the description and check the diff.
+** If it's OK just press '''Merge pull request''' to accept the patch.
+** If there are problems or conflicts, ask the author to solve them by commenting on the patch (globally or single line).
+
+For more information on forking and submitting pull requests, please refer to the GitHub help:  http://help.github.com/fork-a-repo, http://help.github.com/send-pull-requests/
+
+== TODOs ==
+
+There are still a couple of TODOs on our list. If you want to contribute, feel free to work on one of these. However, it would be nice if you could tell us about it, such that we don't duplicate our work.
+
+* Write tests to cover the existing code.
+* When creating a new request, create and push to a remote branch if necessary.
+* When creating a new request, insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
+* Support creating requests to other repositories and branches (like the original repo, this has been forked from).
