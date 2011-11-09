@@ -175,8 +175,11 @@ class GitReview
       return false
     end
     @pending_request = @pending_requests.find{ |req| req['number'] == request_id }
-    puts "Request '#{request_id}' does not exist." unless @pending_request
-    not @pending_request.nil?
+    if @pending_request.nil?
+      puts "Request '#{request_id}' does not exist."
+      return false
+    end
+    true
   end
 
   # Get latest changes from GitHub.
