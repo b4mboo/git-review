@@ -137,8 +137,9 @@ class GitReview
     command = args.shift
     if command and self.respond_to?(command)
       @user, @repo = repo_info
+      return if @user.nil? or @repo.nil?
       @args = args
-      configure_github_access
+      return unless configure_github_access
       update
       self.send command
     else
@@ -246,16 +247,17 @@ class GitReview
 
   # Checks '~/.gitconfig' for credentials and
   def configure_github_access
-    if (github_token.empty? or github_login.empty?)
+    if github_token.empty? or github_login.empty?
       puts 'Please update your git config and provide your GitHub user name and token.'
       puts 'Some commands won\'t work properly without these credentials.'
-    else
-      Octokit.configure do |config|
-        config.login = github_login
-        config.token = github_token
-        config.endpoint = github_endpoint
-      end
+      return false
     end
+    Octokit.configure do |config|
+      config.login = github_login
+      config.token = github_token
+      config.endpoint = github_endpoint
+    end
+    true
   end
 
   # Get GitHub user name.
@@ -285,6 +287,10 @@ class GitReview
     end
     # Extract user and project name from GitHub URL.
     url = config_hash['remote.origin.url']
+    if url.nil?
+      puts "Error: Not a git repository."
+      return [nil, nil]
+    end
     user, project = github_user_and_project(url)
     # If there are no results yet, look for 'insteadof' substitutions in URL and try again.
     unless (user and project)
