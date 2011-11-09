@@ -106,7 +106,7 @@ class GitReview
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
     # Push latest commits to the remote branch (create it if necessary).
-    git "push origin #{source_branch}"
+    git "push origin review_#{Time.now.strftime("%y%m%d")}_#{source_branch}"
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{github_login}' @ '#{source}'"
