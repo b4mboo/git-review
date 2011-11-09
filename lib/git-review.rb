@@ -7,21 +7,6 @@ class GitReview
 
   ## COMMANDS ##
 
-  # Default command to show a quick reference of available commands.
-  def help
-    puts 'Usage: git review <command>'
-    puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
-    puts
-    puts 'Available commands:'
-    puts '   list [--reverse]          List all pending requests.'
-    puts '   show <number> [--full]    Show details of a single request.'
-    puts '   browse <number>           Open a browser window and review a specified request.'
-    puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
-    puts '   merge <number>            Accept a specified request by merging it into master.'
-    puts '   close <number>            Close a specified request.'
-    puts '   create                    Create a new request.'
-  end
-
   # List all pending requests.
   def list
     @pending_requests.reverse! if @args.shift == '--reverse'
@@ -150,18 +135,33 @@ class GitReview
   # Setup variables and call actual commands.
   def initialize(args)
     command = args.shift
-    @user, @repo = repo_info
-    @args = args
-    configure_github_access
-    if command && self.respond_to?(command)
+    if command and self.respond_to?(command)
+      @user, @repo = repo_info
+      @args = args
+      configure_github_access
       update
       self.send command
     else
-      unless command.nil? or command.empty? or %w(-h --help).include?(command)
+      unless command.nil? or command.empty? or %w(help -h --help).include?(command)
         puts "git-review: '#{command}' is not a valid command.\n\n"
       end
       help
     end
+  end
+
+  # Show a quick reference of available commands.
+  def help
+    puts 'Usage: git review <command>'
+    puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
+    puts
+    puts 'Available commands:'
+    puts '   list [--reverse]          List all pending requests.'
+    puts '   show <number> [--full]    Show details of a single request.'
+    puts '   browse <number>           Open a browser window and review a specified request.'
+    puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
+    puts '   merge <number>            Accept a specified request by merging it into master.'
+    puts '   close <number>            Close a specified request.'
+    puts '   create                    Create a new request.'
   end
 
   # Check existence of specified request and assign @pending_request.
