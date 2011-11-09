@@ -98,11 +98,12 @@ class GitReview
       puts 'Tell the contributor not to do this.'
       return false
     end
-    message = "Accepting request ##{@pending_request['number']} and merging into \"#{target}>\""
+    message = "Accepting request ##{@pending_request['number']} and merging into \"#{target}\""
     exec_cmd = "merge --no-ff #{option} -m '#{message}' #{@pending_request['head']['sha']}"
     puts
     puts 'Request title:'
     puts "  #{@pending_request['title']}"
+    puts
     puts 'Merge command:'
     puts "  git #{exec_cmd}"
     puts
