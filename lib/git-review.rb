@@ -127,7 +127,7 @@ class GitReview
     # Create the actual pull request.
     Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
     # Switch back to target_branch and check for success.
-    git "co #{target_branch}"
+    git "commit #{target_branch}"
     update
     potential_new_request = @pending_requests.find{ |req| req['title'] == title }
     puts 'Successfully created new request.' if potential_new_request['number'] > last_request_id
