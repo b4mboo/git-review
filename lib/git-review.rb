@@ -99,7 +99,7 @@ class GitReview
       return false
     end
     message = "Accept request ##{@pending_request['number']} and merge changes into \"#{target}\""
-    exec_cmd = "merge --no-ff #{option} -m '#{message}' #{@pending_request['head']['sha']}"
+    exec_cmd = "merge #{option} -m '#{message}' #{@pending_request['head']['sha']}"
     puts
     puts 'Request title:'
     puts "  #{@pending_request['title']}"
