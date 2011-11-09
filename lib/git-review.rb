@@ -92,7 +92,7 @@ class GitReview
     puts 'Merge command:'
     puts "  git #{exec_cmd}"
     puts
-    git(exec_cmd)
+    git exec_cmd
   end
 
   # Close a specified request.
@@ -105,7 +105,8 @@ class GitReview
   # Create a new request.
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
-    # TODO: Create and push to a remote branch if necessary.
+    # Push latest commits to the remote branch (create it if necessary).
+    git "push origin #{source_branch}"
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{github_login}' @ '#{source}'"
