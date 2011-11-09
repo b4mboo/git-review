@@ -105,8 +105,7 @@ class GitReview
   # Create a new request.
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
-    # Push latest commits to the remote branch (create it if necessary).
-    git "push origin review_#{Time.now.strftime("%y%m%d")}_#{source_branch}"
+    prepare
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{github_login}' @ '#{source}'"
@@ -195,6 +194,29 @@ class GitReview
     repos.uniq.compact.each do |repo|
       git("fetch git@#{host}:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
+  end
+
+  # Get local and remote branches ready to create a new request.
+  def prepare
+    # People should work on local branches, but especially for single commit changes,
+    # more often than not, they don't. Therefore we create a branch for them,
+    # to be able to use code review the way it is intended.
+    if source_branch == target_branch
+      # Unless a branch name is already provided, ask for one.
+      if (branch_name = @args.shift).nil?
+        puts 'Please provide a name for the branch:'
+        branch_name = gets.chomp.gsub(/\W+/, '_').downcase
+      end
+      # Create the new branch (as a copy of the current one).
+      git "checkout -b --track review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
+      # Go back to master and get rid of pending commits (as these are now on the new branch).
+      local_branch = source_branch
+      git "checkout #{target_branch}"
+      git "reset --hard origin/#{target_branch}"
+      git "checkout #{local_branch}"
+    end
+    # Push latest commits to the remote branch (and by that, create it if necessary).
+    git "push origin"
   end
 
   # System call to 'git'.
