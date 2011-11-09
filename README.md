@@ -62,3 +62,9 @@ You can find your API token on the [account](https://github.com/account) page.
 If you want to use git-review with a private GitHub instance (http://fi.github.com/), set the github.host config value to your internal host.
 
     $ git config --global github.host github.mycompany.com
+
+
+Wiki
+----
+
+For more information visit the [wiki](https://github.com/b4mboo/git-review/wiki).
