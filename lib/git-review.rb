@@ -2,6 +2,8 @@
 require 'octokit'
 # Launchy is used in 'browse' to open a browser.
 require 'launchy'
+# Time is used to parse time strings from git back into Time objects.
+require 'time'
 
 class GitReview
 
@@ -35,18 +37,14 @@ class GitReview
     return unless request_exists?
     option = @args.shift == '--full' ? '' : '--stat '
     sha = @pending_request['head']['sha']
-    puts "Number   : #{@pending_request['number']}"
+    puts "ID       : #{@pending_request['number']}"
     puts "Label    : #{@pending_request['head']['label']}"
-    puts "Created  : #{@pending_request['created_at']}"
-    puts "Votes    : #{@pending_request['votes']}"
+    puts "Updated  : #{Time.parse(@pending_request['updated_at']).strftime('%d-%b-%y')}"
     puts "Comments : #{@pending_request['comments']}"
     puts
-    puts "Title    : #{@pending_request['title']}"
-    puts 'Body     :'
+    puts @pending_request['title']
     puts
     puts @pending_request['body']
-    puts
-    puts '------------'
     puts
     puts git("diff --color=always #{option}HEAD...#{sha}")
   end
