@@ -103,7 +103,7 @@ class GitReview
   # Create a new request.
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
-    # prepare
+    prepare
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
