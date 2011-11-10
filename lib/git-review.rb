@@ -90,7 +90,7 @@ class GitReview
     puts 'Merge command:'
     puts "  git #{exec_cmd}"
     puts
-    git exec_cmd
+    puts git(exec_cmd)
   end
 
   # Close a specified request.
