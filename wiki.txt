@@ -49,7 +49,7 @@ gem install git-review
 Then you need to configure your .gitconfig:
 ```bash
 [github]
-  user = your_github_user_name
+  login = your_github_login
   token = your_github_token
 ```
 
@@ -77,6 +77,26 @@ git rebase master new_feature
 
 # push the changes to GitHub
 git push origin new_feature
+
+# initiate code review by sending a pull request
+git review create
+```
+
+Alternatively, you can also just work on master and let git-review create the necessary branches for you.
+Once you call ```git review create``` all commits that have not yet been pushed to remote will be moved to a new branch.
+The only thing you'll have to do is provide a name for that branch.
+
+```bash
+# checkout the project
+git clone git@github.com:user_name/repository_name.git
+
+# iteratively work on the feature, commit small parts
+<change the code>
+git add
+git commit
+
+# integrate latest changes from the master
+git pull
 
 # initiate code review by sending a pull request
 git review create
