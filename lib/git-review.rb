@@ -208,12 +208,14 @@ class GitReview
         branch_name = gets.chomp.gsub(/\W+/, '_').downcase
       end
       # Create the new branch (as a copy of the current one).
-      git "checkout -b --track review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
-      # Go back to master and get rid of pending commits (as these are now on the new branch).
-      local_branch = source_branch
-      git "checkout #{target_branch}"
-      git "reset --hard origin/#{target_branch}"
-      git "checkout #{local_branch}"
+      local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
+      git "checkout -b #{local_branch}"
+      if source_branch == local_branch
+        # Go back to master and get rid of pending commits (as these are now on the new branch).
+        git "checkout #{target_branch}"
+        git "reset --hard origin/#{target_branch}"
+        git "checkout #{local_branch}"
+      end
     end
     # Push latest commits to the remote branch (and by that, create it if necessary).
     git "push origin"
