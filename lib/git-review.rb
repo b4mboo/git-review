@@ -46,7 +46,7 @@ class GitReview
     puts
     puts @pending_request['body']
     puts
-    puts git("diff --color=always #{option}HEAD...#{sha}")
+    puts git_call("diff --color=always #{option}HEAD...#{sha}")
   end
 
   # Open a browser window and review a specified request.
@@ -62,7 +62,7 @@ class GitReview
     puts
     puts '  git checkout master'
     puts
-    git "checkout origin/#{@pending_request['head']['ref']}"
+    git_call "checkout origin/#{@pending_request['head']['ref']}"
   end
 
   # Accept a specified request by merging it into master.
@@ -90,7 +90,7 @@ class GitReview
     puts 'Merge command:'
     puts "  git #{exec_cmd}"
     puts
-    puts git(exec_cmd)
+    puts git_call(exec_cmd)
   end
 
   # Close a specified request.
@@ -106,13 +106,13 @@ class GitReview
     # prepare
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
-    title = "[Review] Request from '#{github_login}' @ '#{source}'"
+    title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
     # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
     body = 'Please review the following changes:'
     # Create the actual pull request.
     Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
     # Switch back to target_branch and check for success.
-    git "checkout #{target_branch}"
+    git_call "checkout #{target_branch}"
     update
     potential_new_request = @pending_requests.find{ |req| req['title'] == title }
     puts 'Successfully created new request.' if potential_new_request['number'] > last_request_id
@@ -154,13 +154,13 @@ class GitReview
     puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
     puts
     puts 'Available commands:'
-    puts '   list [--reverse]          List all pending requests.'
-    puts '   show <number> [--full]    Show details of a single request.'
-    puts '   browse <number>           Open a browser window and review a specified request.'
-    puts '   checkout <number>         Checkout a specified request\'s changes to your local repository.'
-    puts '   merge <number>            Accept a specified request by merging it into master.'
-    puts '   close <number>            Close a specified request.'
-    puts '   create                    Create a new request.'
+    puts '  list [--reverse]          List all pending requests.'
+    puts '  show <number> [--full]    Show details of a single request.'
+    puts '  browse <number>           Open a browser window and review a specified request.'
+    puts '  checkout <number>         Checkout a specified request\'s changes to your local repository.'
+    puts '  merge <number>            Accept a specified request by merging it into master.'
+    puts '  close <number>            Close a specified request.'
+    puts '  create                    Create a new request.'
   end
 
   # Check existence of specified request and assign @pending_request.
@@ -190,7 +190,7 @@ class GitReview
     end
     host = URI.parse(github_endpoint).host
     repos.uniq.compact.each do |repo|
-      git("fetch git@#{host}:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
+      git_call("fetch git@#{host}:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
   end
 
@@ -207,23 +207,28 @@ class GitReview
       end
       # Create the new branch (as a copy of the current one).
       local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
-      git "checkout -b #{local_branch}"
+      git_call "checkout -b #{local_branch}"
       if source_branch == local_branch
         # Go back to master and get rid of pending commits (as these are now on the new branch).
-        git "checkout #{target_branch}"
-        git "reset --hard origin/#{target_branch}"
-        git "checkout #{local_branch}"
+        git_call "checkout #{target_branch}"
+        git_call "reset --hard origin/#{target_branch}"
+        git_call "checkout #{local_branch}"
       end
     end
     # Push latest commits to the remote branch (and by that, create it if necessary).
-    git "push origin"
+    git_call "push origin"
   end
 
   # System call to 'git'.
-  def git(command, chomp = true)
-    s = `git #{command}`
-    s.chomp! if chomp
-    s
+  def git_call(command, verbose = debug_mode)
+    if verbose
+      puts
+      puts "  git #{command}"
+      puts
+    end
+    output = `git #{command}`
+    puts output if verbose and not output.empty?
+    output
   end
 
   # Display helper to make output more configurable.
@@ -238,7 +243,7 @@ class GitReview
 
   # Returns a string that specifies the source branch.
   def source_branch
-    git('branch', false).match(/\*(.*)/)[0][2..-1]
+    git_call('branch').chomp!.match(/\*(.*)/)[0][2..-1]
   end
 
   # Returns a string consisting of source repo and branch.
@@ -265,51 +270,56 @@ class GitReview
 
   # Returns a boolean stating whether a specified commit has already been merged.
   def merged?(sha)
-    not git("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
+    not git_call("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
   end
 
-  # Checks '~/.gitconfig' for credentials and
+  # Uses Octokit to access GitHub.
   def configure_github_access
-    if github_token.empty? or github_login.empty?
-      puts 'Please update your git config and provide your GitHub user name and token.'
-      puts 'Some commands won\'t work properly without these credentials.'
-      return false
+    if git_config['github.login'] and git_config['github.token']
+      Octokit.configure do |config|
+        config.login = git_config['github.login']
+        config.token = git_config['github.token']
+        config.endpoint = github_endpoint
+      end
+      true
+    else
+      puts 'Please update your git config and provide your GitHub login and token.'
+      puts
+      puts '  git config --global github.login your_github_login_1234567890'
+      puts '  git config --global github.token your_github_token_1234567890'
+      puts
+      false
     end
-    Octokit.configure do |config|
-      config.login = github_login
-      config.token = github_token
-      config.endpoint = github_endpoint
-    end
-    true
-  end
-
-  # Get GitHub user name.
-  def github_login
-    git('config --get-all github.user')
-  end
-
-  # Get GitHub token.
-  def github_token
-    git('config --get-all github.token')
   end
 
   # Determine GitHub endpoint (defaults to 'https://github.com/').
   def github_endpoint
-    host = git('config --get-all github.host')
-    host.empty? ? 'https://github.com/' : host
+    git_config['github.endpoint'] || 'https://github.com/'
+  end
+
+  def debug_mode
+    git_config['review.mode'] == 'debug'
+  end
+
+  # Collect git config information in a Hash for easy access.
+  # Checks '~/.gitconfig' for credentials.
+  def git_config
+    unless @git_config
+      # Read @git_config from local git config.
+      @git_config = {}
+      config_list = git_call('config --list', false)
+      config_list.split("\n").each do |line|
+        key, value = line.split('=')
+        @git_config[key] = value
+      end
+    end
+    @git_config
   end
 
   # Returns an array consisting of information on the user and the project.
   def repo_info
-    # Read config_hash from local git config.
-    config_hash = {}
-    config = git('config --list')
-    config.split("\n").each do |line|
-      key, value = line.split('=')
-      config_hash[key] = value
-    end
     # Extract user and project name from GitHub URL.
-    url = config_hash['remote.origin.url']
+    url = git_config['remote.origin.url']
     if url.nil?
       puts "Error: Not a git repository."
       return [nil, nil]
