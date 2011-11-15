@@ -214,9 +214,11 @@ class GitReview
         git_call "reset --hard origin/#{target_branch}"
         git_call "checkout #{local_branch}"
       end
+    else
+      local_branch = source_branch
     end
     # Push latest commits to the remote branch (and by that, create it if necessary).
-    git_call "push origin"
+    git_call "push --set-upstream origin #{local_branch}"
   end
 
   # System call to 'git'.
