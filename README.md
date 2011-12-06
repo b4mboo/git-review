@@ -5,13 +5,13 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
 
     $ git review list
     Pending requests for 'b4mboo/git-review/master'
-    ID      Date       Comments  Title
+    ID      Updated    Comments  Title
     42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
     23      13-Jul-11  8         [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
 
     $ git review list --reverse
     Pending requests for 'b4mboo/git-review/master'
-    ID      Date       Comments  Title
+    ID      Updated    Comments  Title
     23      13-Jul-11  8         [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
     42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
 
@@ -29,11 +29,11 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review checkout 42
     > checkout changes from request #42 to your local repository
 
-    $ git review accept 42
+    $ git review merge 42
     > accept request #42 by merging it
 
-    $ git review decline 42
-    > decline request #42 and close it
+    $ git review close 42
+    > close request #42
 
     $ git review create
     > create a new request

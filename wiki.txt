@@ -118,10 +118,10 @@ git review browse ID
 git review checkout ID
 
 # decline patches and close request
-git review decline ID
+git review close ID
 
 # accept pull request
-git review accept ID
+git review merge ID
 git push
 ```
 
