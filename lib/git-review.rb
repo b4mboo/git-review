@@ -197,7 +197,8 @@ class GitReview
   def request_exists?(request_id = nil)
     # NOTE: If request_id is set explicitly we might need to update to get the
     # latest changes from GitHub, as this is called from within another method.
-    update unless request_id.nil?
+    automated = !request_id.nil?
+    update if automated
     request_id ||= @args.shift.to_i
     if request_id == 0
       puts 'Please specify a valid ID.'
@@ -205,7 +206,8 @@ class GitReview
     end
     @pending_request = @pending_requests.find{ |req| req['number'] == request_id }
     if @pending_request.nil?
-      puts "Request '#{request_id}' does not exist."
+      # No output for automated checks.
+      puts "Request '#{request_id}' does not exist." unless automated
       return false
     end
     true
