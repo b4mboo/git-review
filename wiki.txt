@@ -63,7 +63,7 @@ The features, bugfixes... are implemented in separate branches, the code review 
 git clone git@github.com:user_name/repository_name.git
 
 # create a new feature branch
-git checkout -b new_feature
+git review prepare
 
 # iteratively work on the feature, commit small parts
 <change the code>

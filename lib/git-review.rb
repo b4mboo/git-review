@@ -100,10 +100,39 @@ class GitReview
     puts 'Successfully closed request.' unless request_exists?(@pending_request['number'])
   end
 
+  # Prepare local repository to create a new request.
+  # Sets @local_branch.
+  def prepare
+    # People should work on local branches, but especially for single commit changes,
+    # more often than not, they don't. Therefore we create a branch for them,
+    # to be able to use code review the way it is intended.
+    if source_branch == target_branch
+      # Unless a branch name is already provided, ask for one.
+      if (branch_name = @args.shift).nil?
+        puts 'Please provide a name for the branch:'
+        branch_name = gets.chomp.gsub(/\W+/, '_').downcase
+      end
+      # Create the new branch (as a copy of the current one).
+      @local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
+      git_call "checkout -b #{@local_branch}"
+      if source_branch == @local_branch
+        # Go back to master and get rid of pending commits (as these are now on the new branch).
+        git_call "checkout #{target_branch}"
+        git_call "reset --hard origin/#{target_branch}"
+        git_call "checkout #{@local_branch}"
+      end
+    else
+      @local_branch = source_branch
+    end
+  end
+
   # Create a new request.
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
+    # Prepare @local_branch.
     prepare
+    # Push latest commits to the remote branch (and by that, create it if necessary).
+    git_call "push --set-upstream origin #{@local_branch}"
     # Gather information.
     last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
     title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
@@ -160,6 +189,7 @@ class GitReview
     puts '  checkout <number>         Checkout a specified request\'s changes to your local repository.'
     puts '  merge <number>            Accept a specified request by merging it into master.'
     puts '  close <number>            Close a specified request.'
+    puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
   end
 
@@ -192,33 +222,6 @@ class GitReview
     repos.uniq.compact.each do |repo|
       git_call("fetch git@#{host}:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
-  end
-
-  # Get local and remote branches ready to create a new request.
-  def prepare
-    # People should work on local branches, but especially for single commit changes,
-    # more often than not, they don't. Therefore we create a branch for them,
-    # to be able to use code review the way it is intended.
-    if source_branch == target_branch
-      # Unless a branch name is already provided, ask for one.
-      if (branch_name = @args.shift).nil?
-        puts 'Please provide a name for the branch:'
-        branch_name = gets.chomp.gsub(/\W+/, '_').downcase
-      end
-      # Create the new branch (as a copy of the current one).
-      local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
-      git_call "checkout -b #{local_branch}"
-      if source_branch == local_branch
-        # Go back to master and get rid of pending commits (as these are now on the new branch).
-        git_call "checkout #{target_branch}"
-        git_call "reset --hard origin/#{target_branch}"
-        git_call "checkout #{local_branch}"
-      end
-    else
-      local_branch = source_branch
-    end
-    # Push latest commits to the remote branch (and by that, create it if necessary).
-    git_call "push --set-upstream origin #{local_branch}"
   end
 
   # System call to 'git'.

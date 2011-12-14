@@ -35,6 +35,9 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review close 42
     > close request #42
 
+    $ git review prepare
+    > create a new local branch to base a new request upon
+
     $ git review create
     > create a new request
 
