@@ -49,6 +49,21 @@ class GitReview
     puts git_call("diff --color=always #{option}HEAD...#{sha}")
   end
 
+  # Show a dissusion of a single request.
+  def show_discussion
+    return unless request_exists?
+    request_id = @pending_request['number']
+    request = Octokit.pull_request(source_repo, request_id)
+    discussion = request['discussion'][1..-1]
+    discussion.each do |comment| 
+        puts "-----------"
+        puts "Author : #{comment["user"]["login"]}" 
+        puts "Body : #{comment["body"]}" 
+    end
+  end
+    
+    
+
   # Open a browser window and review a specified request.
   def browse
     Launchy.open(@pending_request['html_url']) if request_exists?
@@ -192,6 +207,7 @@ class GitReview
     puts '  close <ID>                Close a specified request.'
     puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
+    puts '  show_discussion <number>  Shows a discussion.'
   end
 
   # Check existence of specified request and assign @pending_request.
