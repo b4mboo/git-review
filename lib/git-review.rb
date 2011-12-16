@@ -17,7 +17,7 @@ class GitReview
       # still think of them as pending, as it doesn't know about local changes.
       next if merged?(pending_request['head']['sha'])
       line = format_text(pending_request['number'], 8)
-      date_string = Date.parse(pending_request['updated_at']).strftime('%d-%b-%y')
+      date_string = format_time(pending_request['updated_at'])
       line += format_text(date_string, 11)
       line += format_text(pending_request['comments'], 10)
       line += format_text(pending_request['title'], 91)
@@ -32,14 +32,14 @@ class GitReview
     puts output.compact
   end
 
-  # Show details of a single request.
+  # Show details for a single request.
   def show
     return unless request_exists?
     option = @args.shift == '--full' ? '' : '--stat '
     sha = @pending_request['head']['sha']
     puts "ID       : #{@pending_request['number']}"
     puts "Label    : #{@pending_request['head']['label']}"
-    puts "Updated  : #{Time.parse(@pending_request['updated_at']).strftime('%d-%b-%y')}"
+    puts "Updated  : #{format_time(@pending_request['updated_at'])}"
     puts "Comments : #{@pending_request['comments']}"
     puts
     puts @pending_request['title']
@@ -49,16 +49,36 @@ class GitReview
     puts git_call("diff --color=always #{option}HEAD...#{sha}")
   end
 
-  # Show a dissusion of a single request.
-  def show_discussion
+  # Show current discussion for a single request.
+  def discussion
     return unless request_exists?
     request = Octokit.pull_request(source_repo, @pending_request['number'])
     discussion = request['discussion'][1..-1]
-    discussion.each do |comment|
-      puts "-----------"
-      puts "Author : #{comment["user"]["login"]}"
-      puts "Body : #{comment["body"]}"
+    output = []
+    discussion.each do |entry|
+      # For now we only show comments and commits.
+      if ["IssueComment", "Commit"].include?(entry['type'])
+        output << "-----------" unless output.empty?
+        output << "Author    : #{entry["user"]["login"]}"
+        case entry['type']
+          # Comments:
+          when "IssueComment"
+            output << "Created   : #{format_time(entry['created_at'])}"
+            unless entry['created_at'] == entry['updated_at']
+              output << "Updated   : #{format_time(entry['updated_at'])}"
+            end
+            output << "Comment   : #{entry["body"]}"
+          # Commits:
+          when "Commit"
+            output << "Created   : #{format_time(entry['authored_date'])}"
+            unless entry['authored_date'] == entry['committed_date']
+              output << "Committed : #{format_time(entry['committed_date'])}"
+            end
+            output << "Message   : #{entry["message"]}"
+        end
+      end
     end
+    puts output unless output.empty?
   end
 
   # Open a browser window and review a specified request.
@@ -255,6 +275,11 @@ class GitReview
   # Display helper to make output more configurable.
   def format_text(info, size)
     info.to_s.gsub("\n", ' ')[0, size-1].ljust(size)
+  end
+
+  # Display helper to unify time output.
+  def format_time(time_string)
+    Time.parse(time_string).strftime('%d-%b-%y')
   end
 
   # Returns a string that specifies the source repo.
