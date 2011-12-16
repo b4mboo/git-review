@@ -216,14 +216,14 @@ class GitReview
     puts
     puts 'Available commands:'
     puts '  list [--reverse]          List all pending requests.'
-    puts '  show <ID> [--full]        Show details of a single request.'
+    puts '  show <ID> [--full]        Show details for a single request.'
+    puts '  discussion <number>       Shows ongoing discussions for a single request.'
     puts '  browse <ID>               Open a browser window and review a specified request.'
     puts '  checkout <ID> [--branch]  Checkout a specified request\'s changes to your local repository.'
     puts '  merge <ID>                Accept a specified request by merging it into master.'
     puts '  close <ID>                Close a specified request.'
     puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
-    puts '  show_discussion <number>  Shows a discussion.'
   end
 
   # Check existence of specified request and assign @pending_request.
