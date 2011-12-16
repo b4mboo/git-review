@@ -53,9 +53,9 @@ class GitReview
   def discussion
     return unless request_exists?
     request = Octokit.pull_request(source_repo, @pending_request['number'])
-    discussion = request['discussion'][1..-1]
-    result = discussion.collect do |entry|
+    result = request['discussion'].collect do |entry|
       # For now we only show comments and commits.
+      # TODO: Support "PullRequestReviewComment" (= inline code comments), too.
       if ["IssueComment", "Commit"].include?(entry['type'])
         output = "'#{entry["user"]["login"]}' "
         case entry['type']
