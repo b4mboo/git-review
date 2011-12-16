@@ -54,31 +54,30 @@ class GitReview
     return unless request_exists?
     request = Octokit.pull_request(source_repo, @pending_request['number'])
     discussion = request['discussion'][1..-1]
-    output = []
-    discussion.each do |entry|
+    result = discussion.collect do |entry|
       # For now we only show comments and commits.
       if ["IssueComment", "Commit"].include?(entry['type'])
-        output << "-----------" unless output.empty?
-        output << "Author    : #{entry["user"]["login"]}"
+        output = "'#{entry["user"]["login"]}' "
         case entry['type']
           # Comments:
           when "IssueComment"
-            output << "Created   : #{format_time(entry['created_at'])}"
+            output << "added a comment on #{format_time(entry['created_at'])}"
             unless entry['created_at'] == entry['updated_at']
-              output << "Updated   : #{format_time(entry['updated_at'])}"
+              output << " (updated on #{format_time(entry['updated_at'])})"
             end
-            output << "Comment   : #{entry["body"]}"
+            output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["body"]}"
           # Commits:
           when "Commit"
-            output << "Created   : #{format_time(entry['authored_date'])}"
-            unless entry['authored_date'] == entry['committed_date']
-              output << "Committed : #{format_time(entry['committed_date'])}"
-            end
-            output << "Message   : #{entry["message"]}"
+           output << "authored a commit on #{format_time(entry['authored_date'])}"
+           unless entry['authored_date'] == entry['committed_date']
+             output << " (committed on #{format_time(entry['committed_date'])})"
+           end
+           output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
         end
+        output << "\n\n"
       end
     end
-    puts output unless output.empty?
+    puts result.compact unless result.empty?
   end
 
   # Open a browser window and review a specified request.
