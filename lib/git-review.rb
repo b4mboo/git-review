@@ -182,6 +182,7 @@ class GitReview
   # Start a console session (used for debugging).
   def console
     puts 'Entering debug console.'
+    request_exists?
     require 'ruby-debug'
     Debugger.start
     debugger
