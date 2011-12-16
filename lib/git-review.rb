@@ -52,8 +52,7 @@ class GitReview
   # Show a dissusion of a single request.
   def show_discussion
     return unless request_exists?
-    request_id = @pending_request['number']
-    request = Octokit.pull_request(source_repo, request_id)
+    request = Octokit.pull_request(source_repo, @pending_request['number'])
     discussion = request['discussion'][1..-1]
     discussion.each do |comment|
       puts "-----------"
@@ -61,7 +60,7 @@ class GitReview
       puts "Body : #{comment["body"]}"
     end
   end
-    
+
   # Open a browser window and review a specified request.
   def browse
     Launchy.open(@pending_request['html_url']) if request_exists?
