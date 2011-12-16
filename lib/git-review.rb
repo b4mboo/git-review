@@ -18,9 +18,9 @@ class GitReview
       next if merged?(pending_request['head']['sha'])
       line = format_text(pending_request['number'], 8)
       date_string = format_time(pending_request['updated_at'])
-      line += format_text(date_string, 11)
-      line += format_text(pending_request['comments'], 10)
-      line += format_text(pending_request['title'], 91)
+      line << format_text(date_string, 11)
+      line << format_text(pending_request['comments'], 10)
+      line << format_text(pending_request['title'], 91)
       line
     end
     if output.compact.empty?
