@@ -57,12 +57,13 @@ class GitReview
   # Checkout a specified request's changes to your local repository.
   def checkout
     return unless request_exists?
+    create_local_branch = @args.shift == '--branch' ? '' : 'origin/'
     puts 'Checking out changes to your local repository.'
     puts 'To get back to your original state, just run:'
     puts
     puts '  git checkout master'
     puts
-    git_call "checkout origin/#{@pending_request['head']['ref']}"
+    git_call "checkout #{create_local_branch}#{@pending_request['head']['ref']}"
   end
 
   # Accept a specified request by merging it into master.
@@ -184,11 +185,11 @@ class GitReview
     puts
     puts 'Available commands:'
     puts '  list [--reverse]          List all pending requests.'
-    puts '  show <number> [--full]    Show details of a single request.'
-    puts '  browse <number>           Open a browser window and review a specified request.'
-    puts '  checkout <number>         Checkout a specified request\'s changes to your local repository.'
-    puts '  merge <number>            Accept a specified request by merging it into master.'
-    puts '  close <number>            Close a specified request.'
+    puts '  show <ID> [--full]        Show details of a single request.'
+    puts '  browse <ID>               Open a browser window and review a specified request.'
+    puts '  checkout <ID> [--branch]  Checkout a specified request\'s changes to your local repository.'
+    puts '  merge <ID>                Accept a specified request by merging it into master.'
+    puts '  close <ID>                Close a specified request.'
     puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
   end
