@@ -55,15 +55,13 @@ class GitReview
     request_id = @pending_request['number']
     request = Octokit.pull_request(source_repo, request_id)
     discussion = request['discussion'][1..-1]
-    discussion.each do |comment| 
-        puts "-----------"
-        puts "Author : #{comment["user"]["login"]}" 
-        puts "Body : #{comment["body"]}" 
+    discussion.each do |comment|
+      puts "-----------"
+      puts "Author : #{comment["user"]["login"]}"
+      puts "Body : #{comment["body"]}"
     end
   end
     
-    
-
   # Open a browser window and review a specified request.
   def browse
     Launchy.open(@pending_request['html_url']) if request_exists?
