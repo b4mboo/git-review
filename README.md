@@ -18,16 +18,21 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review show 42
     > [summary]
     > [diffstat]
+    > [discussion]
 
     $ git review show 42 --full
     > [summary]
     > [full diff]
+    > [discussion]
 
     $ git review browse 42
     > go to web page
 
     $ git review checkout 42
-    > checkout changes from request #42 to your local repository
+    > checkout changes from request #42 to your local repository in a headless state
+
+    $ git review checkout 42 --branch
+    > checkout remote branch from request #42 and create a local branch from it
 
     $ git review merge 42
     > accept request #42 by merging it
@@ -39,7 +44,7 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     > create a new local branch to base a new request upon
 
     $ git review create
-    > create a new request
+    > create a new request by creating all necessary local and remote branches
 
 
 Installation

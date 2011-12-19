@@ -37,47 +37,20 @@ class GitReview
     return unless request_exists?
     option = @args.shift == '--full' ? '' : '--stat '
     sha = @pending_request['head']['sha']
-    puts "ID       : #{@pending_request['number']}"
-    puts "Label    : #{@pending_request['head']['label']}"
-    puts "Updated  : #{format_time(@pending_request['updated_at'])}"
-    puts "Comments : #{@pending_request['comments']}"
+    puts "ID        : #{@pending_request['number']}"
+    puts "Label     : #{@pending_request['head']['label']}"
+    puts "Updated   : #{format_time(@pending_request['updated_at'])}"
+    puts "Comments  : #{@pending_request['comments']}"
     puts
     puts @pending_request['title']
     puts
     puts @pending_request['body']
     puts
     puts git_call("diff --color=always #{option}HEAD...#{sha}")
-  end
-
-  # Show current discussion for a single request.
-  def discussion
-    return unless request_exists?
-    request = Octokit.pull_request(source_repo, @pending_request['number'])
-    result = request['discussion'].collect do |entry|
-      # For now we only show comments and commits.
-      # TODO: Support "PullRequestReviewComment" (= inline code comments), too.
-      if ["IssueComment", "Commit"].include?(entry['type'])
-        output = "'#{entry["user"]["login"]}' "
-        case entry['type']
-          # Comments:
-          when "IssueComment"
-            output << "added a comment on #{format_time(entry['created_at'])}"
-            unless entry['created_at'] == entry['updated_at']
-              output << " (updated on #{format_time(entry['updated_at'])})"
-            end
-            output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["body"]}"
-          # Commits:
-          when "Commit"
-           output << "authored a commit on #{format_time(entry['authored_date'])}"
-           unless entry['authored_date'] == entry['committed_date']
-             output << " (committed on #{format_time(entry['committed_date'])})"
-           end
-           output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
-        end
-        output << "\n\n"
-      end
-    end
-    puts result.compact unless result.empty?
+    puts
+    puts "Progress  :"
+    puts
+    discussion
   end
 
   # Open a browser window and review a specified request.
@@ -218,7 +191,6 @@ class GitReview
     puts 'Available commands:'
     puts '  list [--reverse]          List all pending requests.'
     puts '  show <ID> [--full]        Show details for a single request.'
-    puts '  discussion <number>       Shows ongoing discussions for a single request.'
     puts '  browse <ID>               Open a browser window and review a specified request.'
     puts '  checkout <ID> [--branch]  Checkout a specified request\'s changes to your local repository.'
     puts '  merge <ID>                Accept a specified request by merging it into master.'
@@ -270,6 +242,36 @@ class GitReview
     output = `git #{command}`
     puts output if verbose and not output.empty?
     output
+  end
+
+  # Show current discussion for @pending_request.
+  def discussion
+    request = Octokit.pull_request(source_repo, @pending_request['number'])
+    result = request['discussion'].collect do |entry|
+      # For now we only show comments and commits.
+      # TODO: Support "PullRequestReviewComment" (= inline code comments), too.
+      if ["IssueComment", "Commit"].include?(entry['type'])
+        output = "'#{entry["user"]["login"]}' "
+        case entry['type']
+          # Comments:
+          when "IssueComment"
+            output << "added a comment on #{format_time(entry['created_at'])}"
+            unless entry['created_at'] == entry['updated_at']
+              output << " (updated on #{format_time(entry['updated_at'])})"
+            end
+            output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["body"]}"
+          # Commits:
+          when "Commit"
+           output << "authored a commit on #{format_time(entry['authored_date'])}"
+           unless entry['authored_date'] == entry['committed_date']
+             output << " (committed on #{format_time(entry['committed_date'])})"
+           end
+           output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
+        end
+        output << "\n\n"
+      end
+    end
+    puts result.compact unless result.empty?
   end
 
   # Display helper to make output more configurable.
