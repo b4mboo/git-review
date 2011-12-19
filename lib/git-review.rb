@@ -248,22 +248,22 @@ class GitReview
   def discussion
     request = Octokit.pull_request(source_repo, @pending_request['number'])
     result = request['discussion'].collect do |entry|
-      output = "'#{entry["user"]["login"]}' "
+      output = "\e[35m#{entry["user"]["login"]}\e[m "
       case entry['type']
         # Comments:
         when "IssueComment", "CommitComment", "PullRequestReviewComment"
           output << "added a comment"
-          output << " to #{entry['commit_id'][0..6]}" if entry['commit_id']
+          output << " to \e[36m#{entry['commit_id'][0..6]}\e[m" if entry['commit_id']
           output <<  " on #{format_time(entry['created_at'])}"
           unless entry['created_at'] == entry['updated_at']
             output << " (updated on #{format_time(entry['updated_at'])})"
           end
           output << ":\n#{''.rjust(output.length + 1, "-")}\n"
-          output << "> #{entry['path']}:#{entry['position']}\n" if entry['path'] and entry['position']
+          output << "> \e[32m#{entry['path']}:#{entry['position']}\e[m\n" if entry['path'] and entry['position']
           output << entry['body']
         # Commits:
         when "Commit"
-         output << "authored commit #{entry['id'][0..6]} on #{format_time(entry['authored_date'])}"
+         output << "authored commit \e[36m#{entry['id'][0..6]}\e[m on #{format_time(entry['authored_date'])}"
          unless entry['authored_date'] == entry['committed_date']
            output << " (committed on #{format_time(entry['committed_date'])})"
          end
