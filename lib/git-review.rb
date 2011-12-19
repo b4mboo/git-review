@@ -248,28 +248,28 @@ class GitReview
   def discussion
     request = Octokit.pull_request(source_repo, @pending_request['number'])
     result = request['discussion'].collect do |entry|
-      # For now we only show comments and commits.
-      # TODO: Support "PullRequestReviewComment" (= inline code comments), too.
-      if ["IssueComment", "Commit"].include?(entry['type'])
-        output = "'#{entry["user"]["login"]}' "
-        case entry['type']
-          # Comments:
-          when "IssueComment"
-            output << "added a comment on #{format_time(entry['created_at'])}"
-            unless entry['created_at'] == entry['updated_at']
-              output << " (updated on #{format_time(entry['updated_at'])})"
-            end
-            output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["body"]}"
-          # Commits:
-          when "Commit"
-           output << "authored a commit on #{format_time(entry['authored_date'])}"
-           unless entry['authored_date'] == entry['committed_date']
-             output << " (committed on #{format_time(entry['committed_date'])})"
-           end
-           output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
-        end
-        output << "\n\n"
+      output = "'#{entry["user"]["login"]}' "
+      case entry['type']
+        # Comments:
+        when "IssueComment", "CommitComment", "PullRequestReviewComment"
+          output << "added a comment"
+          output << " to #{entry['commit_id'][0..6]}" if entry['commit_id']
+          output <<  " on #{format_time(entry['created_at'])}"
+          unless entry['created_at'] == entry['updated_at']
+            output << " (updated on #{format_time(entry['updated_at'])})"
+          end
+          output << ":\n#{''.rjust(output.length + 1, "-")}\n"
+          output << "> #{entry['path']}:#{entry['position']}\n" if entry['path'] and entry['position']
+          output << entry['body']
+        # Commits:
+        when "Commit"
+         output << "authored commit #{entry['id'][0..6]} on #{format_time(entry['authored_date'])}"
+         unless entry['authored_date'] == entry['committed_date']
+           output << " (committed on #{format_time(entry['committed_date'])})"
+         end
+         output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
       end
+      output << "\n\n\n"
     end
     puts result.compact unless result.empty?
   end
