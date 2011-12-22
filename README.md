@@ -63,13 +63,9 @@ Afterwards simply do:
 To be able to use all of git-review's features you have set up your git config for GitHub.
 
     git config --global github.login your_github_login_1234567890
-    git config --global github.token your_github_token_1234567890
+    git config --global github.password your_github_password_1234567890
 
 You can find your API token on the [account](https://github.com/account) page.
-
-If you want to use git-review with a private GitHub instance (http://fi.github.com/), set the github.endpoint config value to your internal host.
-
-    git config --global github.endpoint github.mycompany.com
 
 
 Wiki

@@ -50,7 +50,7 @@ Then you need to configure your .gitconfig:
 ```bash
 [github]
   login = your_github_login
-  token = your_github_token
+  password = your_github_password
 ```
 
 ==== Branches of the same repository ====
