@@ -136,20 +136,26 @@ class GitReview
   def create
     # Prepare @local_branch.
     prepare
-    # Push latest commits to the remote branch (and by that, create it if necessary).
-    git_call "push --set-upstream origin #{@local_branch}"
-    # Gather information.
-    last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
-    title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
-    # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
-    body = 'Please review the following changes:'
-    # Create the actual pull request.
-    Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
-    # Switch back to target_branch and check for success.
-    git_call "checkout #{target_branch}"
-    update
-    potential_new_request = @pending_requests.find{ |req| req['title'] == title }
-    puts 'Successfully created new request.' if potential_new_request['number'] > last_request_id
+    unless git_call("cherry #{target_branch}").empty?
+      # Push latest commits to the remote branch (and by that, create it if necessary).
+      git_call "push --set-upstream origin #{@local_branch}"
+      # Gather information.
+      last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
+      title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
+      # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
+      body = 'Please review the following changes:'
+      # Create the actual pull request.
+      Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
+      # Switch back to target_branch and check for success.
+      git_call "checkout #{target_branch}"
+      update
+      potential_new_request = @pending_requests.find{ |req| req['title'] == title }
+      if potential_new_request and potential_new_request['number'] > last_request_id
+        puts 'Successfully created new request.'
+      end
+    else
+      "Nothing to push to remote yet. Commit something first."
+    end
   end
 
   # Start a console session (used for debugging).
