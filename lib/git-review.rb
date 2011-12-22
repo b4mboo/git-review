@@ -121,10 +121,13 @@ class GitReview
       @local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
       git_call "checkout -b #{@local_branch}"
       if source_branch == @local_branch
+        # Stash any uncommitted changes.
+        git_call('stash') if (save_uncommitted_changes = !git_call('diff HEAD').empty?)
         # Go back to master and get rid of pending commits (as these are now on the new branch).
         git_call "checkout #{target_branch}"
         git_call "reset --hard origin/#{target_branch}"
         git_call "checkout #{@local_branch}"
+        git_call('stash pop') if save_uncommitted_changes
       end
     else
       @local_branch = source_branch
@@ -136,6 +139,11 @@ class GitReview
   def create
     # Prepare @local_branch.
     prepare
+    # Don't create request with uncommitted changes in current branch.
+    unless git_call('diff HEAD').empty?
+      puts 'You have uncommitted changes. Please stash or commit before creating the request.'
+      return
+    end
     unless git_call("cherry #{target_branch}").empty?
       # Push latest commits to the remote branch (and by that, create it if necessary).
       git_call "push --set-upstream origin #{@local_branch}"
@@ -154,7 +162,7 @@ class GitReview
         puts 'Successfully created new request.'
       end
     else
-      "Nothing to push to remote yet. Commit something first."
+      puts 'Nothing to push to remote yet. Commit something first.'
     end
   end
 
