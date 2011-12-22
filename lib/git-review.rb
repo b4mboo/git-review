@@ -226,9 +226,8 @@ class GitReview
       repo = req['head']['repository']
       "#{repo['owner']}/#{repo['name']}" unless repo.nil?
     end
-    host = URI.parse(github_endpoint).host
     repos.uniq.compact.each do |repo|
-      git_call("fetch git@#{host}:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
+      git_call("fetch git@github.com:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
   end
 
@@ -323,26 +322,21 @@ class GitReview
 
   # Uses Octokit to access GitHub.
   def configure_github_access
-    if git_config['github.login'] and git_config['github.token']
+    if git_config['github.login'] and git_config['github.password']
       Octokit.configure do |config|
+        config.api_version = 2
         config.login = git_config['github.login']
-        config.token = git_config['github.token']
-        config.endpoint = github_endpoint
+        config.password = git_config['github.password']
       end
       true
     else
-      puts 'Please update your git config and provide your GitHub login and token.'
+      puts 'Please update your git config and provide your GitHub login and password.'
       puts
       puts '  git config --global github.login your_github_login_1234567890'
-      puts '  git config --global github.token your_github_token_1234567890'
+      puts '  git config --global github.password your_github_password_1234567890'
       puts
       false
     end
-  end
-
-  # Determine GitHub endpoint (defaults to 'https://github.com/').
-  def github_endpoint
-    git_config['github.endpoint'] || 'https://github.com/'
   end
 
   def debug_mode
