@@ -101,7 +101,7 @@ class GitReview
   # Close a specified request.
   def close
     return unless request_exists?
-    Octokit.post("issues/close/#{source_repo}/#{@pending_request['number']}")
+    Octokit.close_issue(source_repo, @pending_request['number'])
     puts 'Successfully closed request.' unless request_exists?(@pending_request['number'])
   end
 
