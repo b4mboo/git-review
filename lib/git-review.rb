@@ -115,7 +115,7 @@ class GitReview
   def close
     return unless request_exists?
     Octokit.close_issue(source_repo, @pending_request['number'])
-    puts 'Successfully closed request.' unless request_exists?(@pending_request['number'])
+    puts 'Successfully closed request.' unless request_exists?('open', @pending_request['number'])
   end
 
   # Prepare local repository to create a new request.
@@ -226,7 +226,7 @@ class GitReview
       return if @user.nil? or @repo.nil?
       @args = args
       return unless configure_github_access
-      update
+      update(command == 'clean' ? 'closed' : 'open')
       self.send command
     else
       unless command.nil? or command.empty? or %w(help -h --help).include?(command)
@@ -258,11 +258,11 @@ class GitReview
   end
 
   # Check existence of specified request and assign @pending_request.
-  def request_exists?(request_id = nil)
+  def request_exists?(state = 'open', request_id = nil)
     # NOTE: If request_id is set explicitly we might need to update to get the
     # latest changes from GitHub, as this is called from within another method.
     automated = !request_id.nil?
-    update if automated
+    update(state) if automated
     request_id ||= @args.shift.to_i
     if request_id == 0
       puts 'Please specify a valid ID.'
@@ -271,15 +271,15 @@ class GitReview
     @pending_request = @pending_requests.find{ |req| req['number'] == request_id }
     if @pending_request.nil?
       # No output for automated checks.
-      puts "Request '#{request_id}' does not exist." unless automated
+      puts "Request '#{request_id}' could not be found among all '#{state}' requests." unless automated
       return false
     end
     true
   end
 
   # Get latest changes from GitHub.
-  def update
-    @pending_requests = Octokit.pull_requests(source_repo)
+  def update(state = 'open')
+    @pending_requests = Octokit.pull_requests(source_repo, state)
     repos = @pending_requests.collect do |req|
       repo = req['head']['repository']
       "#{repo['owner']}/#{repo['name']}" unless repo.nil?
@@ -291,11 +291,11 @@ class GitReview
 
   # Cleans a single request's obsolete branches.
   def clean_single(force_deletion = false)
-    return unless request_exists?
+    return unless request_exists?('closed')
     # FIXME: Finish this method.
-    # require 'ruby-debug'
-    # Debugger.start
-    # debugger
+    require 'ruby-debug'
+    Debugger.start
+    debugger
     puts 'Not yet implemented.'
   end
 
