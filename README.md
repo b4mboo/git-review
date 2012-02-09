@@ -34,6 +34,9 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review checkout 42 --branch
     > checkout remote branch from request #42 and create a local branch from it
 
+    $ git review approve 42
+    > approve request #42 as reviewed by adding a standard comment
+
     $ git review merge 42
     > accept request #42 by merging it
 

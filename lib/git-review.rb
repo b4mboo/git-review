@@ -103,6 +103,14 @@ class GitReview
     puts git_call(exec_cmd)
   end
 
+  # Add an approving comment to the request.
+  def approve
+    return unless request_exists?
+    comment = 'Reviewed and approved.'
+    response = Octokit.add_comment source_repo, @pending_request['number'], comment
+    puts 'Successfully approved request.' if response[:body] == comment
+  end
+
   # Close a specified request.
   def close
     return unless request_exists?
@@ -214,6 +222,7 @@ class GitReview
     puts '  show <ID> [--full]        Show details for a single request.'
     puts '  browse <ID>               Open a browser window and review a specified request.'
     puts '  checkout <ID> [--branch]  Checkout a specified request\'s changes to your local repository.'
+    puts '  approve <ID>              Add an approving comment to a specified request.'
     puts '  merge <ID>                Accept a specified request by merging it into master.'
     puts '  close <ID>                Close a specified request.'
     puts '  prepare                   Creates a new local branch for a request.'

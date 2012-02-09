@@ -115,12 +115,15 @@ git review show ID --full
 git review browse ID
 
 # get a local copy of the code
-git review checkout ID
+git review checkout ID --branch
+
+# add an approving comment
+git review approve ID
 
 # decline patches and close request
 git review close ID
 
-# accept pull request
+# accept pull request and merge it
 git review merge ID
 git push
 ```
