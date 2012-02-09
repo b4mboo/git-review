@@ -164,7 +164,7 @@ class GitReview
       update
       potential_new_request = @pending_requests.find{ |req| req['title'] == title }
       if potential_new_request and potential_new_request['number'] > last_request_id
-        puts 'Successfully created new request.'
+        puts "Successfully created new request ##{potential_new_request['number']}."
       end
     else
       puts 'Nothing to push to remote yet. Commit something first.'
