@@ -294,12 +294,20 @@ class GitReview
     return unless request_exists?('closed')
     # Ensure there are no unmerged commits or '--force' flag has been set.
     if unmerged_commits? and not force_deletion
-      return puts "Won't delete branches that contain unmerged commits. User '--force' to override."
+      return puts "Won't delete branches that contain unmerged commits. Use '--force' to override."
     end
+    # Delete local branch.
+    git_call "branch -D #{@current_request['head']['ref']}", debug_mode, true
+    # Delete remote branch.
+    git_call "push origin :#{@current_request['head']['ref']}", debug_mode, true
+  end
+
+  # Cleans all obsolete branches.
+  def clean_all(user_generated_only = false)
     # FIXME: Finish this method.
-    require 'ruby-debug'
-    Debugger.start
-    debugger
+    # require 'ruby-debug'
+    # Debugger.start
+    # debugger
     puts 'Not yet implemented.'
   end
 
@@ -315,15 +323,6 @@ class GitReview
     end
     # If the array ain't empty, we got unmerged commits.
     not unmerged_commits.empty?
-  end
-
-  # Cleans all obsolete branches.
-  def clean_all(user_generated_only = false)
-    # FIXME: Finish this method.
-    # require 'ruby-debug'
-    # Debugger.start
-    # debugger
-    puts 'Not yet implemented.'
   end
 
   # System call to 'git'.
