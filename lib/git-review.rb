@@ -5,6 +5,11 @@ require 'launchy'
 # Time is used to parse time strings from git back into Time objects.
 require 'time'
 
+# A custom error to raise, if we know we can't go on.
+class UnprocessableState < StandardError
+end
+
+
 class GitReview
 
   ## COMMANDS ##
@@ -146,7 +151,7 @@ class GitReview
     end
     unless git_call("cherry #{target_branch}").empty?
       # Push latest commits to the remote branch (and by that, create it if necessary).
-      git_call "push --set-upstream origin #{@local_branch}"
+      git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
       # Gather information.
       last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
       title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
@@ -195,6 +200,8 @@ class GitReview
       end
       help
     end
+  rescue UnprocessableState
+    puts 'Execution of git-review command stopped.'
   end
 
   # Show a quick reference of available commands.
@@ -246,7 +253,7 @@ class GitReview
   end
 
   # System call to 'git'.
-  def git_call(command, verbose = debug_mode)
+  def git_call(command, verbose = debug_mode, enforce_success = false)
     if verbose
       puts
       puts "  git #{command}"
@@ -254,6 +261,11 @@ class GitReview
     end
     output = `git #{command}`
     puts output if verbose and not output.empty?
+    # If we need sth. to succeed, but it doesn't stop right there.
+    if enforce_success and not last_command_successful?
+      puts output unless output.empty?
+      raise UnprocessableState
+    end
     output
   end
 
@@ -406,6 +418,11 @@ class GitReview
   def github_user_and_project(github_url)
     matches = /github\.com.(.*?)\/(.*)/.match(github_url)
     matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
+  end
+
+  # Returns a boolean stating whether the last issued system call was successful.
+  def last_command_successful?
+    $?.exitstatus == 0
   end
 
 end
