@@ -292,11 +292,29 @@ class GitReview
   # Cleans a single request's obsolete branches.
   def clean_single(force_deletion = false)
     return unless request_exists?('closed')
+    # Ensure there are no unmerged commits or '--force' flag has been set.
+    if unmerged_commits? and not force_deletion
+      return puts "Won't delete branches that contain unmerged commits. User '--force' to override."
+    end
     # FIXME: Finish this method.
     require 'ruby-debug'
     Debugger.start
     debugger
     puts 'Not yet implemented.'
+  end
+
+  # Returns a boolean stating whether there are unmerged commits on the local or remote branch.
+  def unmerged_commits?
+    # Compare remote and local branch with remote and local master.
+    responses = [['origin/', 'origin/'], ['', 'origin/'], ['origin/', ''], ['', '']].collect do |location|
+      git_call "cherry #{location.first}#{target_branch} #{location.last}#{@current_request['head']['ref']}"
+    end
+    # Select commits (= non empty and not just an error message).
+    unmerged_commits = responses.select do |response|
+      not (response.empty? or response.include?('fatal: Unknown commit'))
+    end
+    # If the array ain't empty, we got unmerged commits.
+    not unmerged_commits.empty?
   end
 
   # Cleans all obsolete branches.
