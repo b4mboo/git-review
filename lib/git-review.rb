@@ -16,8 +16,8 @@ class GitReview
 
   # List all pending requests.
   def list
-    @pending_requests.reverse! if @args.shift == '--reverse'
-    output = @pending_requests.collect do |pending_request|
+    @current_requests.reverse! if @args.shift == '--reverse'
+    output = @current_requests.collect do |pending_request|
       # Find only pending (= unmerged) requests and output summary. GitHub might
       # still think of them as pending, as it doesn't know about local changes.
       next if merged?(pending_request['head']['sha'])
@@ -41,15 +41,15 @@ class GitReview
   def show
     return unless request_exists?
     option = @args.shift == '--full' ? '' : '--stat '
-    sha = @pending_request['head']['sha']
-    puts "ID        : #{@pending_request['number']}"
-    puts "Label     : #{@pending_request['head']['label']}"
-    puts "Updated   : #{format_time(@pending_request['updated_at'])}"
-    puts "Comments  : #{@pending_request['comments']}"
+    sha = @current_request['head']['sha']
+    puts "ID        : #{@current_request['number']}"
+    puts "Label     : #{@current_request['head']['label']}"
+    puts "Updated   : #{format_time(@current_request['updated_at'])}"
+    puts "Comments  : #{@current_request['comments']}"
     puts
-    puts @pending_request['title']
+    puts @current_request['title']
     puts
-    puts @pending_request['body']
+    puts @current_request['body']
     puts
     puts git_call("diff --color=always #{option}HEAD...#{sha}")
     puts
@@ -60,7 +60,7 @@ class GitReview
 
   # Open a browser window and review a specified request.
   def browse
-    Launchy.open(@pending_request['html_url']) if request_exists?
+    Launchy.open(@current_request['html_url']) if request_exists?
   end
 
   # Checkout a specified request's changes to your local repository.
@@ -72,17 +72,17 @@ class GitReview
     puts
     puts '  git checkout master'
     puts
-    git_call "checkout #{create_local_branch}#{@pending_request['head']['ref']}"
+    git_call "checkout #{create_local_branch}#{@current_request['head']['ref']}"
   end
 
   # Accept a specified request by merging it into master.
   def merge
     return unless request_exists?
     option = @args.shift
-    unless @pending_request['head']['repository']
+    unless @current_request['head']['repository']
       # Someone deleted the source repo.
-      user = @pending_request['head']['user']['login']
-      url = @pending_request['patch_url']
+      user = @current_request['head']['user']['login']
+      url = @current_request['patch_url']
       puts "Sorry, #{user} deleted the source repository, git-review doesn't support this."
       puts 'You can manually patch your repo by running:'
       puts
@@ -91,11 +91,11 @@ class GitReview
       puts 'Tell the contributor not to do this.'
       return false
     end
-    message = "Accept request ##{@pending_request['number']} and merge changes into \"#{target}\""
-    exec_cmd = "merge #{option} -m '#{message}' #{@pending_request['head']['sha']}"
+    message = "Accept request ##{@current_request['number']} and merge changes into \"#{target}\""
+    exec_cmd = "merge #{option} -m '#{message}' #{@current_request['head']['sha']}"
     puts
     puts 'Request title:'
-    puts "  #{@pending_request['title']}"
+    puts "  #{@current_request['title']}"
     puts
     puts 'Merge command:'
     puts "  git #{exec_cmd}"
@@ -107,15 +107,15 @@ class GitReview
   def approve
     return unless request_exists?
     comment = 'Reviewed and approved.'
-    response = Octokit.add_comment source_repo, @pending_request['number'], comment
+    response = Octokit.add_comment source_repo, @current_request['number'], comment
     puts 'Successfully approved request.' if response[:body] == comment
   end
 
   # Close a specified request.
   def close
     return unless request_exists?
-    Octokit.close_issue(source_repo, @pending_request['number'])
-    puts 'Successfully closed request.' unless request_exists?('open', @pending_request['number'])
+    Octokit.close_issue(source_repo, @current_request['number'])
+    puts 'Successfully closed request.' unless request_exists?('open', @current_request['number'])
   end
 
   # Prepare local repository to create a new request.
@@ -161,7 +161,7 @@ class GitReview
       # Push latest commits to the remote branch (and by that, create it if necessary).
       git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
       # Gather information.
-      last_request_id = @pending_requests.collect{|req| req['number'] }.sort.last.to_i
+      last_request_id = @current_requests.collect{|req| req['number'] }.sort.last.to_i
       title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
       # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
       body = 'Please review the following changes:'
@@ -170,7 +170,7 @@ class GitReview
       # Switch back to target_branch and check for success.
       git_call "checkout #{target_branch}"
       update
-      potential_new_request = @pending_requests.find{ |req| req['title'] == title }
+      potential_new_request = @current_requests.find{ |req| req['title'] == title }
       if potential_new_request and potential_new_request['number'] > last_request_id
         puts "Successfully created new request ##{potential_new_request['number']}."
       end
@@ -257,7 +257,7 @@ class GitReview
     puts '  clean --all / --mine      Delete all / your own obsolete branches.'
   end
 
-  # Check existence of specified request and assign @pending_request.
+  # Check existence of specified request and assign @current_request.
   def request_exists?(state = 'open', request_id = nil)
     # NOTE: If request_id is set explicitly we might need to update to get the
     # latest changes from GitHub, as this is called from within another method.
@@ -268,8 +268,8 @@ class GitReview
       puts 'Please specify a valid ID.'
       return false
     end
-    @pending_request = @pending_requests.find{ |req| req['number'] == request_id }
-    if @pending_request.nil?
+    @current_request = @current_requests.find{ |req| req['number'] == request_id }
+    if @current_request.nil?
       # No output for automated checks.
       puts "Request '#{request_id}' could not be found among all '#{state}' requests." unless automated
       return false
@@ -279,8 +279,8 @@ class GitReview
 
   # Get latest changes from GitHub.
   def update(state = 'open')
-    @pending_requests = Octokit.pull_requests(source_repo, state)
-    repos = @pending_requests.collect do |req|
+    @current_requests = Octokit.pull_requests(source_repo, state)
+    repos = @current_requests.collect do |req|
       repo = req['head']['repository']
       "#{repo['owner']}/#{repo['name']}" unless repo.nil?
     end
@@ -325,9 +325,9 @@ class GitReview
     output
   end
 
-  # Show current discussion for @pending_request.
+  # Show current discussion for @current_request.
   def discussion
-    request = Octokit.pull_request(source_repo, @pending_request['number'])
+    request = Octokit.pull_request(source_repo, @current_request['number'])
     result = request['discussion'].collect do |entry|
       output = "\e[35m#{entry["user"]["login"]}\e[m "
       case entry['type']
