@@ -130,11 +130,14 @@ git push
 
 Once your code has been merged, you can delete obsolete branches:
 ```bash
-# delete remote branch
-git push origin :new_feature
+# remove both local and remote branch for that review
+git review clean ID
 
-# delete local branch
-git branch -D new_feature
+# remove all obsolete branches
+git review clean --all
+
+# remove obsolete branches leftover from your own requests
+git review clean --mine
 ```
 
 ==== Different forks of a project ====

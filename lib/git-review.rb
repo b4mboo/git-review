@@ -179,6 +179,32 @@ class GitReview
     end
   end
 
+  # Deletes obsolete branches (left over from already closed requests).
+  def clean
+    # Determine strategy to clean.
+    case @args.size
+      when 0
+        puts 'Argument missing. Please provide either an ID or a switch (--all / --mine).'
+      when 1
+        case @args.first
+          when '--all'
+            # git review clean --all
+            clean_all
+          when '--mine'
+            # git review clean --mine
+            clean_all(true)
+          else
+            # git review clean ID
+            clean_single
+        end
+      when 2
+        # git review clean ID --force
+        clean_single(@args.last == '--force')
+      else
+        puts 'Too many arguments.'
+    end
+  end
+
   # Start a console session (used for debugging).
   def console
     puts 'Entering debug console.'
@@ -227,6 +253,8 @@ class GitReview
     puts '  close <ID>                Close a specified request.'
     puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
+    puts '  clean <ID> [--force]      Delete a request\'s remote and local branches.'
+    puts '  clean --all / --mine      Delete all / your own obsolete branches.'
   end
 
   # Check existence of specified request and assign @pending_request.
@@ -259,6 +287,25 @@ class GitReview
     repos.uniq.compact.each do |repo|
       git_call("fetch git@github.com:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
+  end
+
+  # Cleans a single request's obsolete branches.
+  def clean_single(force_deletion = false)
+    return unless request_exists?
+    # FIXME: Finish this method.
+    # require 'ruby-debug'
+    # Debugger.start
+    # debugger
+    puts 'Not yet implemented.'
+  end
+
+  # Cleans all obsolete branches.
+  def clean_all(user_generated_only = false)
+    # FIXME: Finish this method.
+    # require 'ruby-debug'
+    # Debugger.start
+    # debugger
+    puts 'Not yet implemented.'
   end
 
   # System call to 'git'.

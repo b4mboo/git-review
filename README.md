@@ -49,6 +49,18 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review create
     > create a new request by creating all necessary local and remote branches
 
+    $ git review clean 42
+    > delete local and remote branches for that request
+
+    $ git review clean 42 --force
+    > delete branches even if they contain unmerged commits
+
+    $ git review clean --all
+    > delete all obsolete branches
+
+    $ git review clean --mine
+    > delete only your own obsolete branches
+
 
 Installation
 ------------
