@@ -135,9 +135,6 @@ git review clean ID
 
 # remove all obsolete branches
 git review clean --all
-
-# remove obsolete branches leftover from your own requests
-git review clean --mine
 ```
 
 ==== Different forks of a project ====

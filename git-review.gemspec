@@ -2,12 +2,12 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name     = "git-review"
-  s.version  = "0.9.0"
+  s.version  = "1.0.0"
   s.date     = Time.now.strftime('%F')
   s.summary  = "facilitates GitHub code reviews"
   s.homepage = "http://github.com/b4mboo/git-review"
   s.email    = "bamberger.dominik@gmail.com"
-  s.authors  = ["Dominik Bamberger, Cristian Messel"]
+  s.authors  = ["Dominik Bamberger"]
 
   s.files    = %w( LICENSE )
   s.files    += Dir.glob("lib/**/*")

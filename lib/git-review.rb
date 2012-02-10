@@ -197,18 +197,14 @@ class GitReview
     # Determine strategy to clean.
     case @args.size
       when 0
-        puts 'Argument missing. Please provide either an ID or a switch (--all / --mine).'
+        puts 'Argument missing. Please provide either an ID or the option "--all".'
       when 1
-        case @args.first
-          when '--all'
-            # git review clean --all
-            clean_all
-          when '--mine'
-            # git review clean --mine
-            clean_all(true)
-          else
-            # git review clean ID
-            clean_single
+        if @args.first == '--all'
+          # git review clean --all
+          clean_all
+        else
+          # git review clean ID
+          clean_single
         end
       when 2
         # git review clean ID --force
@@ -239,7 +235,7 @@ class GitReview
       return if @user.nil? or @repo.nil?
       @args = args
       return unless configure_github_access
-      update(command == 'clean' ? 'closed' : 'open')
+      update unless command == 'clean'
       self.send command
     else
       unless command.nil? or command.empty? or %w(help -h --help).include?(command)
@@ -267,7 +263,7 @@ class GitReview
     puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
     puts '  clean <ID> [--force]      Delete a request\'s remote and local branches.'
-    puts '  clean --all / --mine      Delete all / your own obsolete branches.'
+    puts '  clean --all?              Delete all obsolete branches.'
   end
 
   # Check existence of specified request and assign @current_request.
@@ -304,31 +300,53 @@ class GitReview
 
   # Cleans a single request's obsolete branches.
   def clean_single(force_deletion = false)
+    update('closed')
     return unless request_exists?('closed')
     # Ensure there are no unmerged commits or '--force' flag has been set.
-    if unmerged_commits? and not force_deletion
+    branch_name = @current_request['head']['ref']
+    if unmerged_commits?(branch_name) and not force_deletion
       return puts "Won't delete branches that contain unmerged commits. Use '--force' to override."
     end
-    # Delete local branch if it exists.
-    git_call("branch -D #{@current_request['head']['ref']}") if branch_exists?(:local)
-    # Delete remote branch if it exists.
-    git_call("push origin :#{@current_request['head']['ref']}") if branch_exists?(:remote)
+    delete_branch(branch_name)
   end
 
   # Cleans all obsolete branches.
-  def clean_all(user_generated_only = false)
-    # FIXME: Finish this method.
-    # require 'ruby-debug'
-    # Debugger.start
-    # debugger
-    puts 'Not yet implemented.'
+  def clean_all
+    update
+    # Protect all open requests' branches from deletion.
+    protected_branches = @current_requests.collect{|request| request['head']['ref']}
+    # Select all branches with the correct prefix.
+    review_branches = all_branches.select{|branch| branch.include?('review_')}
+    # Only use uniq branch names (no matter if local or remote).
+    review_branches.collect{|branch| branch.split('/').last}.uniq.each do |branch_name|
+      # Only clean up obsolete branches.
+      unless protected_branches.include?(branch_name) or unmerged_commits?(branch_name, false)
+        delete_branch(branch_name)
+      end
+    end
+  end
+
+  # Delete local and remote branches that match a given name.
+  def delete_branch(branch_name)
+    # Delete local branch if it exists.
+    git_call("branch -D #{branch_name}") if branch_exists?(:local, branch_name)
+    # Delete remote branch if it exists.
+    git_call("push origin :#{branch_name}") if branch_exists?(:remote, branch_name)
   end
 
   # Returns a boolean stating whether there are unmerged commits on the local or remote branch.
-  def unmerged_commits?
+  def unmerged_commits?(branch_name, verbose = true)
+    locations = []
+    locations << ['', ''] if branch_exists?(:local, branch_name)
+    locations << ['origin/', 'origin/'] if branch_exists?(:remote, branch_name)
+    locations = locations + [['', 'origin/'], ['origin/', '']] if locations.size == 2
+    if locations.empty?
+      puts 'Nothing to do. All cleaned up already.' if verbose
+      return false
+    end
     # Compare remote and local branch with remote and local master.
-    responses = [['origin/', 'origin/'], ['', 'origin/'], ['origin/', ''], ['', '']].collect do |location|
-      git_call "cherry #{location.first}#{target_branch} #{location.last}#{@current_request['head']['ref']}"
+    responses = locations.collect do |location|
+      git_call "cherry #{location.first}#{target_branch} #{location.last}#{branch_name}"
     end
     # Select commits (= non empty and not just an error message).
     unmerged_commits = responses.select do |response|
@@ -339,11 +357,10 @@ class GitReview
   end
 
   # Returns a boolean stating whether a branch exists in a specified location.
-  def branch_exists?(location)
+  def branch_exists?(location, branch_name)
     return false unless [:remote, :local].include? location
-    @branches ||= git_call('branch').split("\n").collect{|s|s.strip}
     prefix = location == :remote ? 'remotes/origin/' : ''
-    @branches.include?(prefix + @current_request['head']['ref'])
+    all_branches.include?(prefix + branch_name)
   end
 
   # System call to 'git'.
@@ -438,6 +455,11 @@ class GitReview
   # Returns a string consisting of target repo and branch.
   def target
     "#{target_repo}/#{target_branch}"
+  end
+
+  # Returns an Array of all existing branches.
+  def all_branches
+    @branches ||= git_call('branch -a').split("\n").collect{|s|s.strip}
   end
 
   # Returns a boolean stating whether a specified commit has already been merged.

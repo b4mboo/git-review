@@ -58,9 +58,6 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
     $ git review clean --all
     > delete all obsolete branches
 
-    $ git review clean --mine
-    > delete only your own obsolete branches
-
 
 Installation
 ------------
