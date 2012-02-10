@@ -309,12 +309,10 @@ class GitReview
     if unmerged_commits? and not force_deletion
       return puts "Won't delete branches that contain unmerged commits. Use '--force' to override."
     end
-    # branch_exists?(:local)
-    # branch_exists?(:remote)
-    # Delete local branch.
-    git_call "branch -D #{@current_request['head']['ref']}"
-    # Delete remote branch.
-    git_call "push origin :#{@current_request['head']['ref']}"
+    # Delete local branch if it exists.
+    git_call("branch -D #{@current_request['head']['ref']}") if branch_exists?(:local)
+    # Delete remote branch if it exists.
+    git_call("push origin :#{@current_request['head']['ref']}") if branch_exists?(:remote)
   end
 
   # Cleans all obsolete branches.
@@ -338,6 +336,14 @@ class GitReview
     end
     # If the array ain't empty, we got unmerged commits.
     not unmerged_commits.empty?
+  end
+
+  # Returns a boolean stating whether a branch exists in a specified location.
+  def branch_exists?(location)
+    return false unless [:remote, :local].include? location
+    @branches ||= git_call('branch').split("\n").collect{|s|s.strip}
+    prefix = location == :remote ? 'remotes/origin/' : ''
+    @branches.include?(prefix + @current_request['head']['ref'])
   end
 
   # System call to 'git'.
