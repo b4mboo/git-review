@@ -109,11 +109,13 @@ class GitReview
     comment = 'Reviewed and approved.'
     response = Octokit.add_comment source_repo, @current_request['number'], comment
     if response[:message] == 'Issues are disabled for this repo'
-      # Workaround: Add a pull request comment to the first file's first line.
-      last_commit = Octokit.get("/repos/#{Octokit::Repository.new(source_repo)}/pulls/#{@current_request['number']}/commits", {}, 3).last.sha
-      first_file = Octokit.get("/repos/#{Octokit::Repository.new(source_repo)}/pulls/#{@current_request['number']}/files", {}, 3).first.filename
-      comment += "\n Since issues are disabled, comments made through the API may only be inline. Therefor I chose to just post here. ;-)"
-      response = Octokit.post("/repos/#{Octokit::Repository.new(source_repo)}/pulls/#{@current_request['number']}/comments", {:body => comment, :commit_id => last_commit, :path => first_file, :position => 1}, 3)
+      # Workaround: Add a pull request comment to the last commit's first file's first line.
+      comment += "\n\nNOTE:\n  Issues are disabled on this repository.\n  Comments created through API calls may only be inline.\n  So I chose to just post here. :P"
+      last_commit = repo_call(:get, "pulls/#{@current_request['number']}/commits").last.sha
+      first_file = repo_call(:get, "pulls/#{@current_request['number']}/files").first.filename
+      response = repo_call(:post, "pulls/#{@current_request['number']}/comments",
+        {:body => comment, :commit_id => last_commit, :path => first_file, :position => 1}
+      )
     end
     if response[:body] == comment
       puts 'Successfully approved request.'
@@ -353,6 +355,11 @@ class GitReview
       raise UnprocessableState
     end
     output
+  end
+
+  # Convenience method that uses Octokit to access a repo through Github's API.
+  def repo_call(method, path, options = {})
+    Octokit.send(method, "/repos/#{Octokit::Repository.new(source_repo)}/#{path}", options, 3)
   end
 
   # Show current discussion for @current_request.
