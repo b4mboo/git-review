@@ -108,7 +108,18 @@ class GitReview
     return unless request_exists?
     comment = 'Reviewed and approved.'
     response = Octokit.add_comment source_repo, @current_request['number'], comment
-    puts 'Successfully approved request.' if response[:body] == comment
+    if response[:message] == 'Issues are disabled for this repo'
+      # Workaround: Add a pull request comment to the first file's first line.
+      last_commit = Octokit.get("/repos/#{Octokit::Repository.new(source_repo)}/pulls/#{@current_request['number']}/commits", {}, 3).last.sha
+      first_file = Octokit.get("/repos/#{Octokit::Repository.new(source_repo)}/pulls/#{@current_request['number']}/files", {}, 3).first.filename
+      comment += "\n Since issues are disabled, comments made through the API may only be inline. Therefor I chose to just post here. ;-)"
+      response = Octokit.post("/repos/#{Octokit::Repository.new(source_repo)}/pulls/#{@current_request['number']}/comments", {:body => comment, :commit_id => last_commit, :path => first_file, :position => 1}, 3)
+    end
+    if response[:body] == comment
+      puts 'Successfully approved request.'
+    else
+      puts response[:message]
+    end
   end
 
   # Close a specified request.
@@ -296,10 +307,12 @@ class GitReview
     if unmerged_commits? and not force_deletion
       return puts "Won't delete branches that contain unmerged commits. Use '--force' to override."
     end
+    # branch_exists?(:local)
+    # branch_exists?(:remote)
     # Delete local branch.
-    git_call "branch -D #{@current_request['head']['ref']}", debug_mode, true
+    git_call "branch -D #{@current_request['head']['ref']}"
     # Delete remote branch.
-    git_call "push origin :#{@current_request['head']['ref']}", debug_mode, true
+    git_call "push origin :#{@current_request['head']['ref']}"
   end
 
   # Cleans all obsolete branches.
