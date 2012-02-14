@@ -356,9 +356,9 @@ class GitReview
     responses = locations.collect do |location|
       git_call "cherry #{location.first}#{target_branch} #{location.last}#{branch_name}"
     end
-    # Select commits (= non empty and not just an error message).
-    unmerged_commits = responses.select do |response|
-      not (response.empty? or response.include?('fatal: Unknown commit'))
+    # Select commits (= non empty, not just an error message and not only duplicate commits staring with '-').
+    unmerged_commits = responses.reject do |response|
+      response.empty? or response.include?('fatal: Unknown commit') or response.split("\n").reject{|x| x.index('-') == 0}.empty?
     end
     # If the array ain't empty, we got unmerged commits.
     if unmerged_commits.empty?
