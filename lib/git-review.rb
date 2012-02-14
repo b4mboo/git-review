@@ -278,12 +278,18 @@ class GitReview
       return false
     end
     @current_request = @current_requests.find{ |req| req['number'] == request_id }
-    if @current_request.nil?
+    unless @current_request
+      # Additional try to get an older request from Github by specifying the number.
+      request = Octokit.pull_request(source_repo, request_id)
+      @current_request = request if request.state == state
+    end
+    if @current_request
+      true
+    else
       # No output for automated checks.
       puts "Request '#{request_id}' could not be found among all '#{state}' requests." unless automated
-      return false
+      false
     end
-    true
   end
 
   # Get latest changes from GitHub.
