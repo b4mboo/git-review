@@ -361,7 +361,12 @@ class GitReview
       not (response.empty? or response.include?('fatal: Unknown commit'))
     end
     # If the array ain't empty, we got unmerged commits.
-    not unmerged_commits.empty?
+    if unmerged_commits.empty?
+      false
+    else
+      puts "Unmerged commits on branch '#{branch_name}'."
+      true
+    end
   end
 
   # Returns a boolean stating whether a branch exists in a specified location.
