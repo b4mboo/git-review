@@ -337,9 +337,9 @@ class GitReview
   # Delete local and remote branches that match a given name.
   def delete_branch(branch_name)
     # Delete local branch if it exists.
-    git_call("branch -D #{branch_name}") if branch_exists?(:local, branch_name)
+    git_call("branch -D #{branch_name}", true) if branch_exists?(:local, branch_name)
     # Delete remote branch if it exists.
-    git_call("push origin :#{branch_name}") if branch_exists?(:remote, branch_name)
+    git_call("push origin :#{branch_name}", true) if branch_exists?(:remote, branch_name)
   end
 
   # Returns a boolean stating whether there are unmerged commits on the local or remote branch.
