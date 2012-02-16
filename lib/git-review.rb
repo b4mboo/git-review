@@ -108,15 +108,6 @@ class GitReview
     return unless request_exists?
     comment = 'Reviewed and approved.'
     response = Octokit.add_comment source_repo, @current_request['number'], comment
-    if response[:message] == 'Issues are disabled for this repo'
-      # Workaround: Add a pull request comment to the last commit's first file's first line.
-      comment += "\n\nNOTE:\n  Issues are disabled on this repository.\n  Comments created through API calls may only be inline.\n  So I chose to just post here. :P"
-      last_commit = repo_call(:get, "pulls/#{@current_request['number']}/commits").last.sha
-      first_file = repo_call(:get, "pulls/#{@current_request['number']}/files").first.filename
-      response = repo_call(:post, "pulls/#{@current_request['number']}/comments",
-        {:body => comment, :commit_id => last_commit, :path => first_file, :position => 1}
-      )
-    end
     if response[:body] == comment
       puts 'Successfully approved request.'
     else
