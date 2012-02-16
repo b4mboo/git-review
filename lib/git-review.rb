@@ -402,7 +402,9 @@ class GitReview
   def discussion
     request = Octokit.pull_request(source_repo, @current_request['number'])
     result = request['discussion'].collect do |entry|
-      output = "\e[35m#{entry["user"]["login"]}\e[m "
+      user = entry['user'] || entry['author']
+      name = user['login'].empty? ? user['name'] : user['login']
+      output = "\e[35m#{name}\e[m "
       case entry['type']
         # Comments:
         when "IssueComment", "CommitComment", "PullRequestReviewComment"
