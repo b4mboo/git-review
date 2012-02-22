@@ -455,7 +455,7 @@ class GitReview
   # Returns a string that specifies the target branch.
   def target_branch
     # TODO: Enable possibility to manually override this and set arbitrary branches.
-    'master'
+    ENV['TARGET_BRANCH'] || 'master'
   end
 
   # Returns a string consisting of target repo and branch.
