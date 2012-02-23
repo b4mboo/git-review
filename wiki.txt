@@ -40,9 +40,8 @@ git push
 
 === With code review ===
 
-First you need to install the gem suse-git-pulls from gemcutter.
+First you need to install the gem.
 ```bash
-gem install gemcutter --source http://gemcutter.org
 gem install git-review
 ```
 
@@ -139,40 +138,24 @@ git review clean --all
 
 ==== Different forks of a project ====
 
-This is not yet implemented in git-review, but is a planned feature for future releases of the tool. Until then you'll have to use the UI that GitHub provides (which makes it quite simple to handle).
+This is not yet implemented in git-review, but is a planned feature for future releases of the tool.
 
-* To fork the main project repository at GitHub, press the '''Fork''' button at the original project page
-* Checkout the clone locally:
-<pre>
-git clone git@github.com:user/project.git
-</pre>
-* Edit the code, commit locally and push to GitHub.
-''Note: The remote origin is your fork of the original repository, so pushing to origin/master won't affect the original project.''
-* To track the changes in the original project add it as a remote ''upstream'' project:
+Until then you'll have to use the UI that GitHub provides. For more information on forking and submitting pull requests, please refer to the GitHub help:  http://help.github.com/fork-a-repo, http://help.github.com/send-pull-requests/
+
+
+== Hints ==
+
+==== Overriding the default target branch (= master) ====
+If you want to use a branch other than master to merge to, you can do so by setting an ENV variable.
 ```bash
-git remote add upstream git://github.com/''original_user''/''original_project''.git
-git fetch upstream
-git merge upstream/master
+TARGET_BRANCH=develop git review merge 42
 ```
-* Once you're done, create a pull request to get your changes into the original project.
-** Press '''Pull Request''' to start the workflow.
-** Describe your changes to a potential reviewer.
-** Think about what you just wrote. Does you're description really help to better understand your code?
-** Once you're sure everything is OK, press '''Send Pull Request'''.
-''Note: If you need to work on another feature before the request is merged, you can always create a new branch for it.''
+Alternatively you can set that variable globally, of course.
+Thanks go to to [https://github.com/swalberg swalberg] for this nifty little feature.
 
-* The code reviewer will see the pull request in the original project and can start to review your code.
-** read the description and check the diff.
-** If it's OK just press '''Merge pull request''' to accept the patch.
-** If there are problems or conflicts, ask the author to solve them by commenting on the patch (globally or single line).
-
-For more information on forking and submitting pull requests, please refer to the GitHub help:  http://help.github.com/fork-a-repo, http://help.github.com/send-pull-requests/
 
 == TODOs ==
 
-There are still a couple of TODOs on our list. If you want to contribute, feel free to work on one of these. However, it would be nice if you could tell us about it, such that we don't duplicate our work.
+There are still a couple of TODOs on the list. If you want to contribute, feel free to work on one of these. However, it would be nice if you could tell me about it, such that we don't duplicate our work.
 
-* Write tests to cover the existing code.
-* When creating a new request, create and push to a remote branch if necessary.
-* When creating a new request, insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
-* Support creating requests to other repositories and branches (like the original repo, this has been forked from).
+Check out this repo's issues section if you want to know the details of what is currently worked on or add some issues you found yourself.
