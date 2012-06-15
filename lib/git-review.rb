@@ -107,7 +107,7 @@ class GitReview
   def approve
     return unless request_exists?
     comment = 'Reviewed and approved.'
-    response = Octokit.add_comment source_repo, @current_request['number'], comment
+    response = @github.add_comment source_repo, @current_request['number'], comment
     if response[:body] == comment
       puts 'Successfully approved request.'
     else
@@ -118,7 +118,7 @@ class GitReview
   # Close a specified request.
   def close
     return unless request_exists?
-    Octokit.close_issue(source_repo, @current_request['number'])
+    @github.close_issue source_repo, @current_request['number']
     puts 'Successfully closed request.' unless request_exists?('open', @current_request['number'])
   end
 
@@ -170,7 +170,7 @@ class GitReview
       # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
       body = 'Please review the following changes:'
       # Create the actual pull request.
-      Octokit.create_pull_request(target_repo, target_branch, source_branch, title, body)
+      @github.create_pull_request target_repo, target_branch, source_branch, title, body
       # Switch back to target_branch and check for success.
       git_call "checkout #{target_branch}"
       update
@@ -273,7 +273,7 @@ class GitReview
     @current_request = @current_requests.find{ |req| req['number'] == request_id }
     unless @current_request
       # Additional try to get an older request from Github by specifying the number.
-      request = Octokit.pull_request(source_repo, request_id)
+      request = @github.pull_request source_repo, request_id
       @current_request = request if request.state == state
     end
     if @current_request
@@ -287,7 +287,7 @@ class GitReview
 
   # Get latest changes from GitHub.
   def update(state = 'open')
-    @current_requests = Octokit.pull_requests(source_repo, state)
+    @current_requests = @github.pull_requests source_repo, state
     repos = @current_requests.collect do |req|
       repo = req['head']['repository']
       "#{repo['owner']}/#{repo['name']}" unless repo.nil?
@@ -384,14 +384,9 @@ class GitReview
     output
   end
 
-  # Convenience method that uses Octokit to access a repo through Github's API.
-  def repo_call(method, path, options = {})
-    Octokit.send(method, "/repos/#{Octokit::Repository.new(source_repo)}/#{path}", options, 3)
-  end
-
   # Show current discussion for @current_request.
   def discussion
-    request = Octokit.pull_request(source_repo, @current_request['number'])
+    request = @github.pull_request source_repo, @current_request['number']
     result = request['discussion'].collect do |entry|
       user = entry['user'] || entry['author']
       name = user['login'].empty? ? user['name'] : user['login']
@@ -476,12 +471,12 @@ class GitReview
   # Uses Octokit to access GitHub.
   def configure_github_access
     if git_config['github.login'] and git_config['github.password']
-      Octokit.configure do |config|
-        config.api_version = 2
-        config.login = git_config['github.login']
-        config.password = git_config['github.password']
-      end
+      @github = Octokit::Client.new(
+        :login => git_config['github.login'],
+        :password => git_config['github.password']
+      )
       true
+      @github.login
     else
       puts 'Please update your git config and provide your GitHub login and password.'
       puts
