@@ -62,11 +62,7 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
 Installation
 ------------
 
-To install it via Rubygems, you might need to add Gemcutter to your Rubygems sources:
-
-    gem install gemcutter --source http://gemcutter.org
-
-Afterwards simply do:
+To install it via Rubygems.org simply do:
 
     gem install git-review
 
@@ -76,8 +72,6 @@ To be able to use all of git-review's features you have set up your git config f
 
     git config --global github.login your_github_login_1234567890
     git config --global github.password your_github_password_1234567890
-
-You can find your API token on the [account](https://github.com/account) page.
 
 
 Wiki
