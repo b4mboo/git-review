@@ -180,8 +180,8 @@ class GitReview
       if potential_new_request and potential_new_request['number'] > last_request_id
         puts "Successfully created new request ##{potential_new_request['number']}."
       end
-      # Return home to the branch you were working on
-      git_call "checkout #{@local_branch}"
+      # Return to the user's original branch.
+      git_call "checkout #{@original_branch}"
     else
       puts 'Nothing to push to remote yet. Commit something first.'
     end
