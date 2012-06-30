@@ -79,16 +79,17 @@ class GitReview
   def merge
     return unless request_exists?
     option = @args.shift
-    unless @current_request['head']['repository']
+    unless @current_request['head']['repo']
       # Someone deleted the source repo.
       user = @current_request['head']['user']['login']
       url = @current_request['patch_url']
       puts "Sorry, #{user} deleted the source repository, git-review doesn't support this."
-      puts 'You can manually patch your repo by running:'
+      puts 'Tell the contributor not to do this.'
+      puts
+      puts 'You can still manually patch your repo by running:'
       puts
       puts "  curl #{url} | git am"
       puts
-      puts 'Tell the contributor not to do this.'
       return false
     end
     message = "Accept request ##{@current_request['number']} and merge changes into \"#{target}\""
