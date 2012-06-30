@@ -125,10 +125,12 @@ class GitReview
   # Prepare local repository to create a new request.
   # Sets @local_branch.
   def prepare
+    # Remember original branch the user was currently working on.
+    @original_branch = source_branch
     # People should work on local branches, but especially for single commit changes,
     # more often than not, they don't. Therefore we create a branch for them,
     # to be able to use code review the way it is intended.
-    if source_branch == target_branch
+    if @original_branch == target_branch
       # Unless a branch name is already provided, ask for one.
       if (branch_name = @args.shift).nil?
         puts 'Please provide a name for the branch:'
@@ -147,7 +149,7 @@ class GitReview
         git_call('stash pop') if save_uncommitted_changes
       end
     else
-      @local_branch = source_branch
+      @local_branch = @original_branch
     end
   end
 
