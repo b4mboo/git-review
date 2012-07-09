@@ -226,12 +226,12 @@ class GitReview
   private
 
   # Setup variables and call actual commands.
-  def initialize(args)
+  def initialize(args = [])
+    @args = args
     command = args.shift
     if command and self.respond_to?(command)
       @user, @repo = repo_info
       return if @user.nil? or @repo.nil?
-      @args = args
       return unless configure_github_access
       update unless command == 'clean'
       self.send command
@@ -524,7 +524,7 @@ class GitReview
     end
     user, project = github_user_and_project(url)
     # If there are no results yet, look for 'insteadof' substitutions in URL and try again.
-    unless (user and project)
+    unless user && project
       short, base = github_insteadof_matching(config_hash, url)
       if short and base
         url = url.sub(short, base)
