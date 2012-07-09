@@ -261,7 +261,7 @@ class GitReview
     puts '  prepare                   Creates a new local branch for a request.'
     puts '  create                    Create a new request.'
     puts '  clean <ID> [--force]      Delete a request\'s remote and local branches.'
-    puts '  clean --all?              Delete all obsolete branches.'
+    puts '  clean --all               Delete all obsolete branches.'
   end
 
   # Check existence of specified request and assign @current_request.
