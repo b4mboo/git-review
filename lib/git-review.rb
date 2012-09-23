@@ -37,6 +37,7 @@ class GitReview
     puts output.compact
   end
 
+
   # Show details for a single request.
   def show
     return unless request_exists?
@@ -58,10 +59,12 @@ class GitReview
     discussion
   end
 
+
   # Open a browser window and review a specified request.
   def browse
     Launchy.open(@current_request['html_url']) if request_exists?
   end
+
 
   # Checkout a specified request's changes to your local repository.
   def checkout
@@ -74,6 +77,7 @@ class GitReview
     puts
     git_call "checkout #{create_local_branch}#{@current_request['head']['ref']}"
   end
+
 
   # Accept a specified request by merging it into master.
   def merge
@@ -104,6 +108,7 @@ class GitReview
     puts git_call(exec_cmd)
   end
 
+
   # Add an approving comment to the request.
   def approve
     return unless request_exists?
@@ -116,12 +121,14 @@ class GitReview
     end
   end
 
+
   # Close a specified request.
   def close
     return unless request_exists?
     @github.close_issue source_repo, @current_request['number']
     puts 'Successfully closed request.' unless request_exists?('open', @current_request['number'])
   end
+
 
   # Prepare local repository to create a new request.
   # Sets @local_branch.
@@ -154,6 +161,7 @@ class GitReview
     end
   end
 
+
   # Create a new request.
   # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
   def create
@@ -168,7 +176,7 @@ class GitReview
       # Push latest commits to the remote branch (and by that, create it if necessary).
       git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
       # Gather information.
-      last_request_id = @current_requests.collect{|req| req['number'] }.sort.last.to_i
+      last_request_id = @current_requests.collect { |req| req['number'] }.sort.last.to_i
       title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
       # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
       body = 'Please review the following changes:'
@@ -177,7 +185,7 @@ class GitReview
       # Switch back to target_branch and check for success.
       git_call "checkout #{target_branch}"
       update
-      potential_new_request = @current_requests.find{ |req| req['title'] == title }
+      potential_new_request = @current_requests.find { |req| req['title'] == title }
       if potential_new_request and potential_new_request['number'] > last_request_id
         puts "Successfully created new request ##{potential_new_request['number']}."
       end
@@ -187,6 +195,7 @@ class GitReview
       puts 'Nothing to push to remote yet. Commit something first.'
     end
   end
+
 
   # Deletes obsolete branches (left over from already closed requests).
   def clean
@@ -211,6 +220,7 @@ class GitReview
         puts 'Too many arguments.'
     end
   end
+
 
   # Start a console session (used for debugging).
   def console
@@ -245,6 +255,7 @@ class GitReview
     puts 'Execution of git-review command stopped.'
   end
 
+
   # Show a quick reference of available commands.
   def help
     puts 'Usage: git review <command>'
@@ -264,6 +275,7 @@ class GitReview
     puts '  clean --all               Delete all obsolete branches.'
   end
 
+
   # Check existence of specified request and assign @current_request.
   def request_exists?(state = 'open', request_id = nil)
     # NOTE: If request_id is set explicitly we might need to update to get the
@@ -275,7 +287,7 @@ class GitReview
       puts 'Please specify a valid ID.'
       return false
     end
-    @current_request = @current_requests.find{ |req| req['number'] == request_id }
+    @current_request = @current_requests.find { |req| req['number'] == request_id }
     unless @current_request
       # Additional try to get an older request from Github by specifying the number.
       request = @github.pull_request source_repo, request_id
@@ -290,6 +302,7 @@ class GitReview
     end
   end
 
+
   # Get latest changes from GitHub.
   def update(state = 'open')
     @current_requests = @github.pull_requests source_repo, state
@@ -301,6 +314,7 @@ class GitReview
       git_call("fetch git@github.com:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
     end
   end
+
 
   # Cleans a single request's obsolete branches.
   def clean_single(force_deletion = false)
@@ -314,21 +328,23 @@ class GitReview
     delete_branch(branch_name)
   end
 
+
   # Cleans all obsolete branches.
   def clean_all
     update
     # Protect all open requests' branches from deletion.
-    protected_branches = @current_requests.collect{|request| request['head']['ref']}
+    protected_branches = @current_requests.collect { |request| request['head']['ref'] }
     # Select all branches with the correct prefix.
-    review_branches = all_branches.select{|branch| branch.include?('review_')}
+    review_branches = all_branches.select { |branch| branch.include?('review_') }
     # Only use uniq branch names (no matter if local or remote).
-    review_branches.collect{|branch| branch.split('/').last}.uniq.each do |branch_name|
+    review_branches.collect { |branch| branch.split('/').last }.uniq.each do |branch_name|
       # Only clean up obsolete branches.
       unless protected_branches.include?(branch_name) or unmerged_commits?(branch_name, false)
         delete_branch(branch_name)
       end
     end
   end
+
 
   # Delete local and remote branches that match a given name.
   def delete_branch(branch_name)
@@ -337,6 +353,7 @@ class GitReview
     # Delete remote branch if it exists.
     git_call("push origin :#{branch_name}", true) if branch_exists?(:remote, branch_name)
   end
+
 
   # Returns a boolean stating whether there are unmerged commits on the local or remote branch.
   def unmerged_commits?(branch_name, verbose = true)
@@ -354,7 +371,7 @@ class GitReview
     end
     # Select commits (= non empty, not just an error message and not only duplicate commits staring with '-').
     unmerged_commits = responses.reject do |response|
-      response.empty? or response.include?('fatal: Unknown commit') or response.split("\n").reject{|x| x.index('-') == 0}.empty?
+      response.empty? or response.include?('fatal: Unknown commit') or response.split("\n").reject { |x| x.index('-') == 0 }.empty?
     end
     # If the array ain't empty, we got unmerged commits.
     if unmerged_commits.empty?
@@ -365,12 +382,14 @@ class GitReview
     end
   end
 
+
   # Returns a boolean stating whether a branch exists in a specified location.
   def branch_exists?(location, branch_name)
     return false unless [:remote, :local].include? location
     prefix = location == :remote ? 'remotes/origin/' : ''
     all_branches.include?(prefix + branch_name)
   end
+
 
   # System call to 'git'.
   def git_call(command, verbose = debug_mode, enforce_success = false)
@@ -389,6 +408,7 @@ class GitReview
     output
   end
 
+
   # Show current discussion for @current_request.
   def discussion
     request = @github.pull_request source_repo, @current_request['number']
@@ -404,7 +424,7 @@ class GitReview
         when "IssueComment", "CommitComment", "PullRequestReviewComment"
           output << "added a comment"
           output << " to \e[36m#{entry['commit_id'][0..6]}\e[m" if entry['commit_id']
-          output <<  " on #{format_time(entry['created_at'])}"
+          output << " on #{format_time(entry['created_at'])}"
           unless entry['created_at'] == entry['updated_at']
             output << " (updated on #{format_time(entry['updated_at'])})"
           end
@@ -413,41 +433,47 @@ class GitReview
           output << entry['body']
         # Commits:
         when "Commit"
-         output << "authored commit \e[36m#{entry['id'][0..6]}\e[m on #{format_time(entry['authored_date'])}"
-         unless entry['authored_date'] == entry['committed_date']
-           output << " (committed on #{format_time(entry['committed_date'])})"
-         end
-         output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
+          output << "authored commit \e[36m#{entry['id'][0..6]}\e[m on #{format_time(entry['authored_date'])}"
+          unless entry['authored_date'] == entry['committed_date']
+            output << " (committed on #{format_time(entry['committed_date'])})"
+          end
+          output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
       end
       output << "\n\n\n"
     end
     puts result.compact unless result.empty?
   end
 
+
   # Display helper to make output more configurable.
   def format_text(info, size)
     info.to_s.gsub("\n", ' ')[0, size-1].ljust(size)
   end
+
 
   # Display helper to unify time output.
   def format_time(time_string)
     Time.parse(time_string).strftime('%d-%b-%y')
   end
 
+
   # Returns a string that specifies the source repo.
   def source_repo
     "#{@user}/#{@repo}"
   end
+
 
   # Returns a string that specifies the source branch.
   def source_branch
     git_call('branch').chomp!.match(/\*(.*)/)[0][2..-1]
   end
 
+
   # Returns a string consisting of source repo and branch.
   def source
     "#{source_repo}/#{source_branch}"
   end
+
 
   # Returns a string that specifies the target repo.
   def target_repo
@@ -455,33 +481,38 @@ class GitReview
     source_repo
   end
 
+
   # Returns a string that specifies the target branch.
   def target_branch
     # TODO: Enable possibility to manually override this and set arbitrary branches.
     ENV['TARGET_BRANCH'] || 'master'
   end
 
+
   # Returns a string consisting of target repo and branch.
   def target
     "#{target_repo}/#{target_branch}"
   end
 
+
   # Returns an Array of all existing branches.
   def all_branches
-    @branches ||= git_call('branch -a').split("\n").collect{|s|s.strip}
+    @branches ||= git_call('branch -a').split("\n").collect { |s| s.strip }
   end
+
 
   # Returns a boolean stating whether a specified commit has already been merged.
   def merged?(sha)
     not git_call("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
   end
 
+
   # Uses Octokit to access GitHub.
   def configure_github_access
     if git_config['github.login'] and git_config['github.password']
       @github = Octokit::Client.new(
-        :login => git_config['github.login'],
-        :password => git_config['github.password']
+          :login => git_config['github.login'],
+          :password => git_config['github.password']
       )
       true
       @github.login
@@ -495,16 +526,18 @@ class GitReview
     end
   end
 
+
   def debug_mode
     git_config['review.mode'] == 'debug'
   end
+
 
   # Collect git config information in a Hash for easy access.
   # Checks '~/.gitconfig' for credentials.
   def git_config
     unless @git_config
       # Read @git_config from local git config.
-      @git_config = {}
+      @git_config = { }
       config_list = git_call('config --list', false)
       config_list.split("\n").each do |line|
         key, value = line.split('=')
@@ -513,6 +546,7 @@ class GitReview
     end
     @git_config
   end
+
 
   # Returns an array consisting of information on the user and the project.
   def repo_info
@@ -534,9 +568,10 @@ class GitReview
     [user, project]
   end
 
+
   # Looks for 'insteadof' substitutions in URL.
   def github_insteadof_matching(config_hash, url)
-    first = config_hash.collect { |key,value|
+    first = config_hash.collect { |key, value|
       [value, /url\.(.*github\.com.*)\.insteadof/.match(key)]
     }.find { |value, match|
       url.index(value) and match != nil
@@ -544,11 +579,13 @@ class GitReview
     first ? [first[0], first[1][1]] : [nil, nil]
   end
 
+
   # Extract user and project name from GitHub URL.
   def github_user_and_project(github_url)
     matches = /github\.com.(.*?)\/(.*)/.match(github_url)
     matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
   end
+
 
   # Returns a boolean stating whether the last issued system call was successful.
   def last_command_successful?
