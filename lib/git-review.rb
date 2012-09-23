@@ -16,7 +16,6 @@ class GitReview
 
   # List all pending requests.
   def list
-    @current_requests.reverse! if @args.shift == '--reverse'
     output = @current_requests.collect do |request|
       # Find only pending (= unmerged) requests and output summary.
       # Explicitly look for local changes (that GitHub does not yet know about).
@@ -32,6 +31,7 @@ class GitReview
     puts "No pending requests for '#{source}'." and return if output.empty?
     puts "Pending requests for '#{source}':"
     puts 'ID      Updated    Comments  Title'
+    output.reverse! if @args.shift == '--reverse'
     output.each { |line| puts line }
   end
 

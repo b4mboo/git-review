@@ -37,28 +37,34 @@ describe GitReview do
 
     subject { GitReview.new }
     let(:request) { mock :request }
-    let(:requests) { [request] }
     let(:head_sha) { 'head_sha' }
 
     it 'shows all open pull requests' do
-      subject.instance_variable_set(:@current_requests, [request])
+      subject.instance_variable_set(:@current_requests, [request, request])
       request.stub_chain(:head, :sha).and_return(head_sha)
-      subject.should_receive(:merged?).with(head_sha).and_return(false)
-      request.should_receive(:number).and_return(1)
-      request.should_receive(:updated_at).and_return(Time.now.to_s)
-      request.should_receive(:comments).and_return(23)
-      request.should_receive(:title).and_return('fake')
+      subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
+      request.should_receive(:number).and_return(1, 2)
+      request.should_receive(:updated_at).twice.and_return(Time.now.to_s)
+      request.should_receive(:comments).twice.and_return(23)
+      request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
-      subject.should_receive(:puts).with(include 'fake')
+      subject.should_receive(:puts).with(include 'first').ordered
+      subject.should_receive(:puts).with(include 'second').ordered
       subject.list
     end
 
     it 'allows for an optional argument --reverse' do
       subject.instance_variable_set(:@args, ['--reverse'])
-      subject.instance_variable_set(:@current_requests, requests)
-      requests.should_receive :reverse!
-      requests.should_receive(:collect).and_return([])
-      subject.should_receive(:puts).with(include 'No pending requests')
+      subject.instance_variable_set(:@current_requests, [request, request])
+      request.stub_chain(:head, :sha).and_return(head_sha)
+      subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
+      request.should_receive(:number).and_return(1, 2)
+      request.should_receive(:updated_at).twice.and_return(Time.now.to_s)
+      request.should_receive(:comments).twice.and_return(23)
+      request.should_receive(:title).twice.and_return('first', 'second')
+      subject.should_receive(:puts).with(include 'Pending requests')
+      subject.should_receive(:puts).with(include 'second').ordered
+      subject.should_receive(:puts).with(include 'first').ordered
       subject.list
     end
 
