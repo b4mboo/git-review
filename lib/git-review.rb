@@ -17,24 +17,22 @@ class GitReview
   # List all pending requests.
   def list
     @current_requests.reverse! if @args.shift == '--reverse'
-    output = @current_requests.collect do |pending_request|
-      # Find only pending (= unmerged) requests and output summary. GitHub might
-      # still think of them as pending, as it doesn't know about local changes.
-      next if merged?(pending_request['head']['sha'])
-      line = format_text(pending_request['number'], 8)
-      date_string = format_time(pending_request['updated_at'])
+    output = @current_requests.collect do |request|
+      # Find only pending (= unmerged) requests and output summary.
+      # Explicitly look for local changes (that GitHub does not yet know about).
+      next if merged?(request.head.sha)
+      line = format_text(request.number, 8)
+      date_string = format_time(request.updated_at)
       line << format_text(date_string, 11)
-      line << format_text(pending_request['comments'], 10)
-      line << format_text(pending_request['title'], 91)
+      line << format_text(request.comments, 10)
+      line << format_text(request.title, 91)
       line
     end
-    if output.compact.empty?
-      puts "No pending requests for '#{source}'"
-      return
-    end
-    puts "Pending requests for '#{source}'"
+    output.compact!
+    puts "No pending requests for '#{source}'." and return if output.empty?
+    puts "Pending requests for '#{source}':"
     puts 'ID      Updated    Comments  Title'
-    puts output.compact
+    output.each { |line| puts line }
   end
 
 
@@ -241,8 +239,7 @@ class GitReview
     command = args.shift
     if command and self.respond_to?(command)
       @user, @repo = repo_info
-      return if @user.nil? or @repo.nil?
-      return unless configure_github_access
+      return unless @user && @repo && configure_github_access
       update unless command == 'clean'
       self.send command
     else
@@ -305,13 +302,13 @@ class GitReview
 
   # Get latest changes from GitHub.
   def update(state = 'open')
-    @current_requests = @github.pull_requests source_repo, state
-    repos = @current_requests.collect do |req|
-      repo = req['head']['repository']
-      "#{repo['owner']}/#{repo['name']}" unless repo.nil?
+    @current_requests = @github.pull_requests(source_repo, state)
+    repos = @current_requests.collect do |request|
+      repo = request.head.repository
+      "#{repo.owner}/#{repo.name}" if repo
     end
     repos.uniq.compact.each do |repo|
-      git_call("fetch git@github.com:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*")
+      git_call "fetch git@github.com:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*"
     end
   end
 

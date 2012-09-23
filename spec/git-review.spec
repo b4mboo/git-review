@@ -1,25 +1,29 @@
 $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'git-review'
 
+
 describe GitReview do
 
   before :each do
     # Silence output.
     GitReview.any_instance.stub(:puts)
-    # Stub external dependency @git_config (local file).
-    GitReview.any_instance.stub(:git_config).and_return(
-      'github.login' => 'default_login',
-      'github.password' => 'default_password',
-      'remote.origin.url' => 'git@github.com:user/project.git'
-    )
-    # Stub external dependency @github (remote server).
-    @github = mock 'GitHub'
-    Octokit::Client.stub(:new).and_return(@github)
-    @github.stub(:login)
   end
 
 
   describe 'without any parameters' do
+
+    before :each do
+      # Stub external dependency @git_config (local file).
+      GitReview.any_instance.stub(:git_config).and_return(
+          'github.login' => 'default_login',
+          'github.password' => 'default_password',
+          'remote.origin.url' => 'git@github.com:user/project.git'
+      )
+      # Stub external dependency @github (remote server).
+      @github = mock :github
+      Octokit::Client.stub(:new).and_return(@github)
+      @github.stub(:login)
+    end
 
     it 'shows the help page' do
       GitReview.any_instance.should_receive(:puts).with('Usage: git review <command>')
@@ -31,7 +35,46 @@ describe GitReview do
 
   describe "'list'" do
 
-    it 'shows all open pull requests'
+    subject { GitReview.new }
+    let(:request) { mock :request }
+    let(:requests) { [request] }
+    let(:head_sha) { 'head_sha' }
+
+    it 'shows all open pull requests' do
+      subject.instance_variable_set(:@current_requests, [request])
+      request.stub_chain(:head, :sha).and_return(head_sha)
+      subject.should_receive(:merged?).with(head_sha).and_return(false)
+      request.should_receive(:number).and_return(1)
+      request.should_receive(:updated_at).and_return(Time.now.to_s)
+      request.should_receive(:comments).and_return(23)
+      request.should_receive(:title).and_return('fake')
+      subject.should_receive(:puts).with(include 'Pending requests')
+      subject.should_receive(:puts).with(include 'fake')
+      subject.list
+    end
+
+    it 'allows for an optional argument --reverse' do
+      subject.instance_variable_set(:@args, ['--reverse'])
+      subject.instance_variable_set(:@current_requests, requests)
+      requests.should_receive :reverse!
+      requests.should_receive(:collect).and_return([])
+      subject.should_receive(:puts).with(include 'No pending requests')
+      subject.list
+    end
+
+    it 'respects local changes when determining whether requests are merged' do
+      subject.instance_variable_set(:@current_requests, [request])
+      request.stub_chain(:head, :sha).and_return(head_sha)
+      subject.should_receive(:merged?).with(head_sha).and_return(true)
+      subject.should_receive(:puts).with(include 'No pending requests')
+      subject.list
+    end
+
+    it 'knows when there are no open pull requests' do
+      subject.instance_variable_set(:@current_requests, [])
+      subject.should_receive(:puts).with(include 'No pending requests')
+      subject.list
+    end
 
   end
 
