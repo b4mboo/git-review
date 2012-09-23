@@ -53,7 +53,7 @@ describe GitReview do
       subject.list
     end
 
-    it 'allows for an optional argument --reverse' do
+    it 'allows for an optional argument --reverse to sort the output' do
       subject.instance_variable_set(:@args, ['--reverse'])
       subject.instance_variable_set(:@current_requests, [request, request])
       request.stub_chain(:head, :sha).and_return(head_sha)
