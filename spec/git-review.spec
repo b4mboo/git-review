@@ -7,23 +7,22 @@ describe GitReview do
   before :each do
     # Silence output.
     GitReview.any_instance.stub(:puts)
+
+    # Let's just see which of those stubs we really need in the end.
+    # # Stub external dependency @git_config (local file).
+    # GitReview.any_instance.stub(:git_config).and_return(
+    #   'github.login' => 'default_login',
+    #   'github.password' => 'default_password',
+    #   'remote.origin.url' => 'git@github.com:user/project.git'
+    # )
+    # # Stub external dependency @github (remote server).
+    # @github = mock :github
+    # Octokit::Client.stub(:new).and_return(@github)
+    # @github.stub(:login)
   end
 
 
   describe 'without any parameters' do
-
-    before :each do
-      # Stub external dependency @git_config (local file).
-      GitReview.any_instance.stub(:git_config).and_return(
-          'github.login' => 'default_login',
-          'github.password' => 'default_password',
-          'remote.origin.url' => 'git@github.com:user/project.git'
-      )
-      # Stub external dependency @github (remote server).
-      @github = mock :github
-      Octokit::Client.stub(:new).and_return(@github)
-      @github.stub(:login)
-    end
 
     it 'shows the help page' do
       GitReview.any_instance.should_receive(:puts).with('Usage: git review <command>')
@@ -87,7 +86,9 @@ describe GitReview do
 
   describe "'show'" do
 
-    it 'requires an ID as additional parameter'
+    it 'requires an ID as additional parameter' do
+
+    end
 
     it 'shows a single pull request'
 
