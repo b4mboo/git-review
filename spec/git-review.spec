@@ -47,6 +47,7 @@ describe GitReview do
       request.should_receive(:comments).twice.and_return(23)
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
+      subject.should_not_receive(:puts).with(include 'No pending requests')
       subject.should_receive(:puts).with(include 'first').ordered
       subject.should_receive(:puts).with(include 'second').ordered
       subject.list
@@ -62,6 +63,7 @@ describe GitReview do
       request.should_receive(:comments).twice.and_return(23)
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
+      subject.should_not_receive(:puts).with(include 'No pending requests')
       subject.should_receive(:puts).with(include 'second').ordered
       subject.should_receive(:puts).with(include 'first').ordered
       subject.list
@@ -72,12 +74,14 @@ describe GitReview do
       request.stub_chain(:head, :sha).and_return(head_sha)
       subject.should_receive(:merged?).with(head_sha).and_return(true)
       subject.should_receive(:puts).with(include 'No pending requests')
+      subject.should_not_receive(:puts).with(include 'Pending requests')
       subject.list
     end
 
     it 'knows when there are no open pull requests' do
       subject.instance_variable_set(:@current_requests, [])
       subject.should_receive(:puts).with(include 'No pending requests')
+      subject.should_not_receive(:puts).with(include 'Pending requests')
       subject.list
     end
 

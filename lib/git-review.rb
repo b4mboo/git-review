@@ -28,11 +28,14 @@ class GitReview
       line
     end
     output.compact!
-    puts "No pending requests for '#{source}'." and return if output.empty?
-    puts "Pending requests for '#{source}':"
-    puts 'ID      Updated    Comments  Title'
-    output.reverse! if @args.shift == '--reverse'
-    output.each { |line| puts line }
+    if output.empty?
+      puts "No pending requests for '#{source}'."
+    else
+      puts "Pending requests for '#{source}':"
+      puts 'ID      Updated    Comments  Title'
+      output.reverse! if @args.shift == '--reverse'
+      output.each { |line| puts line }
+    end
   end
 
 
