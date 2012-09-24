@@ -2,7 +2,7 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name     = "git-review"
-  s.version  = '1.1.2'
+  s.version  = '1.1.3'
   s.date     = Time.now.strftime('%F')
   s.summary  = "facilitates GitHub code reviews"
   s.homepage = "http://github.com/b4mboo/git-review"
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.description = "Manage review workflow for projects hosted on GitHub (using pull requests)."
 
   s.add_runtime_dependency 'launchy'
-  s.add_runtime_dependency 'octokit', '~>1.7.0'
+  s.add_runtime_dependency 'octokit'
   s.add_runtime_dependency 'yajl-ruby'
   s.add_runtime_dependency 'rspec'
 end
