@@ -4,21 +4,21 @@ require 'git-review'
 
 describe GitReview do
 
+
   before :each do
     # Silence output.
     GitReview.any_instance.stub(:puts)
 
-    # Let's just see which of those stubs we really need in the end.
-    # # Stub external dependency @git_config (local file).
-    # GitReview.any_instance.stub(:git_config).and_return(
-    #   'github.login' => 'default_login',
-    #   'github.password' => 'default_password',
-    #   'remote.origin.url' => 'git@github.com:user/project.git'
-    # )
-    # # Stub external dependency @github (remote server).
-    # @github = mock :github
-    # Octokit::Client.stub(:new).and_return(@github)
-    # @github.stub(:login)
+    ## Stub external dependency .git/config (local file).
+    #GitReview.any_instance.stub(:git_call).
+    #  with('config --list', false).and_return(
+    #  'github.login=default_login\n' +
+    #  'github.password=default_password\n' +
+    #  'remote.origin.url=git@github.com:user/project.git'
+    #)
+    ## Stub external dependency @github (remote server).
+    #Octokit::Client.stub(:new).and_return(github)
+    #github.stub(:login)
   end
 
 
@@ -35,16 +35,23 @@ describe GitReview do
   describe "'list'" do
 
     subject { GitReview.new }
+    let(:github) { mock :github }
     let(:request) { mock :request }
     let(:head_sha) { 'head_sha' }
 
+    before :each do
+      subject.instance_variable_set(:@github, github)
+    end
+
     it 'shows all open pull requests' do
       subject.instance_variable_set(:@current_requests, [request, request])
+      github.should_receive(:pull_request).twice.and_return(request)
       request.stub_chain(:head, :sha).and_return(head_sha)
       subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
-      request.should_receive(:number).and_return(1, 2)
+      request.should_receive(:number).exactly(4).times.and_return(1, 1, 2, 2)
       request.should_receive(:updated_at).twice.and_return(Time.now.to_s)
-      request.should_receive(:comments).twice.and_return(23)
+      request.should_receive(:comments).twice.times.and_return(23)
+      request.should_receive(:review_comments).twice.times.and_return(23)
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
       subject.should_not_receive(:puts).with(include 'No pending requests')
@@ -56,11 +63,13 @@ describe GitReview do
     it 'allows for an optional argument --reverse to sort the output' do
       subject.instance_variable_set(:@args, ['--reverse'])
       subject.instance_variable_set(:@current_requests, [request, request])
+      github.should_receive(:pull_request).twice.and_return(request)
       request.stub_chain(:head, :sha).and_return(head_sha)
       subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
-      request.should_receive(:number).and_return(1, 2)
+      request.should_receive(:number).exactly(4).times.and_return(1, 1, 2, 2)
       request.should_receive(:updated_at).twice.and_return(Time.now.to_s)
       request.should_receive(:comments).twice.and_return(23)
+      request.should_receive(:review_comments).twice.times.and_return(23)
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
       subject.should_not_receive(:puts).with(include 'No pending requests')
@@ -71,6 +80,8 @@ describe GitReview do
 
     it 'respects local changes when determining whether requests are merged' do
       subject.instance_variable_set(:@current_requests, [request])
+      request.should_receive(:number).and_return(1)
+      github.should_receive(:pull_request).and_return(request)
       request.stub_chain(:head, :sha).and_return(head_sha)
       subject.should_receive(:merged?).with(head_sha).and_return(true)
       subject.should_receive(:puts).with(include 'No pending requests')

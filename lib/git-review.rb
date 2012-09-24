@@ -17,13 +17,14 @@ class GitReview
   # List all pending requests.
   def list
     output = @current_requests.collect do |request|
+      details = @github.pull_request(source_repo, request.number)
       # Find only pending (= unmerged) requests and output summary.
       # Explicitly look for local changes (that GitHub does not yet know about).
       next if merged?(request.head.sha)
       line = format_text(request.number, 8)
       date_string = format_time(request.updated_at)
       line << format_text(date_string, 11)
-      line << format_text(request.comments, 10)
+      line << format_text(details.comments + details.review_comments, 10)
       line << format_text(request.title, 91)
       line
     end
