@@ -4,19 +4,24 @@ require 'git-review'
 
 describe GitReview do
 
+  subject { GitReview.new }
+  let(:github) { mock :github }
+  let(:request) { mock :request }
+  let(:head_sha) { 'head_sha' }
 
   before :each do
     # Silence output.
     GitReview.any_instance.stub(:puts)
 
     ## Stub external dependency .git/config (local file).
-    #GitReview.any_instance.stub(:git_call).
+    #subject.stub(:git_call).
     #  with('config --list', false).and_return(
     #  'github.login=default_login\n' +
     #  'github.password=default_password\n' +
     #  'remote.origin.url=git@github.com:user/project.git'
     #)
-    ## Stub external dependency @github (remote server).
+    # Stub external dependency @github (remote server).
+    subject.instance_variable_set(:@github, github)
     #Octokit::Client.stub(:new).and_return(github)
     #github.stub(:login)
   end
@@ -33,15 +38,6 @@ describe GitReview do
 
 
   describe "'list'" do
-
-    subject { GitReview.new }
-    let(:github) { mock :github }
-    let(:request) { mock :request }
-    let(:head_sha) { 'head_sha' }
-
-    before :each do
-      subject.instance_variable_set(:@github, github)
-    end
 
     it 'shows all open pull requests' do
       subject.instance_variable_set(:@current_requests, [request, request])
@@ -102,7 +98,8 @@ describe GitReview do
   describe "'show'" do
 
     it 'requires an ID as additional parameter' do
-
+      subject.should_receive(:puts).with('Please specify a valid ID.')
+      subject.show
     end
 
     it 'shows a single pull request'
@@ -114,7 +111,10 @@ describe GitReview do
 
   describe "'browse'" do
 
-    it 'requires an ID as additional parameter'
+    it 'requires an ID as additional parameter' do
+      subject.should_receive(:puts).with('Please specify a valid ID.')
+      subject.browse
+    end
 
     it 'opens the pull request\'s page on GitHub in a browser'
 
@@ -123,7 +123,10 @@ describe GitReview do
 
   describe "'checkout'" do
 
-    it 'requires an ID as additional parameter'
+    it 'requires an ID as additional parameter' do
+      subject.should_receive(:puts).with('Please specify a valid ID.')
+      subject.checkout
+    end
 
     it 'creates a headless state in the local git repo that holds the request\'s code'
 
@@ -134,7 +137,10 @@ describe GitReview do
 
   describe "'approve'" do
 
-    it 'requires an ID as additional parameter'
+    it 'requires an ID as additional parameter' do
+      subject.should_receive(:puts).with('Please specify a valid ID.')
+      subject.approve
+    end
 
     it 'posts an approving comment in your name to the request\'s page'
 
@@ -143,7 +149,10 @@ describe GitReview do
 
   describe "'merge'" do
 
-    it 'requires an ID as additional parameter'
+    it 'requires an ID as additional parameter' do
+      subject.should_receive(:puts).with('Please specify a valid ID.')
+      subject.merge
+    end
 
     it 'merges the request with your current branch'
 
@@ -152,7 +161,10 @@ describe GitReview do
 
   describe "'close'" do
 
-    it 'requires an ID as additional parameter'
+    it 'requires an ID as additional parameter' do
+      subject.should_receive(:puts).with('Please specify a valid ID.')
+      subject.close
+    end
 
     it 'closes the request'
 
@@ -187,7 +199,14 @@ describe GitReview do
 
   describe "'clean'" do
 
-    it 'requires either an ID or the additional parameter --all'
+    before :each do
+      subject.stub(:git_call).with('remote prune origin')
+    end
+
+    it 'requires either an ID or the additional parameter --all' do
+      subject.should_receive(:puts).with(include('either an ID or the option "--all"'))
+      subject.clean
+    end
 
     it 'removes obsolete remote branches with review prefix'
 

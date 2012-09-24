@@ -202,7 +202,7 @@ class GitReview
   # Deletes obsolete branches (left over from already closed requests).
   def clean
     # Pruning is needed to remove already deleted branches from your local track.
-    git_call "remote prune origin"
+    git_call 'remote prune origin'
     # Determine strategy to clean.
     case @args.size
       when 0
