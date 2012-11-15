@@ -189,7 +189,8 @@ class GitReview
       update
       potential_new_request = @current_requests.find { |req| req['title'] == title }
       if potential_new_request and potential_new_request['number'] > last_request_id
-        puts "Successfully created new request ##{potential_new_request['number']}."
+        puts "Successfully created new request ##{potential_new_request['number']}" \
+             "(#{File.join("https://github.com", target_repo, "pull", potential_new_request['number'].to_s)})."
       end
       # Return to the user's original branch.
       git_call "checkout #{@original_branch}"
