@@ -4,6 +4,9 @@ require 'octokit'
 require 'launchy'
 # Time is used to parse time strings from git back into Time objects.
 require 'time'
+# tempfile is used to create a temporary file containing PR's title and body.
+# This file is going to be edited by the system editor.
+require 'tempfile'
 
 # A custom error to raise, if we know we can't go on.
 class UnprocessableState < StandardError
@@ -179,9 +182,7 @@ class GitReview
       git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
       # Gather information.
       last_request_id = @current_requests.collect { |req| req['number'] }.sort.last.to_i
-      title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
-      # TODO: Insert commit messages (that are not yet in master) into body (since this will be displayed inside the mail that is sent out).
-      body = 'Please review the following changes:'
+      title, body = create_title_and_body(target_branch)
       # Create the actual pull request.
       @github.create_pull_request target_repo, target_branch, source_branch, title, body
       # Switch back to target_branch and check for success.
@@ -592,6 +593,41 @@ class GitReview
   # Returns a boolean stating whether the last issued system call was successful.
   def last_command_successful?
     $?.exitstatus == 0
+  end
+
+  # Returns an array where the 1st item is the title and the 2nd one is the body
+  def create_title_and_body(target_branch)
+    commits = git_call("log --format='%H' HEAD...#{target_branch}").lines.count
+    puts "commits: #{commits}"
+    if commits == 1
+      # we can create a really specific title and body
+      title = git_call("log --format='%s' HEAD...#{target_branch}").chomp
+      body  = git_call("log --format='%b' HEAD...#{target_branch}").chomp
+    else
+      title = "[Review] Request from '#{git_config['github.login']}' @ '#{source}'"
+      body  = "Please review the following changes:\n"
+      body += git_call("log --oneline HEAD...#{target_branch}").lines.map{|l| "  * #{l.chomp}"}.join("\n")
+    end
+
+    tmpfile = Tempfile.new('git-review')
+    tmpfile.write(title + "\n\n" + body)
+    tmpfile.flush
+    editor = ENV['TERM_EDITOR'] || ENV['EDITOR']
+    warn "Please set $EDITOR or $TERM_EDITOR in your .bash_profile." unless editor
+
+    system("#{editor || 'open'} #{tmpfile.path}")
+
+    tmpfile.rewind
+    lines = tmpfile.read.lines.to_a
+    puts lines.inspect
+    title = lines.shift.chomp
+    lines.shift if lines[0].chomp.empty?
+
+    body = lines.join
+
+    tmpfile.unlink
+
+    [title, body]
   end
 
 end
