@@ -7,6 +7,11 @@ require 'time'
 # tempfile is used to create a temporary file containing PR's title and body.
 # This file is going to be edited by the system editor.
 require 'tempfile'
+# This file provides the OAuthHelper module which is used to create a oauth token/
+require_relative 'oauth_helper'
+# Setting class
+require_relative 'settings'
+
 
 # A custom error to raise, if we know we can't go on.
 class UnprocessableState < StandardError
@@ -14,6 +19,7 @@ end
 
 
 class GitReview
+  include OAuthHelper
 
   ## COMMANDS ##
 
@@ -512,26 +518,21 @@ class GitReview
 
   # Uses Octokit to access GitHub.
   def configure_github_access
-    if git_config['github.login'] and git_config['github.password']
+    if Settings.instance.oauth_token
       @github = Octokit::Client.new(
-          :login => git_config['github.login'],
-          :password => git_config['github.password']
+        :login       => Settings.instance.username,
+        :oauth_token => Settings.instance.oauth_token
       )
-      true
       @github.login
     else
-      puts 'Please update your git config and provide your GitHub login and password.'
-      puts
-      puts '  git config --global github.login your_github_login_1234567890'
-      puts '  git config --global github.password your_github_password_1234567890'
-      puts
-      false
+      configure_oauth
+      configure_github_access
     end
   end
 
 
   def debug_mode
-    git_config['review.mode'] == 'debug'
+    Settings.instance.review_mode == 'debug'
   end
 
 
