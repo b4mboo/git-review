@@ -1,8 +1,11 @@
 require 'net/http'
 require 'net/https'
-require 'json'
+# Used to handle json data
+require 'yajl'
 # Required to hide password
 require 'io/console'
+# Required by yajl for decoding
+require 'stringio'
 # Used to retrieve hostname
 require 'socket'
 
@@ -37,10 +40,12 @@ module OAuthHelper
 
     req =Net::HTTP::Post.new(uri.request_uri)
     req.basic_auth username, password
-    req.body = {
-      "scopes" => ["repo"],
-      "note"   => description
-    }.to_json
+    req.body = Yajl::Encoder.encode(
+      {
+        "scopes" => ["repo"],
+        "note"   => description
+      }
+    )
 
     response = http.request req
 
@@ -48,7 +53,7 @@ module OAuthHelper
       warn "You provided the wrong username/password, please try again."
       configure_oauth(description)
     elsif response.code == '201'
-      parser_response      = JSON.parse(response.body)
+      parser_response      = Yajl::Parser.parse(response.body)
       settings             = Settings.instance
       settings.oauth_token = parser_response['token']
       settings.username    = username
