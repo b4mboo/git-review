@@ -1,6 +1,4 @@
-$:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
-require 'git-review'
-
+require 'spec_helper'
 
 describe GitReview do
 
@@ -44,7 +42,9 @@ describe GitReview do
   describe 'without any parameters' do
 
     it 'shows the help page' do
-      GitReview.any_instance.should_receive(:puts).with('Usage: git review <command>')
+      GitReview.any_instance.should_receive(:puts).with(
+        'Usage: git review <command>'
+      )
       GitReview.new
     end
 
@@ -54,7 +54,7 @@ describe GitReview do
   describe "'list'" do
 
     it 'shows all open pull requests' do
-      subject.instance_variable_set(:@current_requests, [request, request])
+      assume :@current_requests, [request, request]
       github.should_receive(:pull_request).twice.and_return(request)
       request.stub_chain(:head, :sha).and_return(head_sha)
       subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
@@ -71,8 +71,8 @@ describe GitReview do
     end
 
     it 'allows for an optional argument --reverse to sort the output' do
-      subject.instance_variable_set(:@args, ['--reverse'])
-      subject.instance_variable_set(:@current_requests, [request, request])
+      assume :@args, ['--reverse']
+      assume :@current_requests, [request, request]
       github.should_receive(:pull_request).twice.and_return(request)
       request.stub_chain(:head, :sha).and_return(head_sha)
       subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
@@ -89,7 +89,7 @@ describe GitReview do
     end
 
     it 'respects local changes when determining whether requests are merged' do
-      subject.instance_variable_set(:@current_requests, [request])
+      assume :@current_requests, [request]
       request.should_receive(:number).and_return(1)
       github.should_receive(:pull_request).and_return(request)
       request.stub_chain(:head, :sha).and_return(head_sha)
@@ -100,14 +100,14 @@ describe GitReview do
     end
 
     it 'knows when there are no open pull requests' do
-      subject.instance_variable_set(:@current_requests, [])
+      assume :@current_requests, []
+      subject.instance_variable_get(:@current_requests).should be_empty
       subject.should_receive(:puts).with(include 'No pending requests')
       subject.should_not_receive(:puts).with(include 'Pending requests')
       subject.list
     end
 
   end
-
 
   describe "'show'" do
 
@@ -117,8 +117,9 @@ describe GitReview do
     end
 
     it 'shows a single pull request' do
-      subject.instance_variable_set(:@current_requests, [mock_request])
-      subject.instance_variable_set(:@args, [mock_id])
+      assume :@args, [mock_id]
+      assume :@current_requests, [mock_request]
+      # assert the title gets printed.
       subject.should_receive(:puts).with(title)
       subject.show
     end
