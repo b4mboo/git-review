@@ -420,10 +420,10 @@ class GitReview
 
   # Show current discussion for @current_request.
   def discussion
-    request = @github.pull_request source_repo, @current_request['number']
     # FIXME:
     puts 'This needs to be updated to work with API v3.'
     return
+    request = @github.pull_request source_repo, @current_request['number']
     result = request['discussion'].collect do |entry|
       user = entry['user'] || entry['author']
       name = user['login'].empty? ? user['name'] : user['login']
