@@ -8,6 +8,20 @@ describe GitReview do
   let(:github) { mock :github }
   let(:request) { mock :request }
   let(:head_sha) { 'head_sha' }
+  let(:title) { 'some title' }
+  let(:mock_id) { 42 }
+  let(:mock_sha) { 'fake' }
+  let(:mock_request) {
+    {
+      'number' => mock_id,
+      'state'=> 'open',
+      'title' => title,
+      'updated_at' => Time.now.to_s,
+      'head' => {
+        'sha' => mock_sha
+      }
+    }
+  }
 
   before :each do
     # Silence output.
@@ -102,7 +116,12 @@ describe GitReview do
       subject.show
     end
 
-    it 'shows a single pull request'
+    it 'shows a single pull request' do
+      subject.instance_variable_set(:@current_requests, [mock_request])
+      subject.instance_variable_set(:@args, [mock_id])
+      subject.should_receive(:puts).with(title)
+      subject.show
+    end
 
     it 'shows a pull request\'s full diff if the optional parameter --full is appended'
 
