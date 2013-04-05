@@ -6,6 +6,14 @@ def assume(name, value)
   subject.instance_variable_set name, value
 end
 
+def assume_on_github(request)
+  github.stub(:pull_request).with(source_repo, request.number).and_return(request)
+end
+
+def assume_merged(value)
+  subject.stub(:merged?).with(head_sha).and_return(value)
+end
+
 # Adds given item(s) to an instance variable that holds an array.
 # NOTE: Not sure if I will still need this. I'll keep it around for the moment.
 def add_to(collection, new_item)

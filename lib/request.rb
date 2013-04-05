@@ -4,7 +4,9 @@ class Request
                 :state,
                 :title,
                 :updated_at,
-                :sha
+                :sha,
+                :comments,
+                :review_comments
 
   # Allow to set instance variables on initialization.
   def initialize(attributes_hash = {})
