@@ -4,21 +4,18 @@ describe GitReview do
 
   subject { GitReview.new }
   let(:github) { mock :github }
-  let(:request) { mock :request }
+  let(:source_repo) { '/' }
   let(:head_sha) { 'head_sha' }
   let(:title) { 'some title' }
-  let(:mock_id) { 42 }
-  let(:mock_sha) { 'fake' }
-  let(:mock_request) {
-    {
-      'number' => mock_id,
-      'state'=> 'open',
-      'title' => title,
-      'updated_at' => Time.now.to_s,
-      'head' => {
-        'sha' => mock_sha
-      }
-    }
+  let(:request_id) { 42 }
+  let(:request) {
+    Request.new(
+      :number => request_id,
+      :state => 'open',
+      :title => title,
+      :updated_at => Time.now.to_s,
+      :sha => head_sha
+    )
   }
 
   before :each do
@@ -55,10 +52,8 @@ describe GitReview do
 
     it 'shows all open pull requests' do
       assume :@current_requests, [request, request]
-      github.should_receive(:pull_request).twice.and_return(request)
-      request.stub_chain(:head, :sha).and_return(head_sha)
+      github.should_receive(:pull_request).with(source_repo, request_id).twice.and_return(request)
       subject.should_receive(:merged?).with(head_sha).twice.and_return(false)
-      request.should_receive(:number).exactly(4).times.and_return(1, 1, 2, 2)
       request.should_receive(:updated_at).twice.and_return(Time.now.to_s)
       request.should_receive(:comments).twice.times.and_return(23)
       request.should_receive(:review_comments).twice.times.and_return(23)
@@ -117,8 +112,8 @@ describe GitReview do
     end
 
     it 'shows a single pull request' do
-      assume :@args, [mock_id]
-      assume :@current_requests, [mock_request]
+      assume :@args, [request_id]
+      assume :@current_requests, [request]
       # assert the title gets printed.
       subject.should_receive(:puts).with(title)
       subject.show

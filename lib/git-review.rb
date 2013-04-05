@@ -11,7 +11,8 @@ require 'tempfile'
 require_relative 'oauth_helper'
 # Setting class
 require_relative 'settings'
-
+# Request object to hold all request related logic.
+require_relative 'request'
 
 # A custom error to raise, if we know we can't go on.
 class UnprocessableState < StandardError
