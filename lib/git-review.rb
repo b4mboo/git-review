@@ -78,7 +78,7 @@ class GitReview
 
   # Open a browser window and review a specified request.
   def browse
-    Launchy.open(@current_request['html_url']) if request_exists?
+    Launchy.open @current_request.html_url if request_exists?
   end
 
 

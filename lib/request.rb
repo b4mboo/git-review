@@ -6,6 +6,7 @@ class Request
                 :title,
                 :body,
                 :state,
+                :html_url,
                 :updated_at,
                 :comments,
                 :review_comments

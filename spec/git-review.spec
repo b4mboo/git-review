@@ -6,19 +6,22 @@ describe GitReview do
 
   let(:github) { mock :github }
   let(:source_repo) { '/' }
-  let(:head_sha) { 'head_sha' }
-  let(:title) { 'some title' }
-  let(:label) { 'some label' }
   let(:request_id) { 42 }
+  let(:request_url) { 'some/path/to/github' }
+  let(:head_sha) { 'head_sha' }
+  let(:head_label) { 'some label' }
+  let(:title) { 'some title' }
+  let(:body) { 'some body' }
 
   let(:request) {
     request = Request.new(
       :number => request_id,
       :state => 'open',
       :title => title,
+      :html_url => request_url,
       :updated_at => Time.now.to_s,
       :sha => head_sha,
-      :label => label,
+      :label => head_label,
       :comments => 0,
       :review_comments => 0
     )
@@ -140,7 +143,12 @@ describe GitReview do
       subject.browse
     end
 
-    it 'opens the pull request\'s page on GitHub in a browser'
+    it 'opens the pull request\'s page on GitHub in a browser' do
+      assume :@args, [request_id]
+      assume :@current_requests, [request]
+      Launchy.should_receive(:open).with(request_url)
+      subject.browse
+    end
 
   end
 
