@@ -160,9 +160,11 @@ describe GitReview do
       subject.checkout
     end
 
-    it 'creates a headless state in the local git repo that holds the request\'s code'
+    it 'creates a headless state in the local repo with the request\'s code' do
 
-    it 'creates a local branch with the pull request\'s code if the optional parameter --branch is appended'
+    end
+
+    it 'creates a local branch if the optional parameter --branch is appended'
 
   end
 
@@ -218,13 +220,13 @@ describe GitReview do
 
   describe "'create'" do
 
-    it 'calls \'prepare\' unless it is called from a branch other than master'
+    it 'calls \'prepare\' if it is called from master'
 
     it 'pushes the commits to a remote branch'
 
     it 'creates a pull request from that feature branch to master'
 
-    it 'lets the user return to the branch she was working on before the call'
+    it 'lets the user return to the branch she was working on before'
 
   end
 
@@ -236,7 +238,9 @@ describe GitReview do
     end
 
     it 'requires either an ID or the additional parameter --all' do
-      subject.should_receive(:puts).with(include('either an ID or the option "--all"'))
+      subject.should_receive(:puts).with(
+        include('either an ID or the option "--all"')
+      )
       subject.clean
     end
 
@@ -244,7 +248,7 @@ describe GitReview do
 
     it 'removes obsolete local branches with review prefix'
 
-    it 'takes the optional parameter --force to override protection of unmerged changes'
+    it 'needs the option \'--force\' to delete unmerged changes'
 
   end
 
