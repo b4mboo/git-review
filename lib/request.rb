@@ -2,6 +2,7 @@ class Request
 
   attr_accessor :number,
                 :sha,
+                :ref,
                 :label,
                 :title,
                 :body,

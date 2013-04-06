@@ -91,7 +91,7 @@ class GitReview
     puts
     puts '  git checkout master'
     puts
-    git_call "checkout #{create_local_branch}#{@current_request['head']['ref']}"
+    git_call "checkout #{create_local_branch}#{@current_request.head.ref}"
   end
 
 

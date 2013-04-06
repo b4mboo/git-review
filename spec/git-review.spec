@@ -9,7 +9,8 @@ describe GitReview do
   let(:request_id) { 42 }
   let(:request_url) { 'some/path/to/github' }
   let(:head_sha) { 'head_sha' }
-  let(:head_label) { 'some label' }
+  let(:head_ref) { 'head_ref' }
+  let(:head_label) { 'head_label' }
   let(:title) { 'some title' }
   let(:body) { 'some body' }
 
@@ -21,6 +22,7 @@ describe GitReview do
       :html_url => request_url,
       :updated_at => Time.now.to_s,
       :sha => head_sha,
+      :ref => head_ref,
       :label => head_label,
       :comments => 0,
       :review_comments => 0
@@ -74,8 +76,8 @@ describe GitReview do
     end
 
     it 'allows for an optional argument --reverse to sort the output' do
-      assume :@args, ['--reverse']
       assume :@current_requests, [request, request]
+      assume :@args, ['--reverse']
       assume_merged false
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
@@ -112,8 +114,7 @@ describe GitReview do
     end
 
     it 'shows a single pull request' do
-      assume :@args, [request_id]
-      assume :@current_requests, [request]
+      assume_a_valid_request_id
       subject.should_receive(:puts).with(title)
       # Ensure the request's stats are shown.
       subject.should_receive(:git_call).with(
@@ -123,8 +124,8 @@ describe GitReview do
     end
 
     it 'shows a pull request\'s diff if a parameter \'--full\' is appended' do
-      assume :@args, [request_id, '--full']
-      assume :@current_requests, [request]
+      assume_a_valid_request_id
+      assume_added_to :@args, '--full'
       subject.should_receive(:puts).with(title)
       # Ensure the request's full diff is shown.
       subject.should_receive(:git_call).with(
@@ -144,8 +145,7 @@ describe GitReview do
     end
 
     it 'opens the pull request\'s page on GitHub in a browser' do
-      assume :@args, [request_id]
-      assume :@current_requests, [request]
+      assume_a_valid_request_id
       Launchy.should_receive(:open).with(request_url)
       subject.browse
     end
@@ -161,10 +161,17 @@ describe GitReview do
     end
 
     it 'creates a headless state in the local repo with the request\'s code' do
-
+      assume_a_valid_request_id
+      subject.should_receive(:git_call).with("checkout origin/#{head_ref}")
+      subject.checkout
     end
 
-    it 'creates a local branch if the optional parameter --branch is appended'
+    it 'creates a local branch if the optional parameter --branch is appended' do
+      assume_a_valid_request_id
+      assume_added_to :@args, '--branch'
+      subject.should_receive(:git_call).with("checkout #{head_ref}")
+      subject.checkout
+    end
 
   end
 
