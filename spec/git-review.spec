@@ -108,12 +108,24 @@ describe GitReview do
     it 'shows a single pull request' do
       assume :@args, [request_id]
       assume :@current_requests, [request]
-      # assert the title gets printed.
       subject.should_receive(:puts).with(title)
+      # Ensure the request's stats are shown.
+      subject.should_receive(:git_call).with(
+        "diff --color=always --stat HEAD...#{head_sha}"
+      )
       subject.show
     end
 
-    it 'shows a pull request\'s full diff if the optional parameter --full is appended'
+    it 'shows a pull request\'s diff if a parameter \'--full\' is appended' do
+      assume :@args, [request_id, '--full']
+      assume :@current_requests, [request]
+      subject.should_receive(:puts).with(title)
+      # Ensure the request's full diff is shown.
+      subject.should_receive(:git_call).with(
+        "diff --color=always HEAD...#{head_sha}"
+      )
+      subject.show
+    end
 
   end
 
