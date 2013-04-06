@@ -53,22 +53,26 @@ class GitReview
   # Show details for a single request.
   def show
     return unless request_exists?
+    # Determine whether to show full diff or just stats.
     option = @args.shift == '--full' ? '' : '--stat '
-    sha = @current_request['head']['sha']
-    puts "ID        : #{@current_request['number']}"
-    puts "Label     : #{@current_request['head']['label']}"
-    puts "Updated   : #{format_time(@current_request['updated_at'])}"
-    puts "Comments  : #{@current_request['comments']}"
+    diff = "diff --color=always #{option}HEAD...#{@current_request.head.sha}"
+    # TODO: Move to comment calculations to request class.
+    comment_count = @current_request.comments + @current_request.review_comments
+    puts 'ID        : ' + @current_request.number.to_s
+    puts 'Label     : ' + @current_request.head.label
+    puts 'Updated   : ' + format_time(@current_request.updated_at)
+    puts 'Comments  : ' + comment_count.to_s
     puts
-    puts @current_request['title']
+    puts @current_request.title
     puts
-    puts @current_request['body']
+    puts @current_request.body
     puts
-    puts git_call("diff --color=always #{option}HEAD...#{sha}")
-    puts
-    puts "Progress  :"
-    puts
-    discussion
+    puts git_call diff
+    # FIXME: Update discussion output to work with APIv3.
+    # puts
+    # puts "Progress  :"
+    # puts
+    # discussion
   end
 
 

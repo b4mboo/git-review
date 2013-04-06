@@ -8,6 +8,7 @@ describe GitReview do
   let(:source_repo) { '/' }
   let(:head_sha) { 'head_sha' }
   let(:title) { 'some title' }
+  let(:label) { 'some label' }
   let(:request_id) { 42 }
 
   let(:request) {
@@ -17,12 +18,14 @@ describe GitReview do
       :title => title,
       :updated_at => Time.now.to_s,
       :sha => head_sha,
+      :label => label,
       :comments => 0,
       :review_comments => 0
     )
     assume_on_github request
     request
   }
+
 
   before :each do
     # Silence any output during test runs.

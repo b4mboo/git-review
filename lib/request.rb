@@ -1,10 +1,12 @@
 class Request
 
   attr_accessor :number,
-                :state,
-                :title,
-                :updated_at,
                 :sha,
+                :label,
+                :title,
+                :body,
+                :state,
+                :updated_at,
                 :comments,
                 :review_comments
 
