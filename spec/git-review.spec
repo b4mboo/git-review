@@ -183,7 +183,25 @@ describe GitReview do
       subject.approve
     end
 
-    it 'posts an approving comment in your name to the request\'s page'
+    it 'posts an approving comment in your name to the request\'s page' do
+      assume_a_valid_request_id
+      comment = 'Reviewed and approved.'
+      github.should_receive(:add_comment)
+        .with(source_repo, request_id, comment)
+        .and_return(:body => comment)
+      subject.should_receive(:puts).with(include 'Successfully')
+      subject.approve
+    end
+
+    it 'outputs any errors that might occur when trying to post a comment' do
+      assume_a_valid_request_id
+      message = 'fail'
+      github.should_receive(:add_comment)
+      .with(source_repo, request_id, 'Reviewed and approved.')
+      .and_return(:body => nil, :message => message)
+      subject.should_receive(:puts).with(include message)
+      subject.approve
+    end
 
   end
 

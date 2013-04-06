@@ -95,6 +95,20 @@ class GitReview
   end
 
 
+  # Add an approving comment to the request.
+  def approve
+    return unless request_exists?
+    # TODO: Make this configurable.
+    comment = 'Reviewed and approved.'
+    response = @github.add_comment source_repo, @current_request.number, comment
+    if response[:body] == comment
+      puts 'Successfully approved request.'
+    else
+      puts response[:message]
+    end
+  end
+
+
   # Accept a specified request by merging it into master.
   def merge
     return unless request_exists?
@@ -122,19 +136,6 @@ class GitReview
     puts "  git #{exec_cmd}"
     puts
     puts git_call(exec_cmd)
-  end
-
-
-  # Add an approving comment to the request.
-  def approve
-    return unless request_exists?
-    comment = 'Reviewed and approved.'
-    response = @github.add_comment source_repo, @current_request['number'], comment
-    if response[:body] == comment
-      puts 'Successfully approved request.'
-    else
-      puts response[:message]
-    end
   end
 
 
