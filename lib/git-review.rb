@@ -178,14 +178,17 @@ class GitReview
       # Unless a branch name is already provided, ask for one.
       if (branch_name = @args.shift).nil?
         puts 'Please provide a name for the branch:'
-        branch_name = gets.chomp.gsub(/\W+/, '_').downcase
+        branch_name = gets.chomp
       end
+      sanitized_name = branch_name.gsub(/\W+/, '_').downcase
       # Create the new branch (as a copy of the current one).
-      @local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{branch_name}"
+      @local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{sanitized_name}"
       git_call "checkout -b #{@local_branch}"
+      # Have we reached the feature branch?
       if source_branch == @local_branch
         # Stash any uncommitted changes.
-        git_call('stash') if (save_uncommitted_changes = !git_call('diff HEAD').empty?)
+        save_uncommitted_changes = !git_call('diff HEAD').empty?
+        git_call('stash') if save_uncommitted_changes
         # Go back to master and get rid of pending commits (as these are now on the new branch).
         git_call "checkout #{target_branch}"
         git_call "reset --hard origin/#{target_branch}"
@@ -497,9 +500,9 @@ class GitReview
   end
 
 
-  # Returns a string that specifies the source branch.
+  # Returns a string that specifies the current source branch.
   def source_branch
-    git_call('branch').chomp!.match(/\*(.*)/)[0][2..-1]
+    git_call('branch').chomp.match(/\*(.*)/)[0][2..-1]
   end
 
 

@@ -14,6 +14,9 @@ describe GitReview do
   let(:head_repo) { 'path/to/repo' }
   let(:title) { 'some title' }
   let(:body) { 'some body' }
+  let(:feature_name) { 'some_name' }
+  let(:branch_name) { "review_#{Time.now.strftime("%y%m%d")}_#{feature_name}" }
+
 
   let(:request) {
     request = Request.new(
@@ -254,13 +257,46 @@ describe GitReview do
 
   describe "'prepare'" do
 
-    it 'creates a local branch with review prefix'
+    it 'creates a local branch with review prefix' do
+      assume_on_master
+      assume :@args, [feature_name]
+      subject.should_receive(:git_call).with("checkout -b #{branch_name}")
+      subject.prepare
+    end
 
-    it 'lets the user choose a name for the branch'
+    it 'lets the user choose a name for the branch' do
+      assume_on_master
+      subject.should_receive(:gets).and_return(feature_name)
+      subject.should_receive(:git_call).with("checkout -b #{branch_name}")
+      subject.prepare
+    end
 
-    it 'moves uncommitted changes to the new branch'
+    it 'sanitizes provided branch names' do
+      not_sanitized = 'wild stuff?'
+      sanitized = 'wild_stuff'
+      assume_on_master
+      assume :@args, [not_sanitized]
+      subject.should_receive(:git_call).with(include sanitized)
+      subject.prepare
+    end
 
-    it 'moves unpushed commits to the new branch'
+    it 'moves uncommitted changes to the new branch' do
+      assume_change_branches
+      assume :@args, [feature_name]
+      assume_uncommitted_changes true
+      subject.stub(:git_call).with(include 'reset --hard')
+      subject.should_receive(:git_call).with('stash')
+      subject.should_receive(:git_call).with('stash pop')
+      subject.prepare
+    end
+
+    it 'moves unpushed commits to the new branch' do
+      assume_change_branches
+      assume :@args, [feature_name]
+      assume_uncommitted_changes false
+      subject.should_receive(:git_call).with(include 'reset --hard')
+      subject.prepare
+    end
 
   end
 
