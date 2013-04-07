@@ -241,7 +241,13 @@ describe GitReview do
       subject.close
     end
 
-    it 'closes the request'
+    it 'closes the request' do
+      assume_a_valid_request_id
+      github.should_receive(:close_issue).with(source_repo, request_id)
+      github.should_receive(:pull_requests)
+        .with(source_repo, 'open').and_return([])
+      subject.close
+    end
 
   end
 

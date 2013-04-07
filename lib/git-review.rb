@@ -15,6 +15,7 @@ require_relative 'settings'
 require 'accessible'
 require 'nestable'
 require 'user'
+require 'repository'
 require 'commit'
 require 'request'
 
@@ -149,8 +150,10 @@ class GitReview
   # Close a specified request.
   def close
     return unless request_exists?
-    @github.close_issue source_repo, @current_request['number']
-    puts 'Successfully closed request.' unless request_exists?('open', @current_request['number'])
+    @github.close_issue source_repo, @current_request.number
+    unless request_exists?('open', @current_request.number)
+      puts 'Successfully closed request.'
+    end
   end
 
 

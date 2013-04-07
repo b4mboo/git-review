@@ -7,7 +7,7 @@ def assume(name, value)
 end
 
 def assume_on_github(request)
-  github.stub(:pull_request).with(source_repo, request.number).and_return(request)
+  github.stub(:pull_request).with(source_repo, request_id).and_return(request)
 end
 
 def assume_merged(value)
