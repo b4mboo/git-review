@@ -1,23 +1,32 @@
-# Octokit is used to access GitHub's API.
-require 'octokit'
-# Launchy is used in 'browse' to open a browser.
-require 'launchy'
-# Time is used to parse time strings from git back into Time objects.
-require 'time'
-# tempfile is used to create a temporary file containing PR's title and body.
-# This file is going to be edited by the system editor.
-require 'tempfile'
-# This file provides the OAuthHelper module which is used to create a oauth token/
-require_relative 'oauth_helper'
-# Setting class
-require_relative 'settings'
+## External dependencies
 
-require 'accessible'
-require 'nestable'
-require 'user'
-require 'repository'
-require 'commit'
-require 'request'
+# Provide access to GitHub's API.
+require 'octokit'
+# Open a browser in 'browse' command.
+require 'launchy'
+# Parse time strings from git back into Time objects.
+require 'time'
+# Use temporary files to allow editing a request's title and body.
+require 'tempfile'
+
+
+## Our own dependencies
+
+# Use oauth tokens for authentication with GitHub.
+require 'mixins/authenticable'
+# Allow indifferent access to attributes.
+require 'mixins/accessible'
+# Allow nested instances.
+require 'mixins/nestable'
+# Read and write settings from/to the filesytem.
+require 'settings'
+
+# Provide structure for our instances.
+require 'models/user'
+require 'models/repository'
+require 'models/commit'
+require 'models/request'
+
 
 # A custom error to raise, if we know we can't go on.
 class UnprocessableState < StandardError
@@ -25,7 +34,7 @@ end
 
 
 class GitReview
-  include OAuthHelper
+  include Authenticable
 
   ## COMMANDS ##
 
@@ -162,9 +171,9 @@ class GitReview
   def prepare
     # Remember original branch the user was currently working on.
     @original_branch = source_branch
-    # People should work on local branches, but especially for single commit changes,
-    # more often than not, they don't. Therefore we create a branch for them,
-    # to be able to use code review the way it is intended.
+    # People should work on local branches, but especially for single commit
+    # changes, more often than not, they don't. Therefore we create a branch for
+    # them, to be able to use code review the way it is intended.
     if @original_branch == target_branch
       # Unless a branch name is already provided, ask for one.
       if (branch_name = @args.shift).nil?

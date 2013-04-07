@@ -9,7 +9,7 @@ require 'stringio'
 # Used to retrieve hostname
 require 'socket'
 
-module OAuthHelper
+module Authenticable
   def configure_oauth(chosen_description = nil)
     puts "Requesting a OAuth token for git-review."
     puts "This procedure will grant access to your public and private repositories."
