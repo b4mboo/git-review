@@ -11,8 +11,10 @@ require 'tempfile'
 require_relative 'oauth_helper'
 # Setting class
 require_relative 'settings'
-# Request object to hold all request related logic.
-require_relative 'request'
+
+require 'accessible'
+require 'commit'
+require 'request'
 
 # A custom error to raise, if we know we can't go on.
 class UnprocessableState < StandardError
@@ -113,11 +115,12 @@ class GitReview
   def merge
     return unless request_exists?
     option = @args.shift
-    unless @current_request['head']['repo']
+    unless @current_request.head.repo
       # Someone deleted the source repo.
-      user = @current_request['head']['user']['login']
-      url = @current_request['patch_url']
-      puts "Sorry, #{user} deleted the source repository, git-review doesn't support this."
+      user = @current_request.head.user.login
+      url = @current_request.patch_url
+      puts "Sorry, #{user} deleted the source repository."
+      puts 'git-review doesn\'t support this.'
       puts 'Tell the contributor not to do this.'
       puts
       puts 'You can still manually patch your repo by running:'
@@ -126,11 +129,12 @@ class GitReview
       puts
       return false
     end
-    message = "Accept request ##{@current_request['number']} and merge changes into \"#{target}\""
-    exec_cmd = "merge #{option} -m '#{message}' #{@current_request['head']['sha']}"
+    message = "Accept request ##{@current_request.number}" +
+      " and merge changes into \"#{target}\""
+    exec_cmd = "merge #{option} -m '#{message}' #{@current_request.head.sha}"
     puts
     puts 'Request title:'
-    puts "  #{@current_request['title']}"
+    puts '  ' + @current_request.title
     puts
     puts 'Merge command:'
     puts "  git #{exec_cmd}"

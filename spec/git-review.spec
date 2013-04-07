@@ -21,9 +21,11 @@ describe GitReview do
       :title => title,
       :html_url => request_url,
       :updated_at => Time.now.to_s,
-      :sha => head_sha,
-      :ref => head_ref,
-      :label => head_label,
+      :head => {
+        :sha => head_sha,
+        :ref => head_ref,
+        :label => head_label,
+      },
       :comments => 0,
       :review_comments => 0
     )
