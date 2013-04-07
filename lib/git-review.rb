@@ -14,6 +14,7 @@ require_relative 'settings'
 
 require 'accessible'
 require 'nestable'
+require 'user'
 require 'commit'
 require 'request'
 
