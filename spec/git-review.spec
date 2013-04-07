@@ -11,6 +11,7 @@ describe GitReview do
   let(:head_sha) { 'head_sha' }
   let(:head_ref) { 'head_ref' }
   let(:head_label) { 'head_label' }
+  let(:head_repo) { 'path/to/repo' }
   let(:title) { 'some title' }
   let(:body) { 'some body' }
 
@@ -25,6 +26,7 @@ describe GitReview do
         :sha => head_sha,
         :ref => head_ref,
         :label => head_label,
+        :repo => head_repo
       },
       :comments => 0,
       :review_comments => 0
@@ -215,7 +217,19 @@ describe GitReview do
       subject.merge
     end
 
-    it 'merges the request with your current branch'
+    it 'checks whether the source repository still exists' do
+      assume_a_valid_request_id
+      request.head.repo = nil
+      subject.should_receive(:puts).with(include 'deleted the source repository')
+      subject.merge
+    end
+
+    it 'merges the request with your current branch' do
+      assume_a_valid_request_id
+      msg = "Accept request ##{request_id} and merge changes into \"//master\""
+      subject.should_receive(:git_call).with("merge  -m '#{msg}' #{head_sha}")
+      subject.merge
+    end
 
   end
 

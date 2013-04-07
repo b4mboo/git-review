@@ -116,6 +116,7 @@ class GitReview
   # Accept a specified request by merging it into master.
   def merge
     return unless request_exists?
+    # FIXME: What options are allowed here?
     option = @args.shift
     unless @current_request.head.repo
       # Someone deleted the source repo.
@@ -133,15 +134,15 @@ class GitReview
     end
     message = "Accept request ##{@current_request.number}" +
       " and merge changes into \"#{target}\""
-    exec_cmd = "merge #{option} -m '#{message}' #{@current_request.head.sha}"
+    command = "merge #{option} -m '#{message}' #{@current_request.head.sha}"
     puts
     puts 'Request title:'
     puts '  ' + @current_request.title
     puts
     puts 'Merge command:'
-    puts "  git #{exec_cmd}"
+    puts "  git #{command}"
     puts
-    puts git_call(exec_cmd)
+    puts git_call command
   end
 
 

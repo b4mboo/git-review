@@ -10,6 +10,7 @@ class Request
                 :body,
                 :state,
                 :html_url,
+                :patch_url,
                 :updated_at,
                 :comments,
                 :review_comments
