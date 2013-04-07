@@ -13,6 +13,7 @@ require_relative 'oauth_helper'
 require_relative 'settings'
 
 require 'accessible'
+require 'nestable'
 require 'commit'
 require 'request'
 
