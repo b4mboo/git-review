@@ -341,7 +341,9 @@ Available commands:
       true
     else
       # No output for automated checks.
-      puts "Request '#{request_id}' could not be found among all '#{state}' requests." unless automated
+      unless automated
+        puts "Could not find an '#{state}' request wit ID ##{request_id}."
+      end
       false
     end
   end
@@ -354,20 +356,22 @@ Available commands:
       repo = request.head.repository
       "#{repo.owner}/#{repo.name}" if repo
     end
-    repos.uniq.compact.each do |repo|
-      git_call "fetch git@github.com:#{repo}.git +refs/heads/*:refs/pr/#{repo}/*"
+    repos.uniq.compact.each do |rep|
+      git_call "fetch git@github.com:#{rep}.git +refs/heads/*:refs/pr/#{rep}/*"
     end
   end
 
 
   # Cleans a single request's obsolete branches.
   def clean_single(force_deletion = false)
-    update('closed')
+    update 'closed'
     return unless request_exists?('closed')
     # Ensure there are no unmerged commits or '--force' flag has been set.
-    branch_name = @current_request['head']['ref']
+    branch_name = @current_request.head.ref
     if unmerged_commits?(branch_name) and not force_deletion
-      return puts "Won't delete branches that contain unmerged commits. Use '--force' to override."
+      puts 'Won\'t delete branches that contain unmerged commits.'
+      puts 'Use \'--force\' to override.'
+      return
     end
     delete_branch(branch_name)
   end
@@ -377,15 +381,15 @@ Available commands:
   def clean_all
     update
     # Protect all open requests' branches from deletion.
-    protected_branches = @current_requests.collect { |request| request['head']['ref'] }
+    protected_branches = @current_requests.collect {|request| request.head.ref }
     # Select all branches with the correct prefix.
-    review_branches = all_branches.select { |branch| branch.include?('review_') }
-    # Only use uniq branch names (no matter if local or remote).
-    review_branches.collect { |branch| branch.split('/').last }.uniq.each do |branch_name|
+    review_branches = all_branches.collect do |branch|
+      # Only use uniq branch names (no matter if local or remote).
+      branch.split('/').last if branch.include?('review_')
+    end
+    (review_branches.uniq - protected_branches).each do |branch_name|
       # Only clean up obsolete branches.
-      unless protected_branches.include?(branch_name) or unmerged_commits?(branch_name, false)
-        delete_branch(branch_name)
-      end
+      delete_branch(branch_name) unless unmerged_commits?(branch_name, false)
     end
   end
 
