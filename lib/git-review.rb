@@ -189,7 +189,8 @@ class GitReview
         # Stash any uncommitted changes.
         save_uncommitted_changes = !git_call('diff HEAD').empty?
         git_call('stash') if save_uncommitted_changes
-        # Go back to master and get rid of pending commits (as these are now on the new branch).
+        # Go back to master and get rid of pending commits (as these are now on
+        # the new branch).
         git_call "checkout #{target_branch}"
         git_call "reset --hard origin/#{target_branch}"
         git_call "checkout #{@local_branch}"
@@ -202,17 +203,20 @@ class GitReview
 
 
   # Create a new request.
-  # TODO: Support creating requests to other repositories and branches (like the original repo, this has been forked from).
+  # TODO: Support creating requests to other repositories and branches (like the
+  # original repo, this has been forked from).
   def create
     # Prepare @local_branch.
     prepare
     # Don't create request with uncommitted changes in current branch.
     unless git_call('diff HEAD').empty?
-      puts 'You have uncommitted changes. Please stash or commit before creating the request.'
+      puts 'You have uncommitted changes.'
+      puts 'Please stash or commit before creating the request.'
       return
     end
     unless git_call("cherry #{target_branch}").empty?
-      # Push latest commits to the remote branch (and by that, create it if necessary).
+      # Push latest commits to the remote branch (and by that, create it
+      # if necessary).
       git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
       # Gather information.
       last_id = @current_requests.collect(&:number).sort.last.to_i
@@ -242,12 +246,10 @@ class GitReview
 
   # Deletes obsolete branches (left over from already closed requests).
   def clean
-    # Pruning is needed to remove already deleted branches from your local track.
+    # Pruning is needed to remove deleted branches from your local track.
     git_call 'remote prune origin'
     # Determine strategy to clean.
     case @args.size
-      when 0
-        puts 'Argument missing. Please provide either an ID or the option "--all".'
       when 1
         if @args.first == '--all'
           # git review clean --all
@@ -260,7 +262,7 @@ class GitReview
         # git review clean ID --force
         clean_single(@args.last == '--force')
       else
-        puts 'Too many arguments.'
+        puts 'Argument error. Please provide either an ID or "--all".'
     end
   end
 
@@ -288,7 +290,7 @@ class GitReview
       update unless command == 'clean'
       self.send command
     else
-      unless command.nil? or command.empty? or %w(help -h --help).include?(command)
+      unless command.nil? || command.empty? || %w(help -h --help).include?(command)
         puts "git-review: '#{command}' is not a valid command.\n\n"
       end
       help
@@ -300,21 +302,21 @@ class GitReview
 
   # Show a quick reference of available commands.
   def help
-    puts 'Usage: git review <command>'
-    puts 'Manage review workflow for projects hosted on GitHub (using pull requests).'
-    puts
-    puts 'Available commands:'
-    puts '  list [--reverse]          List all pending requests.'
-    puts '  show <ID> [--full]        Show details for a single request.'
-    puts '  browse <ID>               Open a browser window and review a specified request.'
-    puts '  checkout <ID> [--branch]  Checkout a specified request\'s changes to your local repository.'
-    puts '  approve <ID>              Add an approving comment to a specified request.'
-    puts '  merge <ID>                Accept a specified request by merging it into master.'
-    puts '  close <ID>                Close a specified request.'
-    puts '  prepare                   Creates a new local branch for a request.'
-    puts '  create                    Create a new request.'
-    puts '  clean <ID> [--force]      Delete a request\'s remote and local branches.'
-    puts '  clean --all               Delete all obsolete branches.'
+    help_text = 'Usage: git review <command>
+Manage review workflow for projects hosted on GitHub (using pull requests).
+Available commands:
+  list [--reverse]          List all pending requests.
+  show <ID> [--full]        Show details for a single request.
+  browse <ID>               Open a browser window and review a request.
+  checkout <ID> [--branch]  Checkout a request\'s changes to your local repo.
+  approve <ID>              Add an approving comment to a request.
+  merge <ID>                Accept a request by merging it into master.
+  close <ID>                Close a request.
+  prepare                   Creates a new local branch for a request.
+  create                    Create a new request.
+  clean <ID> [--force]      Delete a request\'s remote and local branches.
+  clean --all               Delete all obsolete branches.'
+    puts help_text
   end
 
 
@@ -331,7 +333,7 @@ class GitReview
     end
     @current_request = @current_requests.find { |req| req.number == request_id }
     unless @current_request
-      # Additional try to get an older request from Github by specifying the number.
+      # Additional try to get an older request from Github by specifying the id.
       request = @github.pull_request source_repo, request_id
       @current_request = request if request.state == state
     end

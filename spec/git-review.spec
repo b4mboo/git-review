@@ -61,7 +61,7 @@ describe GitReview do
 
     it 'shows the help page' do
       GitReview.any_instance.should_receive(:puts).with(
-        'Usage: git review <command>'
+        include('Usage: git review <command>')
       )
       GitReview.new
     end
@@ -353,21 +353,33 @@ describe GitReview do
   describe "'clean'" do
 
     before :each do
-      subject.stub(:git_call).with('remote prune origin')
+      assume_pruning
     end
 
     it 'requires either an ID or the additional parameter --all' do
       subject.should_receive(:puts).with(
-        include('either an ID or the option "--all"')
+        include('either an ID or "--all"')
       )
       subject.clean
     end
 
-    it 'removes obsolete remote branches with review prefix'
+    it 'removes a single obsolete branch with review prefix' do
+      assume :@args, [request_id]
+      subject.should_receive(:clean_single)
+      subject.clean
+    end
 
-    it 'removes obsolete local branches with review prefix'
+    it 'removes all obsolete branches with review prefix' do
+      assume :@args, ['--all']
+      subject.should_receive(:clean_all)
+      subject.clean
+    end
 
-    it 'needs the option \'--force\' to delete unmerged changes'
+    it 'needs an option \'--force\' to delete a branch with unmerged changes' do
+      assume :@args, [request_id, '--force']
+      subject.should_receive(:clean_single).with(force = true)
+      subject.clean
+    end
 
   end
 

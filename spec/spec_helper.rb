@@ -77,3 +77,7 @@ def assume_create_pull_request
     source_repo, 'master', branch_name, title, body
   )
 end
+
+def assume_pruning
+  subject.stub(:git_call).with('remote prune origin')
+end
