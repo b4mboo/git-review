@@ -215,17 +215,22 @@ class GitReview
       # Push latest commits to the remote branch (and by that, create it if necessary).
       git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
       # Gather information.
-      last_request_id = @current_requests.collect { |req| req['number'] }.sort.last.to_i
+      last_id = @current_requests.collect(&:number).sort.last.to_i
       title, body = create_title_and_body(target_branch)
       # Create the actual pull request.
-      @github.create_pull_request target_repo, target_branch, source_branch, title, body
+      @github.create_pull_request(
+        target_repo, target_branch, source_branch, title, body
+      )
       # Switch back to target_branch and check for success.
       git_call "checkout #{target_branch}"
       update
-      potential_new_request = @current_requests.find { |req| req['title'] == title }
-      if potential_new_request and potential_new_request['number'] > last_request_id
-        puts "Successfully created new request ##{potential_new_request['number']}"
-        puts File.join("https://github.com", target_repo, "pull", potential_new_request['number'].to_s)
+      potential_new_request = @current_requests.find { |r| r.title == title }
+      if potential_new_request
+        current_id = potential_new_request.number
+        if current_id > last_id
+          puts "Successfully created new request ##{current_id}"
+          puts "https://github.com/#{target_repo}/pull/#{current_id}"
+        end
       end
       # Return to the user's original branch.
       git_call "checkout #{@original_branch}"
@@ -324,7 +329,7 @@ class GitReview
       puts 'Please specify a valid ID.'
       return false
     end
-    @current_request = @current_requests.find { |req| req['number'] == request_id }
+    @current_request = @current_requests.find { |req| req.number == request_id }
     unless @current_request
       # Additional try to get an older request from Github by specifying the number.
       request = @github.pull_request source_repo, request_id

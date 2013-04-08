@@ -281,7 +281,7 @@ describe GitReview do
     end
 
     it 'moves uncommitted changes to the new branch' do
-      assume_change_branches
+      assume_change_branches :master => :feature
       assume :@args, [feature_name]
       assume_uncommitted_changes true
       subject.stub(:git_call).with(include 'reset --hard')
@@ -291,7 +291,7 @@ describe GitReview do
     end
 
     it 'moves unpushed commits to the new branch' do
-      assume_change_branches
+      assume_change_branches :master => :feature
       assume :@args, [feature_name]
       assume_uncommitted_changes false
       subject.should_receive(:git_call).with(include 'reset --hard')
@@ -303,13 +303,49 @@ describe GitReview do
 
   describe "'create'" do
 
-    it 'calls \'prepare\' if it is called from master'
+    it 'calls \'prepare\' if it is called from master' do
+      assume_on_master
+      assume_uncommitted_changes false
+      assume_local_commits false
+      subject.should_receive(:prepare)
+      subject.create
+    end
 
-    it 'pushes the commits to a remote branch'
+    it 'warns the user about uncommitted changes' do
+      assume_on_feature_branch
+      assume_uncommitted_changes true
+      subject.should_receive(:puts).with(include 'uncommitted changes')
+      subject.create
+    end
 
-    it 'creates a pull request from that feature branch to master'
+    it 'pushes the commits to a remote branch and creates a pull request' do
+      assume_no_open_requests
+      assume_on_feature_branch
+      assume_uncommitted_changes false
+      assume_local_commits true
+      assume_title_and_body_set
+      assume_change_branches
+      subject.should_receive(:git_call).with(
+        "push --set-upstream origin #{branch_name}", false, true
+      )
+      subject.should_receive :update
+      github.should_receive(:create_pull_request).with(
+        source_repo, 'master', branch_name, title, body
+      )
+      subject.create
+    end
 
-    it 'lets the user return to the branch she was working on before'
+    it 'lets the user return to the branch she was working on before' do
+      assume_no_open_requests
+      assume_uncommitted_changes false
+      assume_local_commits true
+      assume_title_and_body_set
+      assume_create_pull_request
+      assume_on_feature_branch
+      subject.should_receive(:git_call).with('checkout master').ordered
+      subject.should_receive(:git_call).with("checkout #{branch_name}").ordered
+      subject.create
+    end
 
   end
 
