@@ -6,6 +6,19 @@ def assume(name, value)
   subject.instance_variable_set name, value
 end
 
+def assume_arguments(*arguments)
+  assume :@args, arguments
+end
+
+def assume_requests(*requests)
+  assume :@current_requests, requests
+end
+
+def assume_no_requests
+  assume :@current_requests, []
+  subject.instance_variable_get(:@current_requests).should be_empty
+end
+
 def assume_added_to(collection, new_item)
   array = subject.instance_variable_get(collection) || []
   array << new_item

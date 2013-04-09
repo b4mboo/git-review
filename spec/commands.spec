@@ -20,7 +20,7 @@ describe 'git review <COMMAND>' do
   describe 'list' do
 
     it 'shows all open pull requests' do
-      assume :@current_requests, [request, request]
+      assume_requests request, request
       assume_merged false
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
@@ -31,8 +31,8 @@ describe 'git review <COMMAND>' do
     end
 
     it 'allows for an optional argument --reverse to sort the output' do
-      assume :@current_requests, [request, request]
-      assume :@args, ['--reverse']
+      assume_requests request, request
+      assume_arguments '--reverse'
       assume_merged false
       request.should_receive(:title).twice.and_return('first', 'second')
       subject.should_receive(:puts).with(include 'Pending requests')
@@ -43,7 +43,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'respects local changes when determining whether requests are merged' do
-      assume :@current_requests, [request]
+      assume_requests request
       assume_merged true
       subject.should_receive(:puts).with(include 'No pending requests')
       subject.should_not_receive(:puts).with(include 'Pending requests')
@@ -51,8 +51,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'knows when there are no open pull requests' do
-      assume :@current_requests, []
-      subject.instance_variable_get(:@current_requests).should be_empty
+      assume_no_requests
       subject.should_receive(:puts).with(include 'No pending requests')
       subject.should_not_receive(:puts).with(include 'Pending requests')
       subject.list
@@ -195,8 +194,8 @@ describe 'git review <COMMAND>' do
     it 'closes the request' do
       assume_a_valid_request_id
       github.should_receive(:close_issue).with(source_repo, request_id)
-      github.should_receive(:pull_requests)
-      .with(source_repo, 'open').and_return([])
+      github.should_receive(:pull_requests).
+        with(source_repo, 'open').and_return([])
       subject.close
     end
 
@@ -207,7 +206,7 @@ describe 'git review <COMMAND>' do
 
     it 'creates a local branch with review prefix' do
       assume_on_master
-      assume :@args, [feature_name]
+      assume_arguments feature_name
       subject.should_receive(:git_call).with("checkout -b #{branch_name}")
       subject.prepare
     end
@@ -223,14 +222,14 @@ describe 'git review <COMMAND>' do
       not_sanitized = 'wild stuff?'
       sanitized = 'wild_stuff'
       assume_on_master
-      assume :@args, [not_sanitized]
+      assume_arguments not_sanitized
       subject.should_receive(:git_call).with(include sanitized)
       subject.prepare
     end
 
     it 'moves uncommitted changes to the new branch' do
       assume_change_branches :master => :feature
-      assume :@args, [feature_name]
+      assume_arguments feature_name
       assume_uncommitted_changes true
       subject.stub(:git_call).with(include 'reset --hard')
       subject.should_receive(:git_call).with('stash')
@@ -240,7 +239,7 @@ describe 'git review <COMMAND>' do
 
     it 'moves unpushed commits to the new branch' do
       assume_change_branches :master => :feature
-      assume :@args, [feature_name]
+      assume_arguments feature_name
       assume_uncommitted_changes false
       subject.should_receive(:git_call).with(include 'reset --hard')
       subject.prepare
@@ -312,19 +311,19 @@ describe 'git review <COMMAND>' do
     end
 
     it 'removes a single obsolete branch with review prefix' do
-      assume :@args, [request_id]
+      assume_arguments request_id
       subject.should_receive(:clean_single)
       subject.clean
     end
 
     it 'removes all obsolete branches with review prefix' do
-      assume :@args, ['--all']
+      assume_arguments '--all'
       subject.should_receive(:clean_all)
       subject.clean
     end
 
     it 'needs an option \'--force\' to delete a branch with unmerged changes' do
-      assume :@args, [request_id, '--force']
+      assume_arguments request_id, '--force'
       subject.should_receive(:clean_single).with(force = true)
       subject.clean
     end
