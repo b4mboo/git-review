@@ -2,6 +2,10 @@
 # is relevant to the test at hand. It improves readability and implies that
 # these assumptions have been made to navigate through the code.
 
+def assume_silence
+  GitReview.any_instance.stub(:puts)
+end
+
 def assume(name, value)
   subject.instance_variable_set name, value
 end

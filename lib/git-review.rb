@@ -193,7 +193,7 @@ class GitReview
     end
     output = `git #{command}`
     puts output if verbose and not output.empty?
-    # If we need sth. to succeed, but it doesn't stop right there.
+    # If we need sth. to succeed, but it doesn't, then stop right there.
     if enforce_success and not last_command_successful?
       puts output unless output.empty?
       raise UnprocessableState

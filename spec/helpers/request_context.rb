@@ -39,8 +39,6 @@ unless RSpec.world.shared_example_groups[:request]
     }
 
     before :each do
-      # Silence any output during test runs.
-      GitReview.any_instance.stub(:puts)
       # Stub external dependency @github (= remote server).
       subject.instance_variable_set(:@github, github)
     end
