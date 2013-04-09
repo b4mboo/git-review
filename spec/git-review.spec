@@ -5,15 +5,13 @@ describe GitReview do
   subject { GitReview.any_instance }
 
   it 'shows the help page if no parameters are given' do
-    subject.should_receive(:puts).with(
-      include('Usage: git review <command>')
-    )
+    subject.should_receive(:puts).with(include 'Usage: git review <command>')
     GitReview.new
   end
 
   it 'tells the user if the given command is invalid' do
-    subject.should_receive(:puts).with(include('not a valid command.'))
-    GitReview.new(['invalid'])
+    subject.should_receive(:puts).with(include 'not a valid command.')
+    GitReview.new ['invalid']
   end
 
   it 'collects repository info if a valid command is given'
