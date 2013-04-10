@@ -1,8 +1,7 @@
 $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
-
 require 'git-review'
-require 'helpers/request_context'
-require 'helpers/assumptions'
+require 'support/request_context'
+require 'support/assumptions'
 
 RSpec.configure do |config|
   # Standard values for a nice output.
