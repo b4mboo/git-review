@@ -7,6 +7,14 @@ RSpec.configure do |config|
   # Standard values for a nice output.
   config.color_enabled = true
   config.formatter = :documentation
+  # Allow to re-initialize an instance to be able to mock/stub it in tests.
+  config.before :all do
+    GitReview.define_method :init do
+      initialize @args
+    end
+  end
   # Silence console output for all specs.
-  config.before { assume_silence }
+  config.before :each do
+    assume_silence
+  end
 end

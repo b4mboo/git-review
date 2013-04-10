@@ -98,3 +98,8 @@ end
 def assume_pruning
   subject.stub(:git_call).with('remote prune origin')
 end
+
+def assume_valid_command(valid = true)
+  assume_arguments 'command'
+  subject.stub(:respond_to?).and_return(valid)
+end
