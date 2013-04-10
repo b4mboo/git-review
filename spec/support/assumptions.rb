@@ -38,6 +38,11 @@ def assume_request_on_github(found = true, override = nil)
   github.stub(:pull_request).with(source_repo, request_id).and_return(response)
 end
 
+def assume_requests_on_github(found = true)
+  response = found ? [request] : []
+  github.stub(:pull_requests).with(source_repo, 'open').and_return(response)
+end
+
 def assume_on_master
   subject.stub(:git_call).with('branch').and_return("* master\n")
 end

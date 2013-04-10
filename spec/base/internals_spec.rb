@@ -60,46 +60,119 @@ describe GitReview do
   end
 
 
-  describe 'checking requests' do
+  describe 'when' do
 
     include_context :request
     include_context :private
 
 
-    it 'knows that 0 is not a valid request ID' do
-      request.number = 0
-      subject.should_receive(:puts).with('Please specify a valid ID.')
-      subject.request_exists?.should be_false
+    describe 'checking requests' do
+
+      it 'knows that 0 is not a valid request ID' do
+        request.number = 0
+        subject.should_receive(:puts).with('Please specify a valid ID.')
+        subject.request_exists?.should be_false
+      end
+
+      it 'determines validity for a given ID' do
+        assume_valid_request_id
+        subject.request_exists?.should be_true
+      end
+
+      it 'looks through older requests, if it can\'t be found on the first try' do
+        assume_arguments request_id
+        assume_no_requests
+        github.should_receive(:pull_request).
+          with(source_repo, request_id).and_return(request)
+        subject.request_exists?.should be_true
+      end
+
+      it 'tells the user if no request can be found' do
+        assume_arguments request_id
+        assume_no_requests
+        assume_request_on_github false
+        subject.should_receive(:puts).with(include 'Could not find')
+        subject.request_exists?.should be_false
+      end
+
+      it 'quietly looks for updates on automated lookups for specified IDs' do
+        assume_no_requests
+        assume_request_on_github false
+        subject.should_receive :update
+        subject.should_not_receive(:puts).with(include 'Could not find')
+        subject.request_exists?('open', request_id).should be_false
+      end
+
     end
 
-    it 'determines validity for a given ID' do
-      assume_valid_request_id
-      subject.request_exists?.should be_true
+
+    describe 'updating' do
+
+      it 'queries GitHub for a list of open requests' do
+        github.should_receive(:pull_requests).
+          with(source_repo, 'open').and_return([])
+        subject.update
+      end
+
+      it 'allows to set a state other than the default' do
+        state = 'other'
+        github.should_receive(:pull_requests).
+          with(source_repo, state).and_return([])
+        subject.update state
+      end
+
+      it 'fetches information about the remote branches' do
+        assume_requests_on_github
+        request.head.repository.update_attributes(
+          :owner => user,
+          :name => repo
+        )
+        subject.should_receive(:git_call).with(
+          include "fetch git@github.com:#{user}/#{repo}.git"
+        )
+        subject.update
+      end
+
     end
 
-    it 'looks through older requests, if it can\'t be found on the first try' do
-      assume_arguments request_id
-      assume_no_requests
-      github.should_receive(:pull_request).
-        with(source_repo, request_id).and_return(request)
-      subject.request_exists?.should be_true
-    end
 
-    it 'tells the user if no request can be found' do
-      assume_arguments request_id
-      assume_no_requests
-      assume_request_on_github false
-      subject.should_receive(:puts).with(include 'Could not find')
-      subject.request_exists?.should be_false
-    end
+    describe 'cleaning a single branch'
 
-    it 'quietly looks for updates on automated lookups for specified IDs' do
-      assume_no_requests
-      assume_request_on_github false
-      subject.should_receive :update
-      subject.should_not_receive(:puts).with(include 'Could not find')
-      subject.request_exists?('open', request_id).should be_false
-    end
+
+    describe 'cleaning all branches'
+
+
+    describe 'deleting a branch'
+
+
+    describe 'determining unmerged commits'
+
+
+    describe 'determining a branch\'s existence'
+
+
+    describe 'executing a git command'
+
+
+    describe 'displaying a request\'s discussion'
+
+
+    describe 'configuring access to GitHub'
+
+
+    describe 'reading acessing gitconfig'
+
+
+    describe 'querying repo infos'
+
+
+    describe 'working around GitHub\'s \'insteadof\' matching'
+
+
+    describe 'creating a title and a body for a request'
+
+
+    describe 'looking up various things'
 
   end
 

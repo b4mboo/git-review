@@ -66,7 +66,7 @@ module Internals
   end
 
 
-  # Cleans a single request's obsolete branches.
+  # Cleans a single request's obsolete branch.
   def clean_single(force_deletion = false)
     update 'closed'
     return unless request_exists?('closed')
