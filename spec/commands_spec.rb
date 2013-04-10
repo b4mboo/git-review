@@ -266,7 +266,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'pushes the commits to a remote branch and creates a pull request' do
-      assume_no_open_requests
+      assume_no_requests
       assume_on_feature_branch
       assume_uncommitted_changes false
       assume_local_commits
@@ -283,7 +283,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'lets the user return to the branch she was working on before' do
-      assume_no_open_requests
+      assume_no_requests
       assume_uncommitted_changes false
       assume_local_commits
       assume_title_and_body_set
@@ -299,9 +299,7 @@ describe 'git review <COMMAND>' do
 
   describe 'clean' do
 
-    before :each do
-      assume_pruning
-    end
+    before { assume_pruning }
 
     it 'requires either an ID or the additional parameter --all' do
       subject.should_receive(:puts).with(

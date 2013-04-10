@@ -34,7 +34,7 @@ unless RSpec.world.shared_example_groups[:request]
         :comments => 0,
         :review_comments => 0
       )
-      assume_on_github request
+      assume_request_on_github true, request
       request
     }
 

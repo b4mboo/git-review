@@ -33,12 +33,9 @@ def assume_valid_request_id
   assume :@current_requests, [request]
 end
 
-def assume_no_open_requests
-  assume :@current_requests, []
-end
-
-def assume_on_github(request)
-  github.stub(:pull_request).with(source_repo, request_id).and_return(request)
+def assume_request_on_github(found = true, override = nil)
+  response = override || (found ? request : Request.new)
+  github.stub(:pull_request).with(source_repo, request_id).and_return(response)
 end
 
 def assume_on_master
