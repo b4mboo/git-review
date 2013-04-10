@@ -35,7 +35,6 @@ describe GitReview do
       subject.init
     end
 
-
     it 'configures the GitHub access if repo info is found' do
       assume_valid_command
       assume_repo_info_set
@@ -97,7 +96,7 @@ describe GitReview do
     it 'quietly looks for updates on automated lookups for specified IDs' do
       assume_no_requests
       assume_request_on_github false
-      subject.should_receive(:update)
+      subject.should_receive :update
       subject.should_not_receive(:puts).with(include 'Could not find')
       subject.request_exists?('open', request_id).should be_false
     end
