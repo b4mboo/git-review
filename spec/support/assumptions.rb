@@ -20,7 +20,6 @@ end
 
 def assume_no_requests
   assume :@current_requests, []
-  subject.instance_variable_get(:@current_requests).should be_empty
 end
 
 def assume_added_to(collection, new_item)
@@ -29,7 +28,7 @@ def assume_added_to(collection, new_item)
   subject.instance_variable_set collection, array
 end
 
-def assume_a_valid_request_id
+def assume_valid_request_id
   assume :@args, [request_id]
   assume :@current_requests, [request]
 end
@@ -67,16 +66,16 @@ def assume_change_branches(direction = nil)
   subject.stub(:git_call).with(include 'checkout')
 end
 
-def assume_merged(value)
-  subject.stub(:merged?).with(head_sha).and_return(value)
+def assume_merged(merged = true)
+  subject.stub(:merged?).with(head_sha).and_return(merged)
 end
 
-def assume_uncommitted_changes(changes_exist)
+def assume_uncommitted_changes(changes_exist = true)
   changes = changes_exist ? ['changes'] : []
   subject.stub(:git_call).with('diff HEAD').and_return(changes)
 end
 
-def assume_local_commits(commits_exist)
+def assume_local_commits(commits_exist = true)
   commits = commits_exist ? ['commits'] : []
   subject.stub(:git_call).with('cherry master').and_return(commits)
 end

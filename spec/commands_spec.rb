@@ -44,7 +44,7 @@ describe 'git review <COMMAND>' do
 
     it 'respects local changes when determining whether requests are merged' do
       assume_requests request
-      assume_merged true
+      assume_merged
       subject.should_receive(:puts).with(include 'No pending requests')
       subject.should_not_receive(:puts).with(include 'Pending requests')
       subject.list
@@ -68,7 +68,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'shows a single pull request' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       subject.should_receive(:puts).with(title)
       # Ensure the request's stats are shown.
       subject.should_receive(:git_call).with(
@@ -78,7 +78,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'shows a pull request\'s diff if a parameter \'--full\' is appended' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       assume_added_to :@args, '--full'
       subject.should_receive(:puts).with(title)
       # Ensure the request's full diff is shown.
@@ -99,7 +99,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'opens the pull request\'s page on GitHub in a browser' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       Launchy.should_receive(:open).with(request_url)
       subject.browse
     end
@@ -115,13 +115,13 @@ describe 'git review <COMMAND>' do
     end
 
     it 'creates a headless state in the local repo with the request\'s code' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       subject.should_receive(:git_call).with("checkout origin/#{head_ref}")
       subject.checkout
     end
 
     it 'creates a local branch if the optional param --branch is appended' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       assume_added_to :@args, '--branch'
       subject.should_receive(:git_call).with("checkout #{head_ref}")
       subject.checkout
@@ -138,7 +138,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'posts an approving comment in your name to the request\'s page' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       comment = 'Reviewed and approved.'
       github.should_receive(:add_comment).
         with(source_repo, request_id, comment).
@@ -148,7 +148,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'outputs any errors that might occur when trying to post a comment' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       message = 'fail'
       github.should_receive(:add_comment).
         with(source_repo, request_id, 'Reviewed and approved.').
@@ -168,14 +168,14 @@ describe 'git review <COMMAND>' do
     end
 
     it 'checks whether the source repository still exists' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       request.head.repo = nil
       subject.should_receive(:puts).with(include 'deleted the source repo')
       subject.merge
     end
 
     it 'merges the request with your current branch' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       msg = "Accept request ##{request_id} and merge changes into \"//master\""
       subject.should_receive(:git_call).with("merge  -m '#{msg}' #{head_sha}")
       subject.merge
@@ -192,7 +192,7 @@ describe 'git review <COMMAND>' do
     end
 
     it 'closes the request' do
-      assume_a_valid_request_id
+      assume_valid_request_id
       github.should_receive(:close_issue).with(source_repo, request_id)
       github.should_receive(:pull_requests).
         with(source_repo, 'open').and_return([])
@@ -230,7 +230,7 @@ describe 'git review <COMMAND>' do
     it 'moves uncommitted changes to the new branch' do
       assume_change_branches :master => :feature
       assume_arguments feature_name
-      assume_uncommitted_changes true
+      assume_uncommitted_changes
       subject.stub(:git_call).with(include 'reset --hard')
       subject.should_receive(:git_call).with('stash')
       subject.should_receive(:git_call).with('stash pop')
@@ -260,7 +260,7 @@ describe 'git review <COMMAND>' do
 
     it 'warns the user about uncommitted changes' do
       assume_on_feature_branch
-      assume_uncommitted_changes true
+      assume_uncommitted_changes
       subject.should_receive(:puts).with(include 'uncommitted changes')
       subject.create
     end
@@ -269,7 +269,7 @@ describe 'git review <COMMAND>' do
       assume_no_open_requests
       assume_on_feature_branch
       assume_uncommitted_changes false
-      assume_local_commits true
+      assume_local_commits
       assume_title_and_body_set
       assume_change_branches
       subject.should_receive(:git_call).with(
@@ -285,7 +285,7 @@ describe 'git review <COMMAND>' do
     it 'lets the user return to the branch she was working on before' do
       assume_no_open_requests
       assume_uncommitted_changes false
-      assume_local_commits true
+      assume_local_commits
       assume_title_and_body_set
       assume_create_pull_request
       assume_on_feature_branch
