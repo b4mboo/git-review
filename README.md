@@ -78,3 +78,11 @@ Wiki
 ----
 
 For more information visit the [wiki](https://github.com/b4mboo/git-review/wiki).
+
+
+Thanks
+------
+
+A fork of Scott Chacon's [git-pulls](https://github.com/schacon/git-pulls) was
+used as starting point for this gem. Thank you, Scott for the initial work and
+above all for open sourcing it and allowing me to play with it.
