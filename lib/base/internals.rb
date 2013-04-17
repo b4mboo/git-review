@@ -240,6 +240,10 @@ module Internals
     ENV['TARGET_BRANCH'] || 'master'
   end
 
+  # Returns a boolean stating if custom TARGET_BRANCH is defined.
+  def target_branch_defined?
+    !ENV['TARGET_BRANCH'].nil?
+  end
 
   # Returns a string consisting of target repo and branch.
   def target
