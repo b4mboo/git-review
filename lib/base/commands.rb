@@ -136,7 +136,12 @@ module Commands
     # People should work on local branches, but especially for single commit
     # changes, more often than not, they don't. Therefore we create a branch for
     # them, to be able to use code review the way it is intended.
-    if @original_branch == target_branch
+    if target_branch_defined?
+      create_new_branch = (@original_branch == target_branch) || (@original_branch == 'master')
+    else
+      create_new_branch = @original_branch == target_branch
+    end
+    if create_new_branch
       # Unless a branch name is already provided, ask for one.
       if (branch_name = @args.shift).nil?
         puts 'Please provide a name for the branch:'

@@ -53,6 +53,10 @@ def assume_on_feature_branch
   )
 end
 
+def assume_custom_target_branch_defined
+  ENV.stub(:[]).with('TARGET_BRANCH').and_return('#{custom_target_name}')
+end
+
 def assume_on_master_then_feature_branch
   subject.stub(:git_call).with('branch').twice.and_return(
     "* master\n", " master\n* #{branch_name}\n"
