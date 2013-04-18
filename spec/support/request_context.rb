@@ -16,6 +16,7 @@ unless RSpec.world.shared_example_groups[:request]
     let(:body) { 'some body' }
     let(:feature_name) { 'some_name' }
     let(:branch_name) { "review_#{Time.now.strftime("%y%m%d")}_#{feature_name}"}
+    let(:custom_target_name) { 'custom_target_name' }
 
 
     let(:request) {

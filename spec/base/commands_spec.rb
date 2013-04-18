@@ -218,6 +218,14 @@ describe 'git review <COMMAND>' do
       subject.prepare
     end
 
+    it 'creates a local branch when TARGET_BRANCH is defined' do
+      assume_on_master
+      assume_custom_target_branch_defined
+      assume_arguments feature_name
+      subject.should_receive(:git_call).with("checkout -b #{branch_name}")
+      subject.prepare
+    end
+
     it 'sanitizes provided branch names' do
       not_sanitized = 'wild stuff?'
       sanitized = 'wild_stuff'
