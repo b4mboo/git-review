@@ -240,16 +240,18 @@ module Internals
     ENV['TARGET_BRANCH'] || 'master'
   end
 
-  # Returns a boolean stating if custom TARGET_BRANCH is defined.
-  def target_branch_defined?
-    !ENV['TARGET_BRANCH'].nil?
-  end
-
   # Returns a string consisting of target repo and branch.
   def target
     "#{target_repo}/#{target_branch}"
   end
 
+  # Returns a boolean stating whether we are already on a feature branch.
+  def on_feature_branch?
+    # If current and target branch are the same, we are not on a feature branch.
+    # If they are different, but we are on master, we should still to switch to
+    # a separate feature branch (since master makes for a poor feature branch).
+    !(source_branch == target_branch || source_branch == 'master')
+  end
 
   # Returns an Array of all existing branches.
   def all_branches
