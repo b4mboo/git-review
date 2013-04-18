@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe 'git review <COMMAND>' do
+describe 'Command: git review' do
 
   include_context :request
 
 
-  describe 'help' do
+  describe 'help:' do
 
     it 'shows the help page' do
       subject.should_receive(:puts).with(
@@ -17,7 +17,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'list' do
+  describe 'list:' do
 
     it 'shows all open pull requests' do
       assume_requests request, request
@@ -60,7 +60,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'show' do
+  describe 'show:' do
 
     it 'requires an ID as additional parameter' do
       subject.should_receive(:puts).with('Please specify a valid ID.')
@@ -91,7 +91,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'browse' do
+  describe 'browse:' do
 
     it 'requires an ID as additional parameter' do
       subject.should_receive(:puts).with('Please specify a valid ID.')
@@ -107,7 +107,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'checkout' do
+  describe 'checkout:' do
 
     it 'requires an ID as additional parameter' do
       subject.should_receive(:puts).with('Please specify a valid ID.')
@@ -130,7 +130,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'approve' do
+  describe 'approve:' do
 
     it 'requires an ID as additional parameter' do
       subject.should_receive(:puts).with('Please specify a valid ID.')
@@ -160,7 +160,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'merge' do
+  describe 'merge:' do
 
     it 'requires an ID as additional parameter' do
       subject.should_receive(:puts).with('Please specify a valid ID.')
@@ -184,7 +184,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'close' do
+  describe 'close:' do
 
     it 'requires an ID as additional parameter' do
       subject.should_receive(:puts).with('Please specify a valid ID.')
@@ -202,7 +202,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'prepare' do
+  describe 'prepare:' do
 
     it 'creates a local branch with review prefix' do
       assume_on_master
@@ -256,7 +256,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'create' do
+  describe 'create:' do
 
     it 'calls \'prepare\' if it is called from master' do
       assume_on_master
@@ -305,7 +305,7 @@ describe 'git review <COMMAND>' do
   end
 
 
-  describe 'clean' do
+  describe 'clean:' do
 
     before { assume_pruning }
 
