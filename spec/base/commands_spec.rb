@@ -74,6 +74,7 @@ describe 'git review <COMMAND>' do
       subject.should_receive(:git_call).with(
         "diff --color=always --stat HEAD...#{head_sha}"
       )
+      subject.stub(:discussion)
       subject.show
     end
 
@@ -85,6 +86,7 @@ describe 'git review <COMMAND>' do
       subject.should_receive(:git_call).with(
         "diff --color=always HEAD...#{head_sha}"
       )
+      subject.stub(:discussion)
       subject.show
     end
 
