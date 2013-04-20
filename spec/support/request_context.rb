@@ -9,7 +9,6 @@ unless RSpec.world.shared_example_groups[:request]
     let(:request_id) { 42 }
     let(:request_url) { 'some/path/to/github' }
     let(:head_sha) { 'head_sha' }
-    let(:head_ref) { 'head_ref' }
     let(:head_label) { 'head_label' }
     let(:head_repo) { 'path/to/repo' }
     let(:title) { 'some title' }
@@ -28,7 +27,7 @@ unless RSpec.world.shared_example_groups[:request]
         :updated_at => Time.now.to_s,
         :head => {
           :sha => head_sha,
-          :ref => head_ref,
+          :ref => branch_name,
           :label => head_label,
           :repo => head_repo
         },

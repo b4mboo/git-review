@@ -136,7 +136,42 @@ describe GitReview do
     end
 
 
-    describe 'cleaning a single branch'
+    describe 'cleaning a single request' do
+
+      it 'queries latest infos from GitHub and looks for closed requests' do
+        subject.should_receive(:update).with('closed')
+        subject.clean_single
+      end
+
+      it 'deletes obsolete branches after a request has been closed' do
+        assume_valid_request_id
+        assume_request_closed
+        assume_updated
+        assume_unmerged_commits false
+        subject.should_receive(:delete_branch).with(branch_name)
+        subject.clean_single
+      end
+
+      it 'won\'t remove branches with unmerged commits' do
+        assume_valid_request_id
+        assume_request_closed
+        assume_updated
+        assume_unmerged_commits
+        subject.should_receive(:delete_branch).never
+        subject.should_receive(:puts).with(include 'contain unmerged commits')
+        subject.clean_single
+      end
+
+      it 'allows to \'--force\' deleting of branches with unmerged commits' do
+        assume_valid_request_id
+        assume_request_closed
+        assume_updated
+        assume_unmerged_commits
+        subject.should_receive(:delete_branch).with(branch_name)
+        subject.clean_single(force = true)
+      end
+
+    end
 
 
     describe 'cleaning all branches'

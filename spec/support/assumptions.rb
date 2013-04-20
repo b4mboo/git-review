@@ -43,6 +43,10 @@ def assume_requests_on_github(found = true)
   github.stub(:pull_requests).with(source_repo, 'open').and_return(response)
 end
 
+def assume_request_closed(closed = true)
+  request.state = closed ? 'closed' : 'open'
+end
+
 def assume_on_master
   subject.stub(:git_call).with('branch').and_return("* master\n")
 end
@@ -95,14 +99,22 @@ def assume_create_pull_request
   subject.stub(:git_call).with(
     "push --set-upstream origin #{branch_name}", false, true
   )
-  subject.stub :update
+  assume_updated
   github.stub(:create_pull_request).with(
     source_repo, 'master', branch_name, title, body
   )
 end
 
+def assume_updated
+  subject.stub :update
+end
+
 def assume_pruning
   subject.stub(:git_call).with('remote prune origin')
+end
+
+def assume_unmerged_commits(commits_exist = true)
+  subject.stub(:unmerged_commits?).with(branch_name).and_return(commits_exist)
 end
 
 def assume_valid_command(valid = true)

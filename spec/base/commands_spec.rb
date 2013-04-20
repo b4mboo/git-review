@@ -118,14 +118,14 @@ describe 'Command: git review' do
 
     it 'creates a headless state in the local repo with the request\'s code' do
       assume_valid_request_id
-      subject.should_receive(:git_call).with("checkout origin/#{head_ref}")
+      subject.should_receive(:git_call).with("checkout origin/#{branch_name}")
       subject.checkout
     end
 
     it 'creates a local branch if the optional param --branch is appended' do
       assume_valid_request_id
       assume_added_to :@args, '--branch'
-      subject.should_receive(:git_call).with("checkout #{head_ref}")
+      subject.should_receive(:git_call).with("checkout #{branch_name}")
       subject.checkout
     end
 
