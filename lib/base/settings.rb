@@ -3,45 +3,32 @@ require 'singleton'
 require 'yaml'
 
 class Settings
+
   include Singleton
 
+  # Read settings from ~/.git_review.yml upon initialization.
   def initialize
-    @config_file = File.join(
-      Dir.home,
-      '.git_review.yml'
-    )
-
-    @config = if File.exists?(@config_file)
-      YAML.load_file(@config_file) || {}
-    else
-      {}
-    end
+    @config_file = File.join(Dir.home, '.git_review.yml')
+    @config = YAML.load_file(@config_file) if File.exists?(@config_file)
+    @config ||= {}
   end
 
+  # Write settings back to file.
   def save!
     File.open(@config_file, 'w') do |file|
       file.write(YAML.dump(@config))
     end
   end
 
-  def review_mode
-    @config['review_mode']
-  end
-
-  def oauth_token
-    @config['oauth_token']
-  end
-
-  def oauth_token=(token)
-    @config['oauth_token'] = token
-  end
-
-  def username
-    @config['username']
-  end
-
-  def username=(username)
-    @config['username'] = username
+  # Allow to access config options.
+  def method_missing(*args)
+    name = args.shift.to_s
+    # Determine whether to set or get an attribute.
+    if name.end_with? '='
+      @config[name[0..-2]] = args.shift
+    else
+      @config[name]
+    end
   end
 
 end

@@ -121,3 +121,13 @@ end
 def assume_error_raised
   subject.stub(:help).and_raise(UnprocessableState)
 end
+
+def assume_config_file_exists
+  Dir.stub(:home).and_return(home_dir)
+  File.stub(:exists?).with(config_file).and_return(true)
+end
+
+def assume_config_file_loaded
+  assume_config_file_exists
+  YAML.stub(:load_file).with(config_file)
+end
