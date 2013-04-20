@@ -2,7 +2,9 @@ require 'spec_helper'
 
 describe Settings do
 
-  subject { Settings.instance }
+  # Instead of calling Settings.instance, we need to ensure there is always a
+  # new instance created to keep test cases independent from each other.
+  subject { Settings.send :new }
 
   let(:home_dir) { '/home/foo/' }
   let(:config_file) { home_dir + '.git_review.yml' }
