@@ -44,11 +44,10 @@ module Commands
     puts @current_request.body
     puts
     puts git_call diff
-    # FIXME: Update discussion output to work with APIv3.
-    # puts
-    # puts "Progress  :"
-    # puts
-    # discussion
+    puts
+    puts "Progress  :"
+    puts
+    discussion
   end
 
 
@@ -136,7 +135,9 @@ module Commands
     # People should work on local branches, but especially for single commit
     # changes, more often than not, they don't. Therefore we create a branch for
     # them, to be able to use code review the way it is intended.
-    if @original_branch == target_branch
+    if on_feature_branch?
+      @local_branch = @original_branch
+    else
       # Unless a branch name is already provided, ask for one.
       if (branch_name = @args.shift).nil?
         puts 'Please provide a name for the branch:'
@@ -158,8 +159,6 @@ module Commands
         git_call "checkout #{@local_branch}"
         git_call('stash pop') if save_uncommitted_changes
       end
-    else
-      @local_branch = @original_branch
     end
   end
 
