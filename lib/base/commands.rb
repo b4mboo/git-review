@@ -44,11 +44,10 @@ module Commands
     puts @current_request.body
     puts
     puts git_call diff
-    # FIXME: Update discussion output to work with APIv3.
-    # puts
-    # puts "Progress  :"
-    # puts
-    # discussion
+    puts
+    puts "Progress  :"
+    puts
+    discussion
   end
 
 
