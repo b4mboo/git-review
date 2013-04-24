@@ -214,7 +214,39 @@ describe GitReview do
     end
 
 
-    describe 'deleting a branch'
+    describe 'deleting a branch' do
+
+      it 'removes existing a local branch with a given name' do
+        assume_branch_exist :local
+        subject.should_receive(:git_call).
+          with("branch -D #{branch_name}", true)
+        assume_branch_exist :remote, false
+        subject.should_receive(:git_call).
+          with("push origin :#{branch_name}", true).never
+        subject.delete_branch branch_name
+      end
+
+      it 'removes existing a remote branch with a given name' do
+        assume_branch_exist :remote
+        subject.should_receive(:git_call).
+          with("push origin :#{branch_name}", true)
+        assume_branch_exist :local, false
+        subject.should_receive(:git_call).
+          with("branch -D #{branch_name}", true).never
+        subject.delete_branch branch_name
+      end
+
+      it 'removes both local and remote branches with the same name' do
+        assume_branch_exist :remote
+        subject.should_receive(:git_call).
+          with("push origin :#{branch_name}", true)
+        assume_branch_exist :local
+        subject.should_receive(:git_call).
+          with("branch -D #{branch_name}", true)
+        subject.delete_branch branch_name
+      end
+
+    end
 
 
     describe 'determining unmerged commits'

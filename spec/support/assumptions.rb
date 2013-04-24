@@ -64,6 +64,10 @@ def assume_feature_branch(branch_exists = true)
   subject.stub(:git_call).with('branch -a').and_return(branches)
 end
 
+def assume_branch_exist(location = :local, exists = true)
+  subject.stub(:branch_exists?).with(location, branch_name).and_return(exists)
+end
+
 def assume_custom_target_branch_defined
   ENV.stub(:[]).with('TARGET_BRANCH').and_return(custom_target_name)
 end
