@@ -38,7 +38,7 @@ module Internals
     @current_request = @current_requests.find { |req| req.number == request_id }
     unless @current_request
       # Additional try to get an older request from Github by specifying the id.
-      request = Request.new @github.pull_request source_repo, request_id
+      request = Request.find @github, source_repo, request_id
       @current_request = request if request.state == state
     end
     if @current_request
@@ -55,9 +55,7 @@ module Internals
 
   # Get latest changes from GitHub.
   def update(state = 'open')
-    @current_requests = @github.pull_requests(source_repo, state).map do |req|
-      Request.new req
-    end
+    @current_requests = Request.find_all @github, source_repo, state
     repos = @current_requests.collect do |request|
       repo = request.head.repo
       "#{repo.owner.login}/#{repo.name}" if repo
@@ -173,18 +171,13 @@ module Internals
   #      -Comment 2 on commit
   #    - ...
   def discussion
-    pull_request_comments = @github.issue_comments(source_repo, @current_request['number']).map do |comment|
-      Comment.new comment
+    commits_comments = @current_request.pull_commits.inject([]) do |cat, commit|
+      cat + commit.comments
     end
-    commits = @github.pull_request_commits(source_repo, @current_request['number']).map do |commit|
-      Commit.new commit
-    end
-    commits_comments = commits.inject([]) do |cat, item|
-      cat + @github.commit_comments(@current_request.head.repo.full_name, item.sha).map do |comment|
-        Comment.new comment
-      end
-    end
-    comments = (pull_request_comments + commits + commits_comments).sort!
+    comments = (@current_request.issue_comments +
+      @current_request.pull_comments +
+      @current_request.pull_commits +
+      commits_comments).sort!
     result = comments.collect do |entry|
       "#{entry.to_s}\n\n\n"
     end

@@ -12,7 +12,19 @@ class Commit
                 :label,
                 :repo,
                 :commit,
-                :committer
+                :committer,
+                :host, # to retrieve new data
+                :head_repo # needed to get its comments
+
+
+  def comments
+    if @comments.nil?
+      @comments = host.commit_comments(@head_repo.full_name, @sha).map do |comment|
+        Comment.new comment
+      end
+    end
+    @comments
+  end
 
   def <=>(other)
     if other.class == Comment

@@ -3,7 +3,7 @@ module Commands
   # List all pending requests.
   def list
     output = @current_requests.collect do |request|
-      details = Request.new @github.pull_request(source_repo, request.number)
+      details = Request.find @github, source_repo, request.number
       # Find only pending (= unmerged) requests and output summary.
       # Explicitly look for local changes (that GitHub does not yet know about).
       next if merged?(request.head.sha)
