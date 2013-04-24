@@ -15,6 +15,7 @@ def assume_arguments(*arguments)
 end
 
 def assume_requests(*requests)
+  requests = [request] if requests.empty?
   assume :@current_requests, requests
 end
 
@@ -58,8 +59,9 @@ def assume_on_feature_branch
   )
 end
 
-def assume_no_feature_branches
-  subject.stub(:git_call).with('branch -a').and_return("* master\n")
+def assume_feature_branch(branch_exists = true)
+  branches = branch_exists ? "* master\n  #{branch_name}\n" : "* master\n"
+  subject.stub(:git_call).with('branch -a').and_return(branches)
 end
 
 def assume_custom_target_branch_defined
@@ -119,6 +121,8 @@ end
 
 def assume_unmerged_commits(commits_exist = true)
   subject.stub(:unmerged_commits?).with(branch_name).and_return(commits_exist)
+  subject.stub(:unmerged_commits?).with(branch_name, verbose = false).
+    and_return(commits_exist)
 end
 
 def assume_valid_command(valid = true)

@@ -178,11 +178,38 @@ describe GitReview do
 
       it 'queries latest infos from GitHub and looks for closed requests' do
         assume_no_requests
-        assume_no_feature_branches
-        subject.should_receive(:update)
+        assume_feature_branch false
+        subject.should_receive :update
+        subject.should_receive(:delete_branch).never
         subject.clean_all
       end
 
+      it 'deletes all obsolete review branches' do
+        assume_updated
+        assume_no_requests
+        assume_feature_branch
+        assume_unmerged_commits false
+        subject.should_receive(:delete_branch).with(branch_name)
+        subject.clean_all
+      end
+
+      it 'won\'t deletes review branches that belong to open requests' do
+        assume_updated
+        assume_requests
+        assume_feature_branch
+        assume_unmerged_commits false
+        subject.should_receive(:delete_branch).never
+        subject.clean_all
+      end
+
+      it 'won\'t remove branches with unmerged commits' do
+        assume_updated
+        assume_no_requests
+        assume_feature_branch
+        assume_unmerged_commits
+        subject.should_receive(:delete_branch).never
+        subject.clean_all
+      end
 
     end
 
