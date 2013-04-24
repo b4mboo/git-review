@@ -5,6 +5,7 @@ class Repository
 
   nests :owner => User
 
-  attr_accessor :name
+  attr_accessor :name,
+                :full_name
 
 end

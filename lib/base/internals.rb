@@ -173,41 +173,20 @@ module Internals
   #      -Comment 2 on commit
   #    - ...
   def discussion
-    issue_comments = @github.issue_comments(source_repo, @current_request['number'])
-    pull_commits = @github.pull_commits(source_repo, @current_request['number'])
-    # A bit hacky here. Just put everything in chronological order.
-    # Issue comments and pull commits have different structures.
-    comments = (issue_comments + pull_commits).sort! { |x,y|
-      (x.created_at || x.commit.committer.date) <=> (y.created_at || y.commit.committer.date)
-    }
-    result = comments.collect do |entry|
-      output = ""
-      if entry.commit?
-        # it is a pull commit
-        name = entry.committer.login
-        output << "\e[35m#{name}\e[m "
-        output << "committed \e[36m#{entry['sha'][0..6]}\e[m on #{format_time(entry.commit.committer.date)}"
-        output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry.commit.message}"
-        # FIXME:
-        # Comments on commits does not work yet, as the commits may come from forks
-        # haven't found a reliable way to identify the forked repo.
-        # commit_comments = @github.commit_comments(source_repo, entry.sha)
-        # commit_comments.each do |cc|
-        # end
-      else
-        # it is a issue comment
-        name = entry.user.login
-        output << "\e[35m#{name}\e[m "
-        output << "added a comment"
-        output << " to \e[36m#{entry.id}\e[m"
-        output << " on #{format_time(entry.created_at)}"
-        unless entry['created_at'] == entry['updated_at']
-          output << " (updated on #{format_time(entry.updated_at)})"
-        end
-        output << ":\n#{''.rjust(output.length + 1, "-")}\n"
-        output << entry.body
+    pull_request_comments = @github.issue_comments(source_repo, @current_request['number']).map do |comment|
+      Comment.new comment
+    end
+    commits = @github.pull_request_commits(source_repo, @current_request['number']).map do |commit|
+      Commit.new commit
+    end
+    commits_comments = commits.inject([]) do |cat, item|
+      cat + @github.commit_comments(@current_request.head.repo.full_name, item.sha).map do |comment|
+        Comment.new comment
       end
-      output << "\n\n\n"
+    end
+    comments = (pull_request_comments + commits + commits_comments).sort!
+    result = comments.collect do |entry|
+      "#{entry.to_s}\n\n\n"
     end
     puts result.compact unless result.empty?
 
@@ -243,18 +222,6 @@ module Internals
     #   output << "\n\n\n"
     # end
     # puts result.compact unless result.empty?
-  end
-
-
-  # Display helper to make output more configurable.
-  def format_text(info, size)
-    info.to_s.gsub("\n", ' ')[0, size-1].ljust(size)
-  end
-
-
-  # Display helper to unify time output.
-  def format_time(time_string)
-    Time.parse(time_string).strftime('%d-%b-%y')
   end
 
 
