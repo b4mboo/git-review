@@ -216,7 +216,7 @@ describe GitReview do
 
     describe 'deleting a branch' do
 
-      it 'removes existing a local branch with a given name' do
+      it 'removes a local branch with a given name' do
         assume_branch_exist :local
         subject.should_receive(:git_call).
           with("branch -D #{branch_name}", true)
@@ -226,7 +226,7 @@ describe GitReview do
         subject.delete_branch branch_name
       end
 
-      it 'removes existing a remote branch with a given name' do
+      it 'removes a remote branch with a given name' do
         assume_branch_exist :remote
         subject.should_receive(:git_call).
           with("push origin :#{branch_name}", true)
