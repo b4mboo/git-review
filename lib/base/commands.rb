@@ -33,11 +33,11 @@ module Commands
     option = @args.shift == '--full' ? '' : '--stat '
     diff = "diff --color=always #{option}HEAD...#{@current_request.head.sha}"
     # TODO: Move to comment calculations to request class.
-    comment_count = @current_request.comments + @current_request.review_comments
+    #comment_count = @current_request.comments + @current_request.review_comments
     puts 'ID        : ' + @current_request.number.to_s
     puts 'Label     : ' + @current_request.head.label
     puts 'Updated   : ' + format_time(@current_request.updated_at)
-    puts 'Comments  : ' + comment_count.to_s
+    #puts 'Comments  : ' + comment_count.to_s
     puts
     puts @current_request.title
     puts

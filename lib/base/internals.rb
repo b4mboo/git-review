@@ -55,10 +55,12 @@ module Internals
 
   # Get latest changes from GitHub.
   def update(state = 'open')
-    @current_requests = @github.pull_requests(source_repo, state)
+    @current_requests = @github.pull_requests(source_repo, state).map do |req|
+      Request.new req
+    end
     repos = @current_requests.collect do |request|
-      repo = request.head.repository
-      "#{repo.owner}/#{repo.name}" if repo
+      repo = request.head.repo
+      "#{repo.owner.login}/#{repo.name}" if repo
     end
     repos.uniq.compact.each do |rep|
       git_call "fetch git@github.com:#{rep}.git +refs/heads/*:refs/pr/#{rep}/*"

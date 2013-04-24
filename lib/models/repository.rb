@@ -1,8 +1,10 @@
 class Repository
 
   include Accessible
+  extend Nestable
 
-  attr_accessor :owner,
-                :name
+  nests :owner => User
+
+  attr_accessor :name
 
 end
