@@ -249,7 +249,11 @@ describe GitReview do
     end
 
 
-    describe 'determining unmerged commits'
+    describe 'determining unmerged commits' do
+
+
+
+    end
 
 
     describe 'determining a branch\'s existence'

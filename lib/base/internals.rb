@@ -101,9 +101,13 @@ module Internals
   # Delete local and remote branches that match a given name.
   def delete_branch(branch_name)
     # Delete local branch if it exists.
-    git_call("branch -D #{branch_name}", true) if branch_exists?(:local, branch_name)
+    if branch_exists?(:local, branch_name)
+      git_call("branch -D #{branch_name}", true)
+    end
     # Delete remote branch if it exists.
-    git_call("push origin :#{branch_name}", true) if branch_exists?(:remote, branch_name)
+    if branch_exists?(:remote, branch_name)
+      git_call("push origin :#{branch_name}", true)
+    end
   end
 
 
