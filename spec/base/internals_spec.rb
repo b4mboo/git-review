@@ -174,7 +174,17 @@ describe GitReview do
     end
 
 
-    describe 'cleaning all branches'
+    describe 'cleaning all branches' do
+
+      it 'queries latest infos from GitHub and looks for closed requests' do
+        assume_no_requests
+        assume_no_feature_branches
+        subject.should_receive(:update)
+        subject.clean_all
+      end
+
+
+    end
 
 
     describe 'deleting a branch'

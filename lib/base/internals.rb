@@ -91,7 +91,7 @@ module Internals
       # Only use uniq branch names (no matter if local or remote).
       branch.split('/').last if branch.include?('review_')
     end
-    (review_branches.uniq - protected_branches).each do |branch_name|
+    (review_branches.compact.uniq - protected_branches).each do |branch_name|
       # Only clean up obsolete branches.
       delete_branch(branch_name) unless unmerged_commits?(branch_name, false)
     end
