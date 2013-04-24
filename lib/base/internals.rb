@@ -38,7 +38,7 @@ module Internals
     @current_request = @current_requests.find { |req| req.number == request_id }
     unless @current_request
       # Additional try to get an older request from Github by specifying the id.
-      request = @github.pull_request source_repo, request_id
+      request = Request.new @github.pull_request source_repo, request_id
       @current_request = request if request.state == state
     end
     if @current_request

@@ -3,14 +3,14 @@ module Commands
   # List all pending requests.
   def list
     output = @current_requests.collect do |request|
-      details = @github.pull_request(source_repo, request.number)
+      details = Request.new @github.pull_request(source_repo, request.number)
       # Find only pending (= unmerged) requests and output summary.
       # Explicitly look for local changes (that GitHub does not yet know about).
       next if merged?(request.head.sha)
       line = format_text(request.number, 8)
       date_string = format_time(request.updated_at)
       line << format_text(date_string, 11)
-      line << format_text(details.comments + details.review_comments, 10)
+      line << format_text(details.number_of_comments, 10)
       line << format_text(request.title, 91)
       line
     end
@@ -32,12 +32,10 @@ module Commands
     # Determine whether to show full diff or just stats.
     option = @args.shift == '--full' ? '' : '--stat '
     diff = "diff --color=always #{option}HEAD...#{@current_request.head.sha}"
-    # TODO: Move to comment calculations to request class.
-    #comment_count = @current_request.comments + @current_request.review_comments
     puts 'ID        : ' + @current_request.number.to_s
     puts 'Label     : ' + @current_request.head.label
     puts 'Updated   : ' + format_time(@current_request.updated_at)
-    #puts 'Comments  : ' + comment_count.to_s
+    puts 'Comments  : ' + @current_request.number_of_comments.to_s
     puts
     puts @current_request.title
     puts
