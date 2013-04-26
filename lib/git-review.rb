@@ -26,16 +26,14 @@ require 'base/commands'
 # Include all helper functions to make GitReview work as expected.
 require 'base/internals'
 
+require 'base/errors'
+require 'base/github'
+
 # Provide structure for our instances.
 require 'models/user'
 require 'models/repository'
 require 'models/commit'
 require 'models/request'
-
-
-# A custom error to raise, if we know we can't go on.
-class UnprocessableState < StandardError
-end
 
 
 class GitReview
