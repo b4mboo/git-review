@@ -4,61 +4,122 @@ git-review
 
 Manage review workflow for projects hosted on GitHub (using pull requests).
 
-    $ git review list
-    Pending requests for 'b4mboo/git-review/master'
-    ID      Updated    Comments  Title
-    42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
-    23      13-Jul-11  8         [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
+## Commands
 
-    $ git review list --reverse
-    Pending requests for 'b4mboo/git-review/master'
-    ID      Updated    Comments  Title
-    23      13-Jul-11  8         [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
-    42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
 
-    $ git review show 42
-    > [summary]
-    > [diffstat]
-    > [discussion]
+### list
 
-    $ git review show 42 --full
-    > [summary]
-    > [full diff]
-    > [discussion]
+```
+$ git review list
+Pending requests for 'b4mboo/git-review/master'
+ID      Updated    Comments  Title
+42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
+23      13-Jul-11  8         [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
+```
 
-    $ git review browse 42
-    > go to web page
+```
+$ git review list --reverse
+Pending requests for 'b4mboo/git-review/master'
+ID      Updated    Comments  Title
+23      13-Jul-11  8         [Review] Request from 'mess110' @ 'b4mboo/git-review/new_feature
+42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
+```
 
-    $ git review checkout 42
-    > checkout changes from request #42 to your local repository in a headless state
 
-    $ git review checkout 42 --branch
-    > checkout remote branch from request #42 and create a local branch from it
+### show
 
-    $ git review approve 42
-    > approve request #42 as reviewed by adding a standard comment
+```
+$ git review show 42
+> [summary]
+> [diffstat]
+> [discussion]
+```
 
-    $ git review merge 42
-    > accept request #42 by merging it
+```
+$ git review show 42 --full
+> [summary]
+> [full diff]
+> [discussion]
+```
 
-    $ git review close 42
-    > close request #42
 
-    $ git review prepare
-    > create a new local branch to base a new request upon
+### browse
 
-    $ git review create
-    > create a new request by creating all necessary local and remote branches
+```
+$ git review browse 42
+> go to web page
+```
 
-    $ git review clean 42
-    > delete local and remote branches for that request
 
-    $ git review clean 42 --force
-    > delete branches even if they contain unmerged commits
+### checkout
 
-    $ git review clean --all
-    > delete all obsolete branches
+```
+$ git review checkout 42
+> checkout changes from request #42 to your local repository in a headless state
+```
 
+```
+$ git review checkout 42 --branch
+> checkout remote branch from request #42 and create a local branch from it
+```
+
+
+### approve
+
+```
+$ git review approve 42
+> approve request #42 as reviewed by adding a standard comment
+```
+
+
+### merge
+
+```
+$ git review merge 42
+> accept request #42 by merging it
+```
+
+
+### close
+
+```
+$ git review close 42
+> close request #42
+```
+
+
+### prepare
+
+```
+$ git review prepare
+> create a new local branch to base a new request upon
+```
+
+
+### create
+
+```
+$ git review create
+> create a new request by creating all necessary local and remote branches
+```
+
+
+### clean
+
+```
+$ git review clean 42
+> delete local and remote branches for that request
+```
+
+```
+$ git review clean 42 --force
+> delete branches even if they contain unmerged commits
+```
+
+```
+$ git review clean --all
+> delete all obsolete branches
+```
 
 Installation
 ------------
