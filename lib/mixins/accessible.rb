@@ -1,5 +1,13 @@
 module Accessible
 
+  def self.included(base)
+    base.extend(ClassMethods)
+  end
+
+  def attributes
+    self.class.attributes
+  end
+
   # Setup simple exit criteria for recursion.
   def accessible?
     true
@@ -24,11 +32,25 @@ module Accessible
   def update_attributes(attributes_hash)
     attributes_hash.each do |key, value|
       attribute = self[key]
-      if attribute.respond_to? :accessible?
+      if attribute.respond_to?(:accessible?) && value.respond_to?(:each)
         attribute.update_attributes(value)
       else
         self[key] = value
       end
+    end
+    self
+  end
+
+  module ClassMethods
+    # Override attr_accessor to keep track of attributes
+    def attr_accessor(*vars)
+      @attributes ||= []
+      @attributes.concat(vars)
+      super
+    end
+
+    def attributes
+      @attributes
     end
   end
 
