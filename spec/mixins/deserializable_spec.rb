@@ -3,9 +3,18 @@ require 'hashie'
 
 describe 'Deserializable module' do
 
-  class Foo
+  class Moo
+    include Accessible
     include Deserializable
-    attr_accessor :foo1, :foo2
+    attr_accessor :moo1
+  end
+
+  class Foo
+    extend Nestable
+    include Accessible
+    include Deserializable
+    nests :moo => Moo
+    attr_accessor :foo1
   end
 
   class Baz
@@ -19,7 +28,8 @@ describe 'Deserializable module' do
   mash = Hashie::Mash.new(
     :baz1 => 'baz1',
     :baz2 => 'baz2',
-    :foo  => Hashie::Mash.new(:foo1 => 'foo1', :foo2 => 'foo2')
+    :foo  => Hashie::Mash.new(:foo1 => 'foo1',
+                              :moo => Hashie::Mash.new(:moo1 => 'moo1'))
   )
 
   subject { Baz.new.update_from_mash(mash) }
@@ -31,7 +41,13 @@ describe 'Deserializable module' do
 
   it "recursively updates attributes of an instance's attributes" do
     subject.foo.foo1.should == 'foo1'
-    subject.foo.foo2.should == 'foo2'
+    subject.foo.moo.moo1.should == 'moo1'
+  end
+
+  it 'returns same class after updates' do
+    subject.class.should == Baz
+    subject.foo.class.should == Foo
+    subject.foo.moo.class.should == Moo
   end
 
 end
