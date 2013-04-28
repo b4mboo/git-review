@@ -13,27 +13,31 @@ require 'tempfile'
 ## Our own dependencies
 
 # Use oauth tokens for authentication with GitHub.
-require 'mixins/authenticable'
+require_relative 'mixins/authenticable'
 # Allow indifferent access to attributes.
-require 'mixins/accessible'
+require_relative 'mixins/accessible'
 # Allow nested instances.
-require 'mixins/nestable'
+require_relative 'mixins/nestable'
+# Allow update attributes from Hashie::Mash returned by Octokit
+require_relative 'mixins/deserializable'
 
 # Read and write settings from/to the filesytem.
-require 'base/settings'
+require_relative 'base/settings'
 # Provide available commands.
-require 'base/commands'
+require_relative 'base/commands'
 # Include all helper functions to make GitReview work as expected.
-require 'base/internals'
-
-require 'base/errors'
-require 'base/github'
+require_relative 'base/internals'
+# Include all kinds of custom-defined errors.
+require_relative 'base/errors'
+# Communicate with Github via API.
+require_relative 'base/github'
 
 # Provide structure for our instances.
-require 'models/user'
-require 'models/repository'
-require 'models/commit'
-require 'models/request'
+require_relative 'models/user'
+require_relative 'models/repository'
+require_relative 'models/commit'
+require_relative 'models/request'
+require_relative 'models/comment'
 
 
 class GitReview
