@@ -12,6 +12,11 @@ describe 'Accessible module' do
     attr_accessor :berk
   end
 
+  class Moo < Foo
+    include Accessible
+    attr_accessor :moo1
+  end
+
   subject { Foo.new }
   let(:test_string) { 'foo' }
 
@@ -66,6 +71,10 @@ describe 'Accessible module' do
 
   it 'lists defined attr_accessors for a class' do
     subject.class.attributes.should == [:bar, :baz]
+  end
+
+  it 'lists attr_accessors for a subclass and those of its superclass' do
+    Moo.attributes.should == [:moo1, :bar, :baz]
   end
 
 end

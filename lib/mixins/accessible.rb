@@ -10,7 +10,7 @@ module Accessible
 
   # Setup simple exit criteria for recursion.
   def accessible?
-    true
+    self.class.accessible?
   end
 
   # Allow to set instance variables on initialization.
@@ -46,11 +46,18 @@ module Accessible
     def attr_accessor(*vars)
       @attributes ||= []
       @attributes.concat(vars)
+      if superclass.respond_to? :accessible?
+        @attributes.concat(superclass.attributes)
+      end
       super
     end
 
     def attributes
       @attributes
+    end
+
+    def accessible?
+      true
     end
   end
 
