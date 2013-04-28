@@ -3,25 +3,25 @@ require 'hashie'
 
 describe 'Deserializable module' do
 
-  class Moo
+  class DS_C
     include Accessible
     include Deserializable
     attr_accessor :moo1
   end
 
-  class Foo
+  class DS_B
     extend Nestable
     include Accessible
     include Deserializable
-    nests :moo => Moo
+    nests :moo => DS_C
     attr_accessor :foo1
   end
 
-  class Baz
+  class DS_A
     extend Nestable
     include Accessible
     include Deserializable
-    nests :foo => Foo
+    nests :foo => DS_B
     attr_accessor :baz1, :baz2
   end
 
@@ -32,7 +32,7 @@ describe 'Deserializable module' do
                               :moo => Hashie::Mash.new(:moo1 => 'moo1'))
   )
 
-  subject { Baz.new.update_from_mash(mash) }
+  subject { DS_A.new.update_from_mash(mash) }
 
   it 'updates attributes of an instance' do
     subject.baz1.should == 'baz1'
@@ -45,9 +45,9 @@ describe 'Deserializable module' do
   end
 
   it 'returns same class after updates' do
-    subject.class.should == Baz
-    subject.foo.class.should == Foo
-    subject.foo.moo.class.should == Moo
+    subject.class.should == DS_A
+    subject.foo.class.should == DS_B
+    subject.foo.moo.class.should == DS_C
   end
 
 end

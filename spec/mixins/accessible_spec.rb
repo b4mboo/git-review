@@ -12,9 +12,9 @@ describe 'Accessible module' do
     attr_accessor :berk
   end
 
-  class Moo < Foo
+  class FooFoo < Foo
     include Accessible
-    attr_accessor :moo1
+    attr_accessor :foofoo
   end
 
   subject { Foo.new }
@@ -74,7 +74,7 @@ describe 'Accessible module' do
   end
 
   it 'lists attr_accessors for a subclass and those of its superclass' do
-    Moo.attributes.should == [:moo1, :bar, :baz]
+    FooFoo.attributes.should == [:foofoo, :bar, :baz]
   end
 
 end
