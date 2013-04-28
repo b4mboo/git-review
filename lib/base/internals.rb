@@ -19,7 +19,7 @@ module Internals
       end
       help
     end
-  rescue UnprocessableState
+  rescue Errors::UnprocessableState
     puts 'Execution of git-review command stopped.'
   end
 
@@ -159,7 +159,7 @@ module Internals
     # If we need sth. to succeed, but it doesn't, then stop right there.
     if enforce_success and not last_command_successful?
       puts output unless output.empty?
-      raise UnprocessableState
+      raise Errors::UnprocessableState
     end
     output
   end

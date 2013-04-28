@@ -143,7 +143,7 @@ def assume_github_access_configured
 end
 
 def assume_error_raised
-  subject.stub(:help).and_raise(UnprocessableState)
+  subject.stub(:help).and_raise(Errors::UnprocessableState)
 end
 
 def assume_config_file_exists
