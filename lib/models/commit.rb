@@ -11,4 +11,8 @@ class Commit
                 :ref,
                 :label
 
+  def to_s
+    @sha
+  end
+
 end

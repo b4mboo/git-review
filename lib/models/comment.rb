@@ -11,6 +11,10 @@ class Comment
                 :created_at,
                 :updated_at
 
+  def to_s
+    @body
+  end
+
 end
 
 class ReviewComment < Comment
