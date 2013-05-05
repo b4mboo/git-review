@@ -19,4 +19,8 @@ class Repository
                 :master_branch,
                 :default_branch
 
+  def to_s
+    @full_name
+  end
+
 end

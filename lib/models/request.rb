@@ -21,4 +21,8 @@ class Request
                 :comments,
                 :review_comments
 
+  def to_s
+    @number
+  end
+
 end

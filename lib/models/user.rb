@@ -5,4 +5,8 @@ class User
 
   attr_accessor :login
 
+  def to_s
+    @login
+  end
+
 end
