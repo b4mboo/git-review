@@ -155,3 +155,12 @@ def assume_config_file_loaded
   assume_config_file_exists
   YAML.stub(:load_file).with(config_file)
 end
+
+def assume_token_present
+  Settings.instance.stub(:username).and_return('username')
+  Settings.instance.stub(:oauth_token).and_return('some_valid_token')
+end
+
+def assume_token_missing
+  Settings.instance.stub(:oauth_token).and_return(nil)
+end

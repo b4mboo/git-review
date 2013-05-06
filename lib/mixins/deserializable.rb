@@ -5,6 +5,7 @@ module Deserializable
   end
 
   def update_from_mash(mash)
+    # Recursively updates an instance's attributes from a Mash object.
     self.attributes.each do |attribute|
       unless mash.nil?
         if self.send(attribute).respond_to? :deserializable?
