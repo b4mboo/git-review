@@ -163,7 +163,7 @@ require 'singleton'
       elsif response.code == '401'
         raise Errors::AuthenticationError
       else
-        raise Errors::UnprocessableState(response.body)
+        raise Errors::UnprocessableState, response.body
       end
     end
 
