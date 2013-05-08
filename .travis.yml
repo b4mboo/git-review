@@ -3,4 +3,4 @@ rvm:
   - 1.9.3
   - ruby-head
 before_install: gem install bundler
-script: bundle exec rspec -f d spec/*
+script: bundle exec rspec -f d spec/**/*_spec.rb
