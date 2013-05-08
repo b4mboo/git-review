@@ -14,8 +14,6 @@ require 'tempfile'
 
 # Use oauth tokens for authentication with GitHub.
 require 'mixins/authenticable'
-# Unify output
-require 'mixins/formattable'
 # Allow indifferent access to attributes.
 require 'mixins/accessible'
 # Allow nested instances.
@@ -31,7 +29,6 @@ require 'base/internals'
 # Provide structure for our instances.
 require 'models/user'
 require 'models/repository'
-require 'models/comment'
 require 'models/commit'
 require 'models/request'
 
@@ -44,7 +41,6 @@ end
 class GitReview
 
   include Authenticable
-  include Formattable
   include Commands
   include Internals
 

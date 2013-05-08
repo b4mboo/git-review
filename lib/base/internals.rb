@@ -38,7 +38,7 @@ module Internals
     @current_request = @current_requests.find { |req| req.number == request_id }
     unless @current_request
       # Additional try to get an older request from Github by specifying the id.
-      request = Request.find @github, source_repo, request_id
+      request = @github.pull_request source_repo, request_id
       @current_request = request if request.state == state
     end
     if @current_request
@@ -55,10 +55,10 @@ module Internals
 
   # Get latest changes from GitHub.
   def update(state = 'open')
-    @current_requests = Request.find_all @github, source_repo, state
+    @current_requests = @github.pull_requests(source_repo, state)
     repos = @current_requests.collect do |request|
-      repo = request.head.repo
-      "#{repo.owner.login}/#{repo.name}" if repo
+      repo = request.head.repository
+      "#{repo.owner}/#{repo.name}" if repo
     end
     repos.uniq.compact.each do |rep|
       git_call "fetch git@github.com:#{rep}.git +refs/heads/*:refs/pr/#{rep}/*"
@@ -175,15 +175,41 @@ module Internals
   #      -Comment 2 on commit
   #    - ...
   def discussion
-    commits_comments = @current_request.pull_commits.inject([]) do |cat, commit|
-      cat + commit.comments
-    end
-    comments = (@current_request.issue_comments +
-      @current_request.pull_comments +
-      @current_request.pull_commits +
-      commits_comments).sort!
+    issue_comments = @github.issue_comments(source_repo, @current_request['number'])
+    pull_commits = @github.pull_commits(source_repo, @current_request['number'])
+    # A bit hacky here. Just put everything in chronological order.
+    # Issue comments and pull commits have different structures.
+    comments = (issue_comments + pull_commits).sort! { |x,y|
+      (x.created_at || x.commit.committer.date) <=> (y.created_at || y.commit.committer.date)
+    }
     result = comments.collect do |entry|
-      "#{entry.to_s}\n\n\n"
+      output = ""
+      if entry.commit?
+        # it is a pull commit
+        name = entry.committer.login
+        output << "\e[35m#{name}\e[m "
+        output << "committed \e[36m#{entry['sha'][0..6]}\e[m on #{format_time(entry.commit.committer.date)}"
+        output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry.commit.message}"
+        # FIXME:
+        # Comments on commits does not work yet, as the commits may come from forks
+        # haven't found a reliable way to identify the forked repo.
+        # commit_comments = @github.commit_comments(source_repo, entry.sha)
+        # commit_comments.each do |cc|
+        # end
+      else
+        # it is a issue comment
+        name = entry.user.login
+        output << "\e[35m#{name}\e[m "
+        output << "added a comment"
+        output << " to \e[36m#{entry.id}\e[m"
+        output << " on #{format_time(entry.created_at)}"
+        unless entry['created_at'] == entry['updated_at']
+          output << " (updated on #{format_time(entry.updated_at)})"
+        end
+        output << ":\n#{''.rjust(output.length + 1, "-")}\n"
+        output << entry.body
+      end
+      output << "\n\n\n"
     end
     puts result.compact unless result.empty?
 
@@ -219,6 +245,18 @@ module Internals
     #   output << "\n\n\n"
     # end
     # puts result.compact unless result.empty?
+  end
+
+
+  # Display helper to make output more configurable.
+  def format_text(info, size)
+    info.to_s.gsub("\n", ' ')[0, size-1].ljust(size)
+  end
+
+
+  # Display helper to unify time output.
+  def format_time(time_string)
+    Time.parse(time_string).strftime('%d-%b-%y')
   end
 
 
