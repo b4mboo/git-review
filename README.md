@@ -1,5 +1,6 @@
 git-review
 ----------
+[![Build Status](https://secure.travis-ci.org/b4mboo/git-review.png)](https://secure.travis-ci.org/b4mboo/git-review)
 
 Manage review workflow for projects hosted on GitHub (using pull requests).
 
