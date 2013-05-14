@@ -3,6 +3,12 @@ git-review
 [![Build Status](https://travis-ci.org/b4mboo/git-review.png?branch=master)](https://travis-ci.org/b4mboo/git-review)
 
 Manage review workflow for projects hosted on GitHub (using pull requests).
+
+## Commands
+
+
+### list
+
 ```
 $ git review list
 Pending requests for 'b4mboo/git-review/master'
@@ -19,6 +25,9 @@ ID      Updated    Comments  Title
 42      14-Jul-11  0         [Review] Request from 'mess110' @ 'b4mboo/git-review/documentation
 ```
 
+
+### show
+
 ```
 $ git review show 42
 > [summary]
@@ -33,10 +42,16 @@ $ git review show 42 --full
 > [discussion]
 ```
 
+
+### browse
+
 ```
 $ git review browse 42
 > go to web page
 ```
+
+
+### checkout
 
 ```
 $ git review checkout 42
@@ -48,30 +63,48 @@ $ git review checkout 42 --branch
 > checkout remote branch from request #42 and create a local branch from it
 ```
 
+
+### approve
+
 ```
 $ git review approve 42
 > approve request #42 as reviewed by adding a standard comment
 ```
+
+
+### merge
 
 ```
 $ git review merge 42
 > accept request #42 by merging it
 ```
 
+
+### close
+
 ```
 $ git review close 42
 > close request #42
 ```
+
+
+### prepare
 
 ```
 $ git review prepare
 > create a new local branch to base a new request upon
 ```
 
+
+### create
+
 ```
 $ git review create
 > create a new request by creating all necessary local and remote branches
 ```
+
+
+### clean
 
 ```
 $ git review clean 42
