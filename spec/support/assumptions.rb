@@ -3,7 +3,7 @@
 # these assumptions have been made to navigate through the code.
 
 def assume_silence
-  GitReview.any_instance.stub(:puts)
+  ::GitReview::GitReview.any_instance.stub(:puts)
 end
 
 def assume(name, value)
@@ -35,7 +35,7 @@ def assume_valid_request_id
 end
 
 def assume_request_on_github(found = true, override = nil)
-  response = override || (found ? request : Request.new)
+  response = override || (found ? request : ::GitReview::Request.new)
   github.stub(:pull_request).with(source_repo, request_id).and_return(response)
 end
 
@@ -143,7 +143,7 @@ def assume_github_access_configured
 end
 
 def assume_error_raised
-  subject.stub(:help).and_raise(Errors::UnprocessableState)
+  subject.stub(:help).and_raise(::GitReview::Errors::UnprocessableState)
 end
 
 def assume_config_file_exists
@@ -157,10 +157,10 @@ def assume_config_file_loaded
 end
 
 def assume_token_present
-  Settings.instance.stub(:username).and_return('username')
-  Settings.instance.stub(:oauth_token).and_return('some_valid_token')
+  ::GitReview::Settings.instance.stub(:username).and_return('username')
+  ::GitReview::Settings.instance.stub(:oauth_token).and_return('some_valid_token')
 end
 
 def assume_token_missing
-  Settings.instance.stub(:oauth_token).and_return(nil)
+  ::GitReview::Settings.instance.stub(:oauth_token).and_return(nil)
 end

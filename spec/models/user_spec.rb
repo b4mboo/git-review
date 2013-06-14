@@ -1,8 +1,8 @@
-require 'spec_helper'
+require_relative '../spec_helper'
 
-describe User do
+describe 'User' do
 
-  subject { User.new }
+  subject { ::GitReview::User.new }
 
   it 'has accessible attributes' do
     subject.should be_accessible

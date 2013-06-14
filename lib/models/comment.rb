@@ -1,42 +1,46 @@
-class Comment
+module GitReview
 
-  include Accessible
-  include Deserializable
-  extend Nestable
+  class Comment
 
-  nests :user => User
+    include ::GitReview::Accessible
+    include ::GitReview::Deserializable
+    extend ::GitReview::Nestable
 
-  attr_accessor :id,
-                :body,
-                :created_at,
-                :updated_at
+    nests :user => ::GitReview::User
 
-  def to_s
-    @body
+    attr_accessor :id,
+                  :body,
+                  :created_at,
+                  :updated_at
+
+    def to_s
+      @body
+    end
+
   end
 
-end
+  class ReviewComment < Comment
 
-class ReviewComment < Comment
+    attr_accessor :path,
+                  :position,
+                  :commit_id
 
-  attr_accessor :path,
-                :position,
-                :commit_id
+  end
 
-end
+  class IssueComment < Comment
 
-class IssueComment < Comment
+    attr_accessor :html_url
 
-  attr_accessor :html_url
+  end
 
-end
+  class CommitComment < Comment
 
-class CommitComment < Comment
+    attr_accessor :path,
+                  :position,
+                  :line,
+                  :commit_id,
+                  :html_url
 
-  attr_accessor :path,
-                :position,
-                :line,
-                :commit_id,
-                :html_url
+  end
 
 end

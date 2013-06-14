@@ -1,28 +1,32 @@
-class Request
+module GitReview
 
-  include Accessible
-  include Deserializable
-  extend Nestable
+  class Request
 
-  nests :head => Commit,
-        :base => Commit,
-        :user => User
+    include ::GitReview::Accessible
+    include ::GitReview::Deserializable
+    extend ::GitReview::Nestable
 
-  attr_accessor :number,
-                :title,
-                :body,
-                :state,
-                :html_url,
-                :diff_url,
-                :patch_url,
-                :issue_url,
-                :created_at,
-                :updated_at,
-                :comments,
-                :review_comments
+    nests :head => ::GitReview::Commit,
+          :base => ::GitReview::Commit,
+          :user => ::GitReview::User
 
-  def to_s
-    @number
+    attr_accessor :number,
+                  :title,
+                  :body,
+                  :state,
+                  :html_url,
+                  :diff_url,
+                  :patch_url,
+                  :issue_url,
+                  :created_at,
+                  :updated_at,
+                  :comments,
+                  :review_comments
+
+    def to_s
+      @number
+    end
+
   end
 
 end

@@ -1,18 +1,22 @@
-class Commit
+module GitReview
 
-  include Accessible
-  include Deserializable
-  extend Nestable
+  class Commit
 
-  nests :user => User,
-        :repo => Repository
+    include ::GitReview::Accessible
+    include ::GitReview::Deserializable
+    extend ::GitReview::Nestable
 
-  attr_accessor :sha,
-                :ref,
-                :label
+    nests :user => ::GitReview::User,
+          :repo => ::GitReview::Repository
 
-  def to_s
-    @sha
+    attr_accessor :sha,
+                  :ref,
+                  :label
+
+    def to_s
+      @sha
+    end
+
   end
 
 end

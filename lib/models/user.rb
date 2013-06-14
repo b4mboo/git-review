@@ -1,12 +1,16 @@
-class User
+module GitReview
 
-  include Accessible
-  include Deserializable
+  class User
 
-  attr_accessor :login
+    include ::GitReview::Accessible
+    include ::GitReview::Deserializable
 
-  def to_s
-    @login
+    attr_accessor :login
+
+    def to_s
+      @login
+    end
+
   end
 
 end
