@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'octokit'
   s.add_runtime_dependency 'yajl-ruby'
   s.add_runtime_dependency 'rspec'
+  s.add_runtime_dependency 'grit'
 end
