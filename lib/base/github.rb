@@ -8,9 +8,10 @@ require 'io/console'
 require 'stringio'
 # Used to retrieve hostname
 require 'socket'
+require 'grit'
 require 'singleton'
 
-# module GitReview
+module GitReview
 
   class Github
 
@@ -18,16 +19,18 @@ require 'singleton'
 
     attr_reader :github
 
+    attr_accessor :local_repo
+
     def initialize
       #configure_github_access
     end
 
     # setup connection with Github via OAuth
     def configure_github_access
-      if Settings.instance.oauth_token
+      if ::GitReview::Settings.instance.oauth_token
         @github = Octokit::Client.new(
-          :login          => Settings.instance.username,
-          :oauth_token    => Settings.instance.oauth_token,
+          :login          => ::GitReview::Settings.instance.username,
+          :oauth_token    => ::GitReview::Settings.instance.oauth_token,
           :auto_traversal => true
         )
         @github.login
@@ -37,39 +40,46 @@ require 'singleton'
       end
     end
 
+    def initialize_local_repo
+      repo_name = repo_name_from_config
+      unless repo_name.nil?
+        @local_repo = ::GitReview::Repository.new(:name => repo_name)
+      end
+    end
+
     # list pull requests for a repository
     def pull_requests(repo, state='open')
       args = stringify(repo, state)
       @github.pull_requests(*args).collect { |request|
-        Request.new.update_from_mash(request)
+        ::GitReview::Request.new.update_from_mash(request)
       }
     end
 
     # get a pull request
     def pull_request(repo, number)
       args = stringify(repo, number)
-      Request.new.update_from_mash(@github.pull_request(*args))
+      ::GitReview::Request.new.update_from_mash(@github.pull_request(*args))
     end
 
     # get all comments attached to an issue
     def issue_comments(repo, number)
       args = stringify(repo, number)
       @github.issue_comments(*args).collect { |comment|
-        Comment.new.update_from_mash(comment)
+        ::GitReview::Comment.new.update_from_mash(comment)
       }
     end
 
     # get a single comment attached to an issue
     def issue_comment(repo, number)
       args = stringify(repo, number)
-      Comment.new.update_from_mash(@github.issue_comment(*args))
+      ::GitReview::Comment.new.update_from_mash(@github.issue_comment(*args))
     end
 
     # list comments on a pull request
     def pull_request_comments(repo, number)
       args = stringify(repo, number)
       @github.pull_request_comments(*args) { |comment|
-        Comment.new.update_from_mash(comment)
+        ::GitReview::Comment.new.update_from_mash(comment)
       }
     end
     alias_method :pull_comments, :pull_request_comments
@@ -79,7 +89,7 @@ require 'singleton'
     def pull_request_commits(repo, number)
       args = stringify(repo, number)
       @github.pull_request_commits(*args) { |commit|
-        Commit.new.update_from_mash(commit)
+        ::GitReview::Commit.new.update_from_mash(commit)
       }
     end
     alias_method :pull_commits, :pull_request_commits
@@ -102,6 +112,18 @@ require 'singleton'
       @github.create_pull_request(*args)
     end
 
+    # get latest changes from GitHub.
+    def update(state = 'open')
+      @current_requests = @github.pull_requests(local_repo, state)
+      repos = @current_requests.collect do |request|
+        repo = request.head.repository
+        "#{repo.owner}/#{repo.name}" if repo
+      end
+      repos.uniq.compact.each do |rep|
+        git_call "fetch git@github.com:#{rep}.git +refs/heads/*:refs/pr/#{rep}/*"
+      end
+    end
+
   private
 
     def configure_oauth
@@ -109,9 +131,9 @@ require 'singleton'
         prepare_username_and_password
         prepare_description
         authorize
-      rescue Errors::AuthenticationError => e
+      rescue ::GitReview::Errors::AuthenticationError => e
         warn e.message
-      rescue Errors::UnprocessableState => e
+      rescue ::GitReview::Errors::UnprocessableState => e
         warn e.message
         exit 1
       end
@@ -152,8 +174,8 @@ require 'singleton'
       req.basic_auth(@username, @password)
       req.body = Yajl::Encoder.encode(
         {
-          'scopes' => ['repo'],
-          'note'   => @description
+          :scopes => %w(repo),
+          :note   => @description
         }
       )
       response = http.request(req)
@@ -161,14 +183,14 @@ require 'singleton'
         parser_response = Yajl::Parser.parse(response.body)
         save_oauth_token(parser_response['token'])
       elsif response.code == '401'
-        raise Errors::AuthenticationError
+        raise ::GitReview::Errors::AuthenticationError
       else
-        raise Errors::UnprocessableState, response.body
+        raise ::GitReview::Errors::UnprocessableState, response.body
       end
     end
 
     def save_oauth_token(token)
-      settings = Settings.instance
+      settings = ::GitReview::Settings.instance
       settings.oauth_token = token
       settings.username = @username
       settings.save!
@@ -180,6 +202,41 @@ require 'singleton'
       args.map(&:to_s)
     end
 
+    # extract user and project name from GitHub URL.
+    def github_url_matching(url)
+      matches = /github\.com.(.*?)\/(.*)/.match(url)
+      matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
+    end
+
+    # look for 'insteadof' substitutions in URL.
+    def github_insteadof_matching(config, url)
+      first_match = config.keys.collect { |key|
+        [config[key], /url\.(.*github\.com.*)\.insteadof/.match(key)]
+      }.find { |insteadof_url, true_url|
+        url.index(insteadof_url) and true_url != nil
+      }
+      first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
+    end
+
+    # return repo name based on local git config.
+    def repo_name_from_config
+      git_config = ::GitReview::Local.instance.config
+      url = git_config['remote.origin.url']
+      raise ::GitReview::Errors::InvalidGitRepositoryError if url.nil?
+
+      user, project = github_url_matching(url)
+      # If there are no results yet, look for 'insteadof' substitutions
+      # in URL and try again.
+      unless user && project
+        insteadof_url, true_url = github_insteadof_matching(git_config, url)
+        if insteadof_url and true_url
+          url = url.sub(insteadof_url, true_url)
+          user, project = github_url_matching(url)
+        end
+      end
+      [user, project]
+    end
+
   end
 
-# end
+end
