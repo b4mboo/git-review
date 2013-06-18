@@ -8,12 +8,12 @@ require 'launchy'
 require 'time'
 # Use temporary files to allow editing a request's title and body.
 require 'tempfile'
+# Handle local git commands
+require 'grit'
 
 
 ## Our own dependencies
 
-# Use oauth tokens for authentication with GitHub.
-require_relative 'mixins/authenticable'
 # Allow indifferent access to attributes.
 require_relative 'mixins/accessible'
 # Allow nested instances.
@@ -21,7 +21,7 @@ require_relative 'mixins/nestable'
 # Allow update attributes from Hashie::Mash returned by Octokit
 require_relative 'mixins/deserializable'
 
-# Read and write settings from/to the filesytem.
+# Read and write settings from/to the filesystem.
 require_relative 'base/settings'
 # Provide available commands.
 require_relative 'base/commands'
@@ -39,11 +39,42 @@ require_relative 'models/commit'
 require_relative 'models/request'
 require_relative 'models/comment'
 
+module GitReview
 
-class GitReview
+  class GitReview
 
-  include Authenticable
-  include Commands
-  include Internals
+    include Internals
+
+    def initialize(args=[])
+      @github = Github.instance
+      @args = args
+      command = args.shift
+      if command.nil? || command.empty? || %w(help -h --help).include?(command)
+        ::GitReview::Commands::help
+      elsif ::GitReview::Commands.respond_to?(command)
+        if local_repo_ready && github_access_ready
+          @github.update unless command == 'clean'
+          ::GitReview::Commands.send(command)
+        end
+      else
+        puts "git-review: '#{command}' is not a valid command.\n\n"
+        ::GitReview::Commands::help
+      end
+    rescue Exception => e
+      puts e.message
+    end
+
+  private
+
+    def local_repo_ready
+      @github.initialize_local_repo
+      @github.local_repo && @github.configure_github_access
+    end
+
+    def github_access_ready
+      @github.configure_github_access
+    end
+
+  end
 
 end
