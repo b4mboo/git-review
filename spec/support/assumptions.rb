@@ -134,6 +134,14 @@ def assume_valid_command(valid = true)
   subject.stub(:respond_to?).and_return(valid)
 end
 
+def assume_valid_command
+  ::GitReview::Commands.stub(:respond_to?).and_return(true)
+end
+
+def assume_invalid_command
+  ::GitReview::Commands.stub(:respond_to?).and_return(false)
+end
+
 def assume_repo_info_set
   subject.stub(:repo_info).and_return([user, repo])
 end

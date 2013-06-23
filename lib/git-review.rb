@@ -46,33 +46,35 @@ module GitReview
     include Internals
 
     def initialize(args=[])
-      @github = Github.instance
+      @github = ::GitReview::Github.instance
       @args = args
       command = args.shift
       if command.nil? || command.empty? || %w(help -h --help).include?(command)
-        ::GitReview::Commands::help
+        help
       elsif ::GitReview::Commands.respond_to?(command)
-        if local_repo_ready && github_access_ready
-          @github.update unless command == 'clean'
-          ::GitReview::Commands.send(command)
-        end
+        execute_command(command)
       else
         puts "git-review: '#{command}' is not a valid command.\n\n"
-        ::GitReview::Commands::help
+        help
       end
     rescue Exception => e
       puts e.message
     end
 
-  private
-
-    def local_repo_ready
-      @github.initialize_local_repo
-      @github.local_repo && @github.configure_github_access
+    def help
+      ::GitReview::Commands::help
     end
 
-    def github_access_ready
+  private
+
+    # execute command only when it is valid
+    def execute_command(command)
       @github.configure_github_access
+      @github.initialize_local_repo
+      if @github.local_repo && @github.github.login
+        @github.update unless command == 'clean'
+        ::GitReview::Commands.send(command)
+      end
     end
 
   end
