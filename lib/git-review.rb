@@ -47,7 +47,7 @@ module GitReview
 
     def initialize(args=[])
       @github = ::GitReview::Github.instance
-      @args = args
+      ::GitReview::Commands.args = args
       command = args.shift
       if command.nil? || command.empty? || %w(help -h --help).include?(command)
         help

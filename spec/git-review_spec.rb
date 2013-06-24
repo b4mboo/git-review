@@ -25,6 +25,13 @@ describe 'GitReview' do
     subject.new(%w(foo))
   end
 
+  it 'stores arguments in Commands' do
+    cmd.stub(:respond_to?).and_return(true)
+    subject.any_instance.stub(:execute_command)
+    subject.new(%w(foo bar gee))
+    cmd.args.should == %w(bar gee)
+  end
+
   context 'when command is valid' do
 
     before(:each) do

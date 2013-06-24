@@ -4,6 +4,8 @@ module GitReview
 
     extend self
 
+    attr_accessor :args
+
     # List all pending requests.
     def list
       output = @current_requests.collect do |request|
@@ -209,11 +211,11 @@ module GitReview
     end
 
 
-    # Deletes obsolete branches (left over from already closed requests).
+    # delete obsolete branches (left over from already closed requests).
     def clean
-      # Pruning is needed to remove deleted branches from your local track.
+      # pruning is needed to remove deleted branches from your local track.
       git_call 'remote prune origin'
-      # Determine strategy to clean.
+      # determine strategy to clean.
       case @args.size
         when 1
           if @args.first == '--all'
@@ -227,7 +229,8 @@ module GitReview
           # git review clean ID --force
           clean_single(@args.last == '--force')
         else
-          puts 'Argument error. Please provide either an ID or "--all".'
+          raise ::GitReview::Errors::InvalidArgumentError,
+                'Argument error. Please provide either an ID or "--all".'
       end
     end
 
@@ -245,21 +248,22 @@ module GitReview
 
     # Show a quick reference of available commands.
     def help
-      help_text = 'Usage: git review <command>
-  Manage review workflow for projects hosted on GitHub (using pull requests).
-  Available commands:
-    list [--reverse]          List all pending requests.
-    show <ID> [--full]        Show details for a single request.
-    browse <ID>               Open a browser window and review a request.
-    checkout <ID> [--branch]  Checkout a request\'s changes to your local repo.
-    approve <ID>              Add an approving comment to a request.
-    merge <ID>                Accept a request by merging it into master.
-    close <ID>                Close a request.
-    prepare                   Creates a new local branch for a request.
-    create                    Create a new request.
-    clean <ID> [--force]      Delete a request\'s remote and local branches.
-    clean --all               Delete all obsolete branches.'
-      puts help_text
+      puts <<HELP_TEXT
+Usage: git review <command>
+Manage review workflow for projects hosted on GitHub (using pull requests).
+Available commands:
+  list [--reverse]          List all pending requests.
+  show <ID> [--full]        Show details for a single request.
+  browse <ID>               Open a browser window and review a request.
+  checkout <ID> [--branch]  Checkout a request\'s changes to your local repo.
+  approve <ID>              Add an approving comment to a request.
+  merge <ID>                Accept a request by merging it into master.
+  close <ID>                Close a request.
+  prepare                   Creates a new local branch for a request.
+  create                    Create a new request.
+  clean <ID> [--force]      Delete a request\'s remote and local branches.
+  clean --all               Delete all obsolete branches.
+HELP_TEXT
     end
 
   end

@@ -19,13 +19,15 @@ module GitReview
 
     attr_reader :github
 
-    attr_accessor :local_repo
+    attr_accessor :local_repo,
+                  :current_requests
 
     def initialize
       #configure_github_access
     end
 
     # setup connection with Github via OAuth
+    # @return [String] the username logged in
     def configure_github_access
       if ::GitReview::Settings.instance.oauth_token
         @github = Octokit::Client.new(
@@ -40,8 +42,9 @@ module GitReview
       end
     end
 
+    # @return [Repository, nil] the local repo in the current directory
     def initialize_local_repo
-      repo_name = repo_name_from_config
+      _, repo_name = repo_name_from_config
       unless repo_name.nil?
         @local_repo = ::GitReview::Repository.new(:name => repo_name)
       end
@@ -112,9 +115,9 @@ module GitReview
       @github.create_pull_request(*args)
     end
 
-    # get latest changes from GitHub.
-    def update(state = 'open')
-      @current_requests = @github.pull_requests(local_repo, state)
+    # get latest changes from Github.
+    def update(state='open')
+      @current_requests = pull_requests(@local_repo, state)
       repos = @current_requests.collect do |request|
         repo = request.head.repository
         "#{repo.owner}/#{repo.name}" if repo

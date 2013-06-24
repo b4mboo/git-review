@@ -23,6 +23,10 @@ module GitReview
       end
     end
 
+    class InvalidArgumentError < StandardError
+
+    end
+
   end
 
 end

@@ -64,8 +64,28 @@ def assume_feature_branch(branch_exists = true)
   subject.stub(:git_call).with('branch -a').and_return(branches)
 end
 
+def assume_feature_branch(branch_name='foo')
+  ::GitReview::Local.instance.stub(:git_call).with('branch -a').
+      and_return("* master\n  #{branch_name}\n")
+end
+
+def assume_no_feature_branch
+  ::GitReview::Local.instance.stub(:git_call).with('branch -a').
+      and_return("* master\n")
+end
+
 def assume_branch_exist(location = :local, exists = true)
   subject.stub(:branch_exists?).with(location, branch_name).and_return(exists)
+end
+
+def assume_branch_exists(location=:local, branch_name='foo')
+  ::GitReview::Local.instance.stub(:branch_exists?).with(location, branch_name).
+      and_return(true)
+end
+
+def assume_branch_not_exists(location=:local, branch_name='foo')
+  ::GitReview::Local.instance.stub(:branch_exists?).with(location, branch_name).
+      and_return(false)
 end
 
 def assume_custom_target_branch_defined
@@ -116,7 +136,7 @@ def assume_create_pull_request
 end
 
 def assume_updated
-  subject.stub :update
+  ::GitReview.stub :update
 end
 
 def assume_pruning
