@@ -18,9 +18,7 @@ module GitReview
     include Singleton
 
     attr_reader :github
-
-    attr_accessor :local_repo,
-                  :current_requests
+    attr_accessor :local_repo, :current_requests
 
     def initialize
       #configure_github_access
@@ -44,9 +42,8 @@ module GitReview
 
     # @return [Repository, nil] the local repo in the current directory
     def initialize_local_repo
-      _, repo_name = repo_name_from_config
-      unless repo_name.nil?
-        @local_repo = ::GitReview::Repository.new(:name => repo_name)
+      unless source_repo.nil?
+        @local_repo = ::GitReview::Repository.new(:full_name => source_repo)
       end
     end
 
@@ -118,13 +115,85 @@ module GitReview
     # get latest changes from Github.
     def update(state='open')
       @current_requests = pull_requests(@local_repo, state)
-      repos = @current_requests.collect do |request|
+      repos = @current_requests.collect { |request|
         repo = request.head.repository
         "#{repo.owner}/#{repo.name}" if repo
-      end
+      }
       repos.uniq.compact.each do |rep|
         git_call "fetch git@github.com:#{rep}.git +refs/heads/*:refs/pr/#{rep}/*"
       end
+    end
+
+    # @return [Boolean] the existence of specified request
+    def request_exists?(state='open', request_id=nil)
+      # NOTE: If request_id is set explicitly we might need to update to get the
+      # latest changes from GitHub, as this is called from within another method.
+      #automated = !request_id.nil?
+      #update(state) if automated
+      update(state)
+      request_id = request_id.to_i
+      if request_id == 0
+        raise ::GitReview::Errors::InvalidRequestIDError
+      end
+      @current_requests.any? { |r| r.number == request_id }
+      #unless @current_request
+      #  # additional try to get an older request from Github by specifying the id.
+      #  request = pull_request(source_repo, request_id)
+      #  @current_request = request if request.state == state
+      #end
+      #if @current_request
+      #  true
+      #else
+      #  # No output for automated checks.
+      #  unless automated
+      #    puts "Could not find an '#{state}' request wit ID ##{request_id}."
+      #  end
+      #  false
+      #end
+    end
+
+    # @return [Request] the request if exists
+    def get_request(state='open', request_id)
+      if request_exists?(state, request_id)
+        @current_requests.find { |req| req.number == request_id.to_i }
+      end
+    end
+
+    # @return [Array(String, String)] user and repo name from local git config
+    def repo_info_from_config
+      git_config = ::GitReview::Local.instance.config
+      url = git_config['remote.origin.url']
+      raise ::GitReview::Errors::InvalidGitRepositoryError if url.nil?
+
+      user, project = github_url_matching(url)
+      # If there are no results yet, look for 'insteadof' substitutions
+      # in URL and try again.
+      unless user && project
+        insteadof_url, true_url = github_insteadof_matching(git_config, url)
+        if insteadof_url and true_url
+          url = url.sub(insteadof_url, true_url)
+          user, project = github_url_matching(url)
+        end
+      end
+      [user, project]
+    end
+
+    # @return [String] the source repo
+    def source_repo
+      user, repo = repo_info_from_config
+      if user && repo
+        "#{user}/#{repo}"
+      end
+    end
+
+    # @return [String] the current source branch
+    def source_branch
+      git_call('branch').chomp.match(/\*(.*)/)[0][2..-1]
+    end
+
+    # @return [String] combine source repo and branch
+    def source
+      "#{source_repo}/#{source_branch}"
     end
 
   private
@@ -219,25 +288,6 @@ module GitReview
         url.index(insteadof_url) and true_url != nil
       }
       first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
-    end
-
-    # return repo name based on local git config.
-    def repo_name_from_config
-      git_config = ::GitReview::Local.instance.config
-      url = git_config['remote.origin.url']
-      raise ::GitReview::Errors::InvalidGitRepositoryError if url.nil?
-
-      user, project = github_url_matching(url)
-      # If there are no results yet, look for 'insteadof' substitutions
-      # in URL and try again.
-      unless user && project
-        insteadof_url, true_url = github_insteadof_matching(git_config, url)
-        if insteadof_url and true_url
-          url = url.sub(insteadof_url, true_url)
-          user, project = github_url_matching(url)
-        end
-      end
-      [user, project]
     end
 
   end

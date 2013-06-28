@@ -4,7 +4,7 @@ require 'singleton'
 module GitReview
 
   # The local repository is where the git-review command is being called
-  # by default. It is not specific to Github.
+  # by default. It is (supposedly) not specific to Github.
   class Local
 
     include Singleton
@@ -24,17 +24,19 @@ module GitReview
     end
 
     # clean a single request's obsolete branch
-    def clean_single(force_deletion = false)
-      update 'closed'
-      return unless request_exists?('closed')
-      # Ensure there are no unmerged commits or '--force' flag has been set
-      branch_name = @current_request.head.ref
-      if unmerged_commits?(branch_name) and not force_deletion
-        puts 'Won\'t delete branches that contain unmerged commits.'
-        puts 'Use \'--force\' to override.'
-        return
+    # TODO: remove Github-dependency
+    def clean_single(request_id, force_deletion=false)
+      request = ::GitReview::Github.instance.get_request('closed', request_id)
+      if request
+        # ensure there are no unmerged commits or '--force' flag has been set
+        branch_name = request.head.ref
+        if unmerged_commits?(branch_name) && !force_deletion
+          puts "Won't delete branches that contain unmerged commits."
+          puts "Use '--force' to override."
+        else
+          delete_branch(branch_name)
+        end
       end
-      delete_branch(branch_name)
     end
 
     # clean all obsolete branches
@@ -47,8 +49,8 @@ module GitReview
       review_branches = all_branches.collect { |branch|
         # only use uniq branch names (no matter if local or remote)
         branch.split('/').last if branch.include?('review_')
-      }
-      (review_branches.compact.uniq - protected_branches).each do |branch_name|
+      }.compact.uniq
+      (review_branches - protected_branches).each do |branch_name|
         # only clean up obsolete branches.
         delete_branch(branch_name) unless unmerged_commits?(branch_name, false)
       end
@@ -92,12 +94,9 @@ module GitReview
     #   remote branch.
     def unmerged_commits?(branch_name, verbose=true)
       locations = []
-      locations << ['', ''] if branch_exists?(:local, branch_name)
-      locations << ['origin/', 'origin/'] if branch_exists?(:remote, branch_name)
-      if locations.size == 2
-        # both local and remote branches exist
-        locations = locations + [['', 'origin/'], ['origin/', '']]
-      end
+      locations << '' if branch_exists?(:local, branch_name)
+      locations << 'origin/' if branch_exists?(:remote, branch_name)
+      locations = locations.repeated_permutation(2).to_a
       if locations.empty?
         puts 'Nothing to do. All cleaned up already.' if verbose
         return false
@@ -106,7 +105,8 @@ module GitReview
       responses = locations.collect { |loc|
         git_call "cherry #{loc.first}#{target_branch} #{loc.last}#{branch_name}"
       }
-      # select commits (= non empty, not just an error message and not only duplicate commits staring with '-').
+      # select commits (= non empty, not just an error message and not only
+      #   duplicate commits staring with '-').
       unmerged_commits = responses.reject { |response|
         response.empty? or response.include?('fatal: Unknown commit') or
             response.split("\n").reject { |x| x.index('-') == 0 }.empty?
@@ -118,6 +118,11 @@ module GitReview
         puts "Unmerged commits on branch '#{branch_name}'."
         true
       end
+    end
+
+    # @return [Boolean] whether a specified commit has already been merged.
+    def merged?(sha)
+      not git_call("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
     end
 
     # @return [String] the name of the target branch

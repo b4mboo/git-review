@@ -223,11 +223,11 @@ module GitReview
             clean_all
           else
             # git review clean ID
-            clean_single
+            clean_single(@args.first)
           end
         when 2
           # git review clean ID --force
-          clean_single(@args.last == '--force')
+          clean_single(@args.first, @args.last == '--force')
         else
           raise ::GitReview::Errors::InvalidArgumentError,
                 'Argument error. Please provide either an ID or "--all".'

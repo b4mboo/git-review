@@ -27,6 +27,10 @@ module GitReview
 
     end
 
+    class InvalidRequestIDError < StandardError
+
+    end
+
   end
 
 end
