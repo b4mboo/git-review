@@ -213,21 +213,22 @@ module GitReview
 
     # delete obsolete branches (left over from already closed requests).
     def clean
+      local_repo = ::GitReview::Local.instance
       # pruning is needed to remove deleted branches from your local track.
-      git_call 'remote prune origin'
+      git_call('remote prune origin')
       # determine strategy to clean.
       case @args.size
         when 1
           if @args.first == '--all'
             # git review clean --all
-            clean_all
+            local_repo.clean_all
           else
             # git review clean ID
-            clean_single(@args.first)
+            local_repo.clean_single(@args.first)
           end
         when 2
           # git review clean ID --force
-          clean_single(@args.first, @args.last == '--force')
+          local_repo.clean_single(@args.first, @args.last == '--force')
         else
           raise ::GitReview::Errors::InvalidArgumentError,
                 'Argument error. Please provide either an ID or "--all".'

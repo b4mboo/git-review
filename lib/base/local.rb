@@ -5,6 +5,7 @@ module GitReview
 
   # The local repository is where the git-review command is being called
   # by default. It is (supposedly) not specific to Github.
+  # TODO: remove Github-dependency
   class Local
 
     include Singleton
@@ -23,14 +24,26 @@ module GitReview
       git_call('branch -a').split("\n").collect { |s| s.strip }
     end
 
+    # @return [Array<String>] all open requests' branches shouldn't be deleted
+    def protected_branches
+      ::GitReview::Github.instance.current_requests.collect { |r| r.head.ref }
+    end
+
+    # @return [Array<String>] all review branches with 'review_' prefix
+    def review_branches
+      all_branches.collect { |branch|
+        # only use uniq branch names (no matter if local or remote)
+        branch.split('/').last if branch.include?('review_')
+      }.compact.uniq
+    end
+
     # clean a single request's obsolete branch
-    # TODO: remove Github-dependency
-    def clean_single(request_id, force_deletion=false)
+    def clean_single(request_id, force=false)
       request = ::GitReview::Github.instance.get_request('closed', request_id)
       if request
         # ensure there are no unmerged commits or '--force' flag has been set
         branch_name = request.head.ref
-        if unmerged_commits?(branch_name) && !force_deletion
+        if unmerged_commits?(branch_name) && !force
           puts "Won't delete branches that contain unmerged commits."
           puts "Use '--force' to override."
         else
@@ -41,15 +54,7 @@ module GitReview
 
     # clean all obsolete branches
     def clean_all
-      update
-      # protect all open requests' branches from deletion
-      protected_branches = ::GitReview::Github.instance.current_requests.
-          collect { |req| req.head.ref }
-      # select all branches with the correct prefix
-      review_branches = all_branches.collect { |branch|
-        # only use uniq branch names (no matter if local or remote)
-        branch.split('/').last if branch.include?('review_')
-      }.compact.uniq
+      ::GitReview::Github.instance.update
       (review_branches - protected_branches).each do |branch_name|
         # only clean up obsolete branches.
         delete_branch(branch_name) unless unmerged_commits?(branch_name, false)

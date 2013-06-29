@@ -136,7 +136,7 @@ def assume_create_pull_request
 end
 
 def assume_updated
-  ::GitReview.stub :update
+  ::GitReview::Github.instance.stub(:update)
 end
 
 def assume_pruning
@@ -147,6 +147,15 @@ def assume_unmerged_commits(commits_exist = true)
   subject.stub(:unmerged_commits?).with(branch_name).and_return(commits_exist)
   subject.stub(:unmerged_commits?).with(branch_name, verbose = false).
     and_return(commits_exist)
+end
+
+def assume_unmerged_commits
+  ::GitReview::Local.instance.stub(:unmerged_commits?).and_return(true)
+end
+
+
+def assume_no_unmerged_commits
+  ::GitReview::Local.instance.stub(:unmerged_commits?).and_return(false)
 end
 
 def assume_valid_command(valid = true)
