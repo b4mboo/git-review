@@ -116,7 +116,7 @@ module GitReview
     def update(state='open')
       @current_requests = pull_requests(@local_repo, state)
       repos = @current_requests.collect { |request|
-        repo = request.head.repository
+        repo = request.head.repo
         "#{repo.owner}/#{repo.name}" if repo
       }
       repos.uniq.compact.each do |rep|
