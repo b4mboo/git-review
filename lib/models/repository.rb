@@ -21,10 +21,6 @@ module GitReview
                   :master_branch,
                   :default_branch
 
-    def initialize(mash=nil)
-      self.update_from_mash(mash) unless mash.nil?
-    end
-
     def to_s
       @full_name
     end
