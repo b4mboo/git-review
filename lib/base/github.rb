@@ -11,11 +11,14 @@ require 'socket'
 require 'grit'
 require 'singleton'
 
+require_relative 'local'
+
 module GitReview
 
   class Github
 
     include Singleton
+    include Internals
 
     attr_reader :github
     attr_accessor :local_repo, :current_requests
@@ -43,7 +46,8 @@ module GitReview
     # @return [Repository, nil] the local repo in the current directory
     def initialize_local_repo
       unless source_repo.nil?
-        @local_repo = ::GitReview::Repository.new(:full_name => source_repo)
+        @local_repo = ::GitReview::Repository.new
+        @local_repo.full_name = source_repo
       end
     end
 

@@ -9,6 +9,7 @@ module GitReview
   class Local
 
     include Singleton
+    include Internals
 
     attr_accessor :config
 

@@ -1,18 +1,24 @@
+require_relative 'internals'
+
 module GitReview
 
   module Commands
 
+    include Internals
     extend self
 
     attr_accessor :args
 
     # List all pending requests.
     def list
-      output = @current_requests.collect do |request|
-        details = @github.pull_request(source_repo, request.number)
+      github = ::GitReview::Github.instance
+      source_repo = github.source_repo
+      source = github.source
+      output = github.current_requests.collect do |request|
+        details = github.pull_request(source_repo, request.number)
         # Find only pending (= unmerged) requests and output summary.
         # Explicitly look for local changes (that GitHub does not yet know about).
-        next if merged?(request.head.sha)
+        next if ::GitReview::Local.instance.merged?(request.head.sha)
         line = format_text(request.number, 8)
         date_string = format_time(request.updated_at)
         line << format_text(date_string, 11)
@@ -34,24 +40,31 @@ module GitReview
 
     # Show details for a single request.
     def show
-      return unless request_exists?
+      github = ::GitReview::Github.instance
+      request_id = @args.shift
+      puts github.source_repo
+      if github.request_exists?('open', request_id)
+        current_request = github.pull_request(github.source_repo, request_id)
+      else
+        return
+      end
       # Determine whether to show full diff or just stats.
       option = @args.shift == '--full' ? '' : '--stat '
-      diff = "diff --color=always #{option}HEAD...#{@current_request.head.sha}"
+      diff = "diff --color=always #{option}HEAD...#{current_request.head.sha}"
       # TODO: Move to comment calculations to request class.
-      comment_count = @current_request.comments + @current_request.review_comments
-      puts 'ID        : ' + @current_request.number.to_s
-      puts 'Label     : ' + @current_request.head.label
-      puts 'Updated   : ' + format_time(@current_request.updated_at)
-      puts 'Comments  : ' + comment_count.to_s
+      puts current_request.comments_count
+      puts 'ID        : ' + current_request.number.to_s
+      puts 'Label     : ' + current_request.head.label
+      puts 'Updated   : ' + format_time(current_request.updated_at)
+      puts 'Comments  : ' + current_request.comments_count.to_s
       puts
-      puts @current_request.title
+      puts current_request.title
       puts
-      puts @current_request.body
+      puts current_request.body
       puts
       puts git_call diff
       puts
-      puts "Progress  :"
+      puts 'Progress  :'
       puts
       discussion
     end
@@ -59,7 +72,11 @@ module GitReview
 
     # Open a browser window and review a specified request.
     def browse
-      Launchy.open @current_request.html_url if request_exists?
+      github = ::GitReview::Github.instance
+      request_id = @args.shift
+      if github.request_exists?('open', request_id)
+        Launchy.open github.get_request('open', request_id).html_url
+      end
     end
 
 

@@ -27,6 +27,12 @@ module GitReview
       @number
     end
 
+    def comments_count
+      @comments ||= 0
+      @review_comments ||= 0
+      @comments + @review_comments
+    end
+
   end
 
 end
