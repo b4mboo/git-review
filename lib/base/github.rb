@@ -30,10 +30,11 @@ module GitReview
     # setup connection with Github via OAuth
     # @return [String] the username logged in
     def configure_github_access
-      if ::GitReview::Settings.instance.oauth_token
+      settings = ::GitReview::Settings.instance
+      if settings.oauth_token && settings.username
         @github = Octokit::Client.new(
-          :login          => ::GitReview::Settings.instance.username,
-          :oauth_token    => ::GitReview::Settings.instance.oauth_token,
+          :login          => settings.username,
+          :oauth_token    => settings.oauth_token,
           :auto_traversal => true
         )
         @github.login

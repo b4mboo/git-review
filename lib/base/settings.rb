@@ -8,8 +8,6 @@ module GitReview
 
     include Singleton
 
-    attr_accessor :username, :oauth_token
-
     # Read settings from ~/.git_review.yml upon initialization.
     def initialize
       @config_file = File.join(Dir.home, '.git_review.yml')
@@ -25,13 +23,12 @@ module GitReview
     end
 
     # Allow to access config options.
-    def method_missing(*args)
-      name = args.shift.to_s
+    def method_missing(method, *args)
       # Determine whether to set or get an attribute.
-      if name.end_with? '='
-        @config[name[0..-2]] = args.shift
+      if method.to_s =~ /(.*)=$/
+        @config[$1.to_sym] = args.shift
       else
-        @config[name]
+        @config[method.to_sym]
       end
     end
 
