@@ -152,15 +152,23 @@ module GitReview
       ENV['TARGET_BRANCH'] || 'master'
     end
 
-    # @returns [String] the name of the target repo
+    # @return [String] the name of the target repo
     def target_repo
       # TODO: Manually override this and set arbitrary repositories
       source_repo
     end
 
-    # @returns [String] combine target repo and branch
+    # @return [String] combine target repo and branch
     def target
       "#{target_repo}/#{target_branch}"
+    end
+
+    # @return [Boolean] whether already on a feature branch
+    def on_feature_branch?
+      # If current and target are the same, we are not on a feature branch.
+      # If they are different, but we are on master, we should still to switch
+      # to a separate branch (since master makes for a poor feature branch).
+      source_branch != target_branch && source_branch != 'master'
     end
 
   end

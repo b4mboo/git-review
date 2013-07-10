@@ -165,16 +165,16 @@ module GitReview
 
 
     # Prepare local repository to create a new request.
-    # Sets @local_branch.
+    # Return original_branch and local_branch.
     def prepare
       # Remember original branch the user was currently working on.
-      @original_branch = source_branch
+      local = ::GitReview::Local.instance
+      target_branch = local.target_branch
+      original_branch = local.source_branch
       # People should work on local branches, but especially for single commit
-      # changes, more often than not, they don't. Therefore we create a branch for
-      # them, to be able to use code review the way it is intended.
-      if on_feature_branch?
-        @local_branch = @original_branch
-      else
+      # changes, more often than not, they don't. Therefore we create a branch
+      # for them, to be able to use code review the way it is intended.
+      if @args.shift == '--new' || !local.on_feature_branch?
         # Unless a branch name is already provided, ask for one.
         if (branch_name = @args.shift).nil?
           puts 'Please provide a name for the branch:'
@@ -182,51 +182,62 @@ module GitReview
         end
         sanitized_name = branch_name.gsub(/\W+/, '_').downcase
         # Create the new branch (as a copy of the current one).
-        @local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{sanitized_name}"
-        git_call "checkout -b #{@local_branch}"
+        local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{sanitized_name}"
+        git_call "checkout -b #{local_branch}"
         # Have we reached the feature branch?
-        if source_branch == @local_branch
+        if local.source_branch == local_branch
           # Stash any uncommitted changes.
           save_uncommitted_changes = !git_call('diff HEAD').empty?
           git_call('stash') if save_uncommitted_changes
-          # Go back to master and get rid of pending commits (as these are now on
-          # the new branch).
+          # Go back to master and get rid of pending commits (as these are now
+          # on the new branch).
           git_call "checkout #{target_branch}"
           git_call "reset --hard origin/#{target_branch}"
-          git_call "checkout #{@local_branch}"
+          git_call "checkout #{local_branch}"
           git_call('stash pop') if save_uncommitted_changes
         end
+      else
+        local_branch = original_branch
       end
+      [original_branch, local_branch]
     end
 
 
     # Create a new request.
-    # TODO: Support creating requests to other repositories and branches (like the
-    # original repo, this has been forked from).
+    # TODO: Support creating requests to other repositories and branches (like
+    # the original repo, this has been forked from).
     def create
-      # Prepare @local_branch.
-      prepare
+      # Prepare original_branch and local_branch.
+      original_branch, local_branch = prepare
+      local = ::GitReview::Local.instance
+      target_branch = local.target_branch
+      target_repo = local.target_repo
+      source_branch = local.source_branch
       # Don't create request with uncommitted changes in current branch.
       unless git_call('diff HEAD').empty?
         puts 'You have uncommitted changes.'
         puts 'Please stash or commit before creating the request.'
         return
       end
-      unless git_call("cherry #{target_branch}").empty?
+      if git_call("cherry #{target_branch}").empty?
+        puts 'Nothing to push to remote yet. Commit something first.'
+      else
         # Push latest commits to the remote branch (and by that, create it
         # if necessary).
-        git_call "push --set-upstream origin #{@local_branch}", debug_mode, true
+        git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
         # Gather information.
-        last_id = @current_requests.collect(&:number).sort.last.to_i
+        github = ::GitReview::Github.instance
+        requests = github.current_requests
+        last_id = requests.collect(&:number).sort.last.to_i
         title, body = create_title_and_body(target_branch)
         # Create the actual pull request.
-        @github.create_pull_request(
-          target_repo, target_branch, source_branch, title, body
+        github.create_pull_request(
+            target_repo, target_branch, source_branch, title, body
         )
         # Switch back to target_branch and check for success.
-        git_call "checkout #{target_branch}"
-        update
-        potential_new_request = @current_requests.find { |r| r.title == title }
+        git_call("checkout #{target_branch}")
+        github.update
+        potential_new_request = requests.find { |r| r.title == title }
         if potential_new_request
           current_id = potential_new_request.number
           if current_id > last_id
@@ -235,9 +246,8 @@ module GitReview
           end
         end
         # Return to the user's original branch.
-        git_call "checkout #{@original_branch}"
-      else
-        puts 'Nothing to push to remote yet. Commit something first.'
+        # FIXME: keep track of original branch etc
+        git_call "checkout #{original_branch}"
       end
     end
 
@@ -269,8 +279,9 @@ module GitReview
 
     # Start a console session (used for debugging).
     def console
+      # TODO: Debugger for Ruby 2.0?
       puts 'Entering debug console.'
-      request_exists?
+      #request_exists?
       require 'ruby-debug'
       Debugger.start
       debugger
@@ -291,11 +302,56 @@ Available commands:
   approve <ID>              Add an approving comment to a request.
   merge <ID>                Accept a request by merging it into master.
   close <ID>                Close a request.
-  prepare                   Creates a new local branch for a request.
+  prepare [--new]           Creates a new local branch for a request.
   create                    Create a new request.
   clean <ID> [--force]      Delete a request\'s remote and local branches.
   clean --all               Delete all obsolete branches.
 HELP_TEXT
+    end
+
+  private
+
+    # Returns an array where the 1st item is the title and the 2nd one is the body
+    def create_title_and_body(target_branch)
+      local = ::GitReview::Local.instance
+      source = local.source
+      git_config = local.config
+      commits = git_call("log --format='%H' HEAD...#{target_branch}").
+          lines.count
+      puts "commits: #{commits}"
+      if commits == 1
+        # we can create a really specific title and body
+        title = git_call("log --format='%s' HEAD...#{target_branch}").chomp
+        body  = git_call("log --format='%b' HEAD...#{target_branch}").chomp
+      else
+        title = "[Review] Request from '#{git_config['github.login']}'" +
+            " @ '#{source}'"
+        body  = "Please review the following changes:\n"
+        body += git_call("log --oneline HEAD...#{target_branch}").
+            lines.map{|l| "  * #{l.chomp}"}.join("\n")
+      end
+
+      tmpfile = Tempfile.new('git-review')
+      tmpfile.write(title + "\n\n" + body)
+      tmpfile.flush
+      editor = ENV['TERM_EDITOR'] || ENV['EDITOR']
+      unless editor
+        warn "Please set $EDITOR or $TERM_EDITOR in your .bash_profile."
+      end
+
+      system("#{editor || 'open'} #{tmpfile.path}")
+
+      tmpfile.rewind
+      lines = tmpfile.read.lines.to_a
+      puts lines.inspect
+      title = lines.shift.chomp
+      lines.shift if lines[0].chomp.empty?
+
+      body = lines.join
+
+      tmpfile.unlink
+
+      [title, body]
     end
 
   end

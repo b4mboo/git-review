@@ -147,6 +147,7 @@ module Internals
 
   # Returns an array where the 1st item is the title and the 2nd one is the body
   def create_title_and_body(target_branch)
+    git_config = ::GitReview::Local.instance.config
     commits = git_call("log --format='%H' HEAD...#{target_branch}").lines.count
     puts "commits: #{commits}"
     if commits == 1
