@@ -42,7 +42,6 @@ module GitReview
     def show
       github = ::GitReview::Github.instance
       request_id = @args.shift
-      puts github.source_repo
       if github.request_exists?('open', request_id)
         current_request = github.pull_request(github.source_repo, request_id)
       else
@@ -82,23 +81,31 @@ module GitReview
 
     # Checkout a specified request's changes to your local repository.
     def checkout
-      return unless request_exists?
+      github = ::GitReview::Github.instance
+      request_id = @args.shift
+      return unless github.request_exists?('open', request_id)
+      request = github.get_request('open', request_id)
       create_local_branch = @args.shift == '--branch' ? '' : 'origin/'
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
       puts '  git checkout master'
       puts
-      git_call "checkout #{create_local_branch}#{@current_request.head.ref}"
+      git_call "checkout #{create_local_branch}#{request.head.ref}"
     end
 
 
     # Add an approving comment to the request.
     def approve
-      return unless request_exists?
+      github = ::GitReview::Github.instance
+      request_id = @args.shift
+      return unless github.request_exists?('open', request_id)
+      request = github.get_request('open', request_id)
+      repo = github.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
-      response = @github.add_comment source_repo, @current_request.number, comment
+
+      response = github.add_comment(repo, request.number, comment)
       if response[:body] == comment
         puts 'Successfully approved request.'
       else
@@ -109,13 +116,16 @@ module GitReview
 
     # Accept a specified request by merging it into master.
     def merge
-      return unless request_exists?
+      github = ::GitReview::Github.instance
+      request_id = @args.shift
+      return unless github.request_exists?('open', request_id)
+      request = github.get_request('open', request_id)
       # FIXME: What options are allowed here?
       option = @args.shift
-      unless @current_request.head.repo
+      unless request.head.repo
         # Someone deleted the source repo.
-        user = @current_request.head.user.login
-        url = @current_request.patch_url
+        user = request.head.user.login
+        url = request.patch_url
         puts "Sorry, #{user} deleted the source repository."
         puts 'git-review doesn\'t support this.'
         puts 'Tell the contributor not to do this.'
@@ -126,12 +136,12 @@ module GitReview
         puts
         return false
       end
-      message = "Accept request ##{@current_request.number}" +
-        " and merge changes into \"#{target}\""
-      command = "merge #{option} -m '#{message}' #{@current_request.head.sha}"
+      message = "Accept request ##{request.number}" +
+        " and merge changes into \"#{::GitReview::Local.instance.target}\""
+      command = "merge #{option} -m '#{message}' #{request.head.sha}"
       puts
       puts 'Request title:'
-      puts '  ' + @current_request.title
+      puts '  ' + request.title
       puts
       puts 'Merge command:'
       puts "  git #{command}"
@@ -142,9 +152,13 @@ module GitReview
 
     # Close a specified request.
     def close
-      return unless request_exists?
-      @github.close_issue source_repo, @current_request.number
-      unless request_exists?('open', @current_request.number)
+      github = ::GitReview::Github.instance
+      request_id = @args.shift
+      return unless github.request_exists?('open', request_id)
+      request = github.get_request('open', request_id)
+      repo = github.source_repo
+      github.close_issue(repo, request.number)
+      unless github.request_exists?('open', request.number)
         puts 'Successfully closed request.'
       end
     end

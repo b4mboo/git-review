@@ -131,10 +131,36 @@ module GitReview
       not git_call("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
     end
 
+    # @return [String] the source repo
+    def source_repo
+      ::GitReview::Github.instance.source_repo
+    end
+
+    # @return [String] the current source branch
+    def source_branch
+      ::GitReview::Github.instance.source_branch
+    end
+
+    # @return [String] combine source repo and branch
+    def source
+      "#{source_repo}/#{source_branch}"
+    end
+
     # @return [String] the name of the target branch
     def target_branch
-      # TODO: Enable possibility to manually override this and set arbitrary branches.
+      # TODO: Manually override this and set arbitrary branches
       ENV['TARGET_BRANCH'] || 'master'
+    end
+
+    # @returns [String] the name of the target repo
+    def target_repo
+      # TODO: Manually override this and set arbitrary repositories
+      source_repo
+    end
+
+    # @returns [String] combine target repo and branch
+    def target
+      "#{target_repo}/#{target_branch}"
     end
 
   end
