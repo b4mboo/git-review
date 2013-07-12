@@ -61,7 +61,7 @@ module GitReview
       puts
       puts current_request.body
       puts
-      puts git_call diff
+      puts git_call(diff)
       puts
       puts 'Progress  :'
       puts
@@ -91,7 +91,7 @@ module GitReview
       puts
       puts '  git checkout master'
       puts
-      git_call "checkout #{create_local_branch}#{request.head.ref}"
+      git_call("checkout #{create_local_branch}#{request.head.ref}")
     end
 
 
@@ -146,7 +146,7 @@ module GitReview
       puts 'Merge command:'
       puts "  git #{command}"
       puts
-      puts git_call command
+      puts git_call(command)
     end
 
 
@@ -183,7 +183,7 @@ module GitReview
         sanitized_name = branch_name.gsub(/\W+/, '_').downcase
         # Create the new branch (as a copy of the current one).
         local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{sanitized_name}"
-        git_call "checkout -b #{local_branch}"
+        git_call("checkout -b #{local_branch}")
         # Have we reached the feature branch?
         if local.source_branch == local_branch
           # Stash any uncommitted changes.
@@ -191,9 +191,9 @@ module GitReview
           git_call('stash') if save_uncommitted_changes
           # Go back to master and get rid of pending commits (as these are now
           # on the new branch).
-          git_call "checkout #{target_branch}"
-          git_call "reset --hard origin/#{target_branch}"
-          git_call "checkout #{local_branch}"
+          git_call("checkout #{target_branch}")
+          git_call("reset --hard origin/#{target_branch}")
+          git_call("checkout #{local_branch}")
           git_call('stash pop') if save_uncommitted_changes
         end
       else
@@ -247,7 +247,7 @@ module GitReview
         end
         # Return to the user's original branch.
         # FIXME: keep track of original branch etc
-        git_call "checkout #{original_branch}"
+        git_call("checkout #{original_branch}")
       end
     end
 
