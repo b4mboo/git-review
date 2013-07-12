@@ -70,21 +70,22 @@ module GitReview
     def issue_comments(repo, number)
       args = stringify(repo, number)
       @github.issue_comments(*args).collect { |comment|
-        ::GitReview::Comment.new.update_from_mash(comment)
+        ::GitReview::IssueComment.new.update_from_mash(comment)
       }
     end
 
     # get a single comment attached to an issue
     def issue_comment(repo, number)
       args = stringify(repo, number)
-      ::GitReview::Comment.new.update_from_mash(@github.issue_comment(*args))
+      ::GitReview::IssueComment.new.
+          update_from_mash(@github.issue_comment(*args))
     end
 
     # list comments on a pull request
     def pull_request_comments(repo, number)
       args = stringify(repo, number)
-      @github.pull_request_comments(*args) { |comment|
-        ::GitReview::Comment.new.update_from_mash(comment)
+      @github.pull_request_comments(*args).collect { |comment|
+        ::GitReview::ReviewComment.new.update_from_mash(comment)
       }
     end
     alias_method :pull_comments, :pull_request_comments
@@ -93,11 +94,19 @@ module GitReview
     # list commits on a pull request
     def pull_request_commits(repo, number)
       args = stringify(repo, number)
-      @github.pull_request_commits(*args) { |commit|
+      @github.pull_request_commits(*args).collect { |commit|
         ::GitReview::Commit.new.update_from_mash(commit)
       }
     end
     alias_method :pull_commits, :pull_request_commits
+
+    # list comments on a commit
+    def commit_comments(repo, sha)
+      args = stringify(repo, sha)
+      @github.commit_comments(*args).collect { |comment|
+        ::GitReview::CommitComment.new.update_from_mash(comment)
+      }
+    end
 
     # close an issue
     def close_issue(repo, number)
@@ -116,6 +125,24 @@ module GitReview
       args = stringify(repo, base, head, title, body)
       @github.create_pull_request(*args)
     end
+
+    # list repositories of a user
+    def repositories(username)
+      args = stringify(username)
+      @github.repositories(*args).collect { |repo|
+        ::GitReview::Repository.new.update_from_mash(repo)
+      }
+    end
+    alias_method :list_repositories, :repositories
+    alias_method :list_repos, :repositories
+    alias_method :repos, :repositories
+
+    # get a single repository of a user
+    def repository(repo)
+      args = stringify(repo)
+      ::GitReview::Repository.new.update_from_mash(@github.repository(*args))
+    end
+    alias_method :repo, :repository
 
     # get latest changes from Github.
     def update(state='open')
@@ -199,6 +226,91 @@ module GitReview
     # @return [String] combine source repo and branch
     def source
       "#{source_repo}/#{source_branch}"
+    end
+
+    # Show current discussion for @current_request.
+    # The structure of a discussion is like the following
+    # - Some pull request
+    #    - Comment 1
+    #    - Comment 2
+    #    - Some commit
+    #      -Comment 1 on commit
+    #      -Comment 2 on commit
+    #    - ...
+    def discussion(request_id)
+      request = get_request('open', request_id)
+      source = source_repo
+      issue_comments = issue_comments(source, request['number'])
+      pull_commits = pull_commits(source, request['number'])
+      # A bit hacky here. Just put everything in chronological order.
+      # Issue comments and pull commits have different structures.
+      comments = (issue_comments + pull_commits).sort! { |x,y|
+        (x.created_at || x.commit.committer.date) <=>
+            (y.created_at || y.commit.committer.date)
+      }
+      result = comments.collect do |entry|
+        output = ""
+        if entry.commit?
+          # it is a pull commit
+          name = entry.committer.login
+          output << "\e[35m#{name}\e[m "
+          output << "committed \e[36m#{entry['sha'][0..6]}\e[m on #{format_time(entry.commit.committer.date)}"
+          output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry.commit.message}"
+          # FIXME:
+          # Comments on commits does not work yet, as the commits may come from forks
+          # haven't found a reliable way to identify the forked repo.
+          # commit_comments = @github.commit_comments(source_repo, entry.sha)
+          # commit_comments.each do |cc|
+          # end
+        else
+          # it is a issue comment
+          name = entry.user.login
+          output << "\e[35m#{name}\e[m "
+          output << "added a comment"
+          output << " to \e[36m#{entry.id}\e[m"
+          output << " on #{format_time(entry.created_at)}"
+          unless entry['created_at'] == entry['updated_at']
+            output << " (updated on #{format_time(entry.updated_at)})"
+          end
+          output << ":\n#{''.rjust(output.length + 1, "-")}\n"
+          output << entry.body
+        end
+        output << "\n\n\n"
+      end
+      puts result.compact unless result.empty?
+
+
+      # # FIXME:
+      # puts 'This needs to be updated to work with API v3.'
+      # return
+      # request = @github.pull_request source_repo, @current_request['number']
+      # result = request['discussion'].collect do |entry|
+      #   user = entry['user'] || entry['author']
+      #   name = user['login'].empty? ? user['name'] : user['login']
+      #   output = "\e[35m#{name}\e[m "
+      #   case entry['type']
+      #     # Comments:
+      #     when "IssueComment", "CommitComment", "PullRequestReviewComment"
+      #       output << "added a comment"
+      #       output << " to \e[36m#{entry['commit_id'][0..6]}\e[m" if entry['commit_id']
+      #       output << " on #{format_time(entry['created_at'])}"
+      #       unless entry['created_at'] == entry['updated_at']
+      #         output << " (updated on #{format_time(entry['updated_at'])})"
+      #       end
+      #       output << ":\n#{''.rjust(output.length + 1, "-")}\n"
+      #       output << "> \e[32m#{entry['path']}:#{entry['position']}\e[m\n" if entry['path'] and entry['position']
+      #       output << entry['body']
+      #     # Commits:
+      #     when "Commit"
+      #       output << "authored commit \e[36m#{entry['id'][0..6]}\e[m on #{format_time(entry['authored_date'])}"
+      #       unless entry['authored_date'] == entry['committed_date']
+      #         output << " (committed on #{format_time(entry['committed_date'])})"
+      #       end
+      #       output << ":\n#{''.rjust(output.length + 1, "-")}\n#{entry["message"]}"
+      #   end
+      #   output << "\n\n\n"
+      # end
+      # puts result.compact unless result.empty?
     end
 
   private
