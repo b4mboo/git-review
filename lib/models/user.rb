@@ -11,6 +11,10 @@ module GitReview
       @login
     end
 
+    def repos
+      ::GitReview::Github.instance.repositories(@login)
+    end
+
   end
 
 end

@@ -19,10 +19,17 @@ module GitReview
                   :pushed_at,
                   :open_issues_count,
                   :master_branch,
-                  :default_branch
+                  :default_branch,
+                  :parent
 
     def to_s
       @full_name
+    end
+
+    # @return [Repository, nil] parent of the forked repo
+    def parent
+      return unless fork
+      @parent = ::GitReview::Github.instance.repository(@full_name)
     end
 
   end
