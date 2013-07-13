@@ -11,9 +11,9 @@ module GitReview
     def list
       source_repo = local.source_repo
       source = local.source
-      output = github.pull_requests.collect do |request|
-        # need to use pull_request (different from pull_requests!) again to
-        #   retrieve details about the particular request
+      output = github.current_requests.collect do |request|
+        # need to use pull_request again to retrieve details about the
+        #   particular request
         details = github.pull_request(source_repo, request.number)
         # find only pending (= unmerged) requests and output summary
         # explicitly look for local changes Github does not yet know about
@@ -212,7 +212,7 @@ module GitReview
         #   if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
         # gather information before creating pull request
-        requests = github.pull_requests
+        requests = github.current_requests
         last_id = requests.collect(&:number).sort.last.to_i
         title, body = create_title_and_body(target_branch)
         # create the actual pull request
@@ -221,7 +221,7 @@ module GitReview
         )
         # switch back to target_branch and check for success
         git_call("checkout #{target_branch}")
-        requests = github.pull_requests
+        requests = github.current_requests
         potential_new_request = requests.find { |r| r.title == title }
         if potential_new_request
           current_number = potential_new_request.number

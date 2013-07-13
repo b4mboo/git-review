@@ -53,8 +53,15 @@ module GitReview
       false
     end
 
-    def pull_requests
+    def current_requests
       @github.pull_requests(source_repo)
+    end
+
+    def update
+      repos = current_requests.collect { |request| request.head.full_name }
+      repos.uniq.compact.each do |r|
+        git_call("fetch git@github.com:#{r}.git +refs/heads/*:refs/pr/#{r}/*")
+      end
     end
 
     # @return [Array(String, String)] user and repo name from local git config
@@ -89,10 +96,8 @@ module GitReview
 
     def commit_discussion(number)
       pull_commits = @github.pull_commits(source_repo, number)
-      original_repo = nil # cache original_repo so it's retrieved only once
+      repo = @github.pull_request(source_repo, number).head.repo.full_name
       discussion = pull_commits.collect { |commit|
-        original_repo ||= original_repo(commit) # cache here
-
         # commit message
         name = commit.committer.login
         output = "\e[35m#{name}\e[m "
@@ -104,7 +109,7 @@ module GitReview
         result = [output]
 
         # comments on commit
-        comments = @github.commit_comments(original_repo, commit.sha)
+        comments = @github.commit_comments(repo, commit.sha)
         result + comments.collect { |comment|
           name = comment.user.login
           output = "\e[35m#{name}\e[m "
@@ -142,21 +147,6 @@ module GitReview
     def discussion(number)
       commit_discussion(number).insert(0, "Commits on pull request:\n\n") +
       issue_discussion(number).insert(0, "\n Comments on pull request:\n\n")
-    end
-
-    # @param commit [Mash] commit of a pull_request
-    # @return [String] the original (forked) repo where the commit is from
-    def original_repo(commit)
-      committer = commit.committer.login
-      # if the commit is from self
-      return source_repo if repo_info_from_config[0] == committer
-      # repositories only gives a list of repos, but no parent info for them
-      #   therefore have to use repository again to get details
-      repos = @github.repositories(committer).collect { |r|
-        @github.repository(r.full_name)
-      }
-      repo = repos.find { |r| r.parent? && r.parent.full_name == source_repo }
-      repo.full_name
     end
 
     # delegate methods that interact with Github to Octokit client

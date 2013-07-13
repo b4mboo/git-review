@@ -58,6 +58,7 @@ module GitReview
       github = ::GitReview::Github.instance
       github.configure_github_access
       if github.source_repo && github.github.login
+        github.update unless command == 'clean'
         ::GitReview::Commands.send(command)
       end
     end

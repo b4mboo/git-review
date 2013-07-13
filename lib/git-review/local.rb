@@ -42,8 +42,8 @@ module GitReview
 
     # clean a single request's obsolete branch
     def clean_single(request_id, force=false)
-      request = ::GitReview::Github.instance.get_request('closed', request_id)
-      if request
+      request = ::GitReview::Github.instance.pull_request(source_repo, request_id)
+      if request && request.state == 'closed'
         # ensure there are no unmerged commits or '--force' flag has been set
         branch_name = request.head.ref
         if unmerged_commits?(branch_name) && !force
@@ -57,7 +57,6 @@ module GitReview
 
     # clean all obsolete branches
     def clean_all
-      ::GitReview::Github.instance.update
       (review_branches - protected_branches).each do |branch_name|
         # only clean up obsolete branches.
         delete_branch(branch_name) unless unmerged_commits?(branch_name, false)
