@@ -13,8 +13,10 @@ module GitReview
 
     attr_accessor :config
 
-    def initialize(path='.')
-      repo = Grit::Repo.new(path)
+    def initialize(path=nil)
+      # find root git directory if currently in subdirectory
+      root = path || git_call('rev-parse --show-toplevel').strip
+      repo = Grit::Repo.new(root)
       @config = repo.config
     rescue
       raise ::GitReview::Errors::InvalidGitRepositoryError
