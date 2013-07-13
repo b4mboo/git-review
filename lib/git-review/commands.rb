@@ -1,5 +1,3 @@
-require_relative 'internals'
-
 module GitReview
 
   module Commands
@@ -11,19 +9,21 @@ module GitReview
 
     # List all pending requests.
     def list
-      github = ::GitReview::Github.instance
-      source_repo = github.source_repo
-      source = github.source
-      output = github.current_requests.collect do |request|
+      source_repo = local.source_repo
+      source = local.source
+      output = github.pull_requests.collect do |request|
+        # need to use pull_request (different from pull_requests!) again to
+        #   retrieve details about the particular request
         details = github.pull_request(source_repo, request.number)
-        # Find only pending (= unmerged) requests and output summary.
-        # Explicitly look for local changes (that GitHub does not yet know about).
-        next if ::GitReview::Local.instance.merged?(request.head.sha)
-        line = format_text(request.number, 8)
-        date_string = format_time(request.updated_at)
+        # find only pending (= unmerged) requests and output summary
+        # explicitly look for local changes Github does not yet know about
+        next if local.merged?(details.head.sha)
+        date_string = format_time(details.updated_at)
+        comments_count = details.comments.to_i + details.review_comments.to_i
+        line = format_text(details.number, 8)
         line << format_text(date_string, 11)
-        line << format_text(details.comments + details.review_comments, 10)
-        line << format_text(request.title, 91)
+        line << format_text(comments_count, 10)
+        line << format_text(details.title, 91)
         line
       end
       output.compact!
@@ -37,54 +37,45 @@ module GitReview
       end
     end
 
-
     # Show details for a single request.
     def show
-      github = ::GitReview::Github.instance
-      request_id = @args.shift
-      if github.request_exists?('open', request_id)
-        current_request = github.pull_request(github.source_repo, request_id)
-      else
-        return
-      end
-      # Determine whether to show full diff or just stats.
+      request_number = @args.shift
+      request = github.request_exists?(request_number)
+      return unless request
+      # determine whether to show full diff or just stats
       option = @args.shift == '--full' ? '' : '--stat '
-      diff = "diff --color=always #{option}HEAD...#{current_request.head.sha}"
-      # TODO: Move to comment calculations to request class.
-      puts current_request.comments_count
-      puts 'ID        : ' + current_request.number.to_s
-      puts 'Label     : ' + current_request.head.label
-      puts 'Updated   : ' + format_time(current_request.updated_at)
-      puts 'Comments  : ' + current_request.comments_count.to_s
+      diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
+      comments_count = request.comments.to_i + request.review_comments.to_i
+      puts 'ID        : ' + request.number.to_s
+      puts 'Label     : ' + request.head.label
+      puts 'Updated   : ' + format_time(request.updated_at)
+      puts 'Comments  : ' + comments_count.to_s
       puts
-      puts current_request.title
+      puts request.title
       puts
-      puts current_request.body
+      puts request.body
       puts
       puts git_call(diff)
       puts
       puts 'Progress  :'
       puts
-      discussion
+      puts github.discussion(request_number)
     end
 
 
     # Open a browser window and review a specified request.
     def browse
-      github = ::GitReview::Github.instance
-      request_id = @args.shift
-      if github.request_exists?('open', request_id)
-        Launchy.open github.get_request('open', request_id).html_url
-      end
+      request_number = @args.shift
+      request = github.request_exists?(request_number)
+      Launchy.open(request.html_url) if request
     end
 
 
     # Checkout a specified request's changes to your local repository.
     def checkout
-      github = ::GitReview::Github.instance
-      request_id = @args.shift
-      return unless github.request_exists?('open', request_id)
-      request = github.get_request('open', request_id)
+      request_number = @args.shift
+      request = github.request_exists?(request_number)
+      return unless request
       create_local_branch = @args.shift == '--branch' ? '' : 'origin/'
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
@@ -97,14 +88,12 @@ module GitReview
 
     # Add an approving comment to the request.
     def approve
-      github = ::GitReview::Github.instance
-      request_id = @args.shift
-      return unless github.request_exists?('open', request_id)
-      request = github.get_request('open', request_id)
+      request_number = @args.shift
+      request = github.request_exists?(request_number)
+      return unless request
       repo = github.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
-
       response = github.add_comment(repo, request.number, comment)
       if response[:body] == comment
         puts 'Successfully approved request.'
@@ -116,14 +105,13 @@ module GitReview
 
     # Accept a specified request by merging it into master.
     def merge
-      github = ::GitReview::Github.instance
-      request_id = @args.shift
-      return unless github.request_exists?('open', request_id)
-      request = github.get_request('open', request_id)
+      request_number = @args.shift
+      request = github.request_exists?(request_number)
+      return unless request
       # FIXME: What options are allowed here?
       option = @args.shift
       unless request.head.repo
-        # Someone deleted the source repo.
+        # someone deleted the source repo
         user = request.head.user.login
         url = request.patch_url
         puts "Sorry, #{user} deleted the source repository."
@@ -137,7 +125,7 @@ module GitReview
         return false
       end
       message = "Accept request ##{request.number}" +
-        " and merge changes into \"#{::GitReview::Local.instance.target}\""
+        " and merge changes into \"#{local.target}\""
       command = "merge #{option} -m '#{message}' #{request.head.sha}"
       puts
       puts 'Request title:'
@@ -152,10 +140,9 @@ module GitReview
 
     # Close a specified request.
     def close
-      github = ::GitReview::Github.instance
-      request_id = @args.shift
-      return unless github.request_exists?('open', request_id)
-      request = github.get_request('open', request_id)
+      request_number = @args.shift
+      request = github.request_exists?(request_number, 'open')
+      return unless request
       repo = github.source_repo
       github.close_issue(repo, request.number)
       unless github.request_exists?('open', request.number)
@@ -165,32 +152,32 @@ module GitReview
 
 
     # Prepare local repository to create a new request.
-    # Return original_branch and local_branch.
+    # People should work on local branches, but especially for single commit
+    #   changes, more often than not, they don't. Therefore we create a branch
+    #   for them, to be able to use code review the way it is intended.
+    # @return [Array(String, String)] the original branch and the local branch
     def prepare
-      # Remember original branch the user was currently working on.
-      local = ::GitReview::Local.instance
-      target_branch = local.target_branch
+      # remember original branch the user was currently working on
       original_branch = local.source_branch
-      # People should work on local branches, but especially for single commit
-      # changes, more often than not, they don't. Therefore we create a branch
-      # for them, to be able to use code review the way it is intended.
+      target_branch = local.target_branch
+
       if @args.shift == '--new' || !local.on_feature_branch?
-        # Unless a branch name is already provided, ask for one.
+        # ask for branch name if not provided
         if (branch_name = @args.shift).nil?
           puts 'Please provide a name for the branch:'
           branch_name = gets.chomp
         end
         sanitized_name = branch_name.gsub(/\W+/, '_').downcase
-        # Create the new branch (as a copy of the current one).
+        # create the new branch (as a copy of the current one)
         local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{sanitized_name}"
         git_call("checkout -b #{local_branch}")
-        # Have we reached the feature branch?
+        # make sure we are on the feature branch
         if local.source_branch == local_branch
-          # Stash any uncommitted changes.
+          # stash any uncommitted changes
           save_uncommitted_changes = !git_call('diff HEAD').empty?
           git_call('stash') if save_uncommitted_changes
-          # Go back to master and get rid of pending commits (as these are now
-          # on the new branch).
+          # go back to master and get rid of pending commits (as these are now
+          #   on the new branch)
           git_call("checkout #{target_branch}")
           git_call("reset --hard origin/#{target_branch}")
           git_call("checkout #{local_branch}")
@@ -205,15 +192,14 @@ module GitReview
 
     # Create a new request.
     # TODO: Support creating requests to other repositories and branches (like
-    # the original repo, this has been forked from).
+    #   the original repo, this has been forked from).
     def create
-      # Prepare original_branch and local_branch.
+      # prepare original_branch and local_branch
       original_branch, local_branch = prepare
-      local = ::GitReview::Local.instance
       target_branch = local.target_branch
       target_repo = local.target_repo
       source_branch = local.source_branch
-      # Don't create request with uncommitted changes in current branch.
+      # don't create request with uncommitted changes in current branch
       unless git_call('diff HEAD').empty?
         puts 'You have uncommitted changes.'
         puts 'Please stash or commit before creating the request.'
@@ -222,54 +208,52 @@ module GitReview
       if git_call("cherry #{target_branch}").empty?
         puts 'Nothing to push to remote yet. Commit something first.'
       else
-        # Push latest commits to the remote branch (and by that, create it
-        # if necessary).
+        # push latest commits to the remote branch (and by that, create it
+        #   if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
-        # Gather information.
-        github = ::GitReview::Github.instance
-        requests = github.current_requests
+        # gather information before creating pull request
+        requests = github.pull_requests
         last_id = requests.collect(&:number).sort.last.to_i
         title, body = create_title_and_body(target_branch)
-        # Create the actual pull request.
+        # create the actual pull request
         github.create_pull_request(
             target_repo, target_branch, source_branch, title, body
         )
-        # Switch back to target_branch and check for success.
+        # switch back to target_branch and check for success
         git_call("checkout #{target_branch}")
-        github.update
+        requests = github.pull_requests
         potential_new_request = requests.find { |r| r.title == title }
         if potential_new_request
-          current_id = potential_new_request.number
-          if current_id > last_id
-            puts "Successfully created new request ##{current_id}"
-            puts "https://github.com/#{target_repo}/pull/#{current_id}"
+          current_number = potential_new_request.number
+          if current_number > last_id
+            puts "Successfully created new request ##{current_number}"
+            puts "https://github.com/#{target_repo}/pull/#{current_number}"
           end
         end
-        # Return to the user's original branch.
+        # return to the user's original branch
         # FIXME: keep track of original branch etc
         git_call("checkout #{original_branch}")
       end
     end
 
 
-    # delete obsolete branches (left over from already closed requests).
+    # delete obsolete branches (left over from already closed requests)
     def clean
-      local_repo = ::GitReview::Local.instance
-      # pruning is needed to remove deleted branches from your local track.
+      # pruning is needed to remove deleted branches from your local track
       git_call('remote prune origin')
       # determine strategy to clean.
       case @args.size
         when 1
           if @args.first == '--all'
             # git review clean --all
-            local_repo.clean_all
+            local.clean_all
           else
             # git review clean ID
-            local_repo.clean_single(@args.first)
+            local.clean_single(@args.first)
           end
         when 2
           # git review clean ID --force
-          local_repo.clean_single(@args.first, @args.last == '--force')
+          local.clean_single(@args.first, @args.last == '--force')
         else
           raise ::GitReview::Errors::InvalidArgumentError,
                 'Argument error. Please provide either an ID or "--all".'
@@ -311,9 +295,8 @@ HELP_TEXT
 
   private
 
-    # Returns an array where the 1st item is the title and the 2nd one is the body
+    # @return [Array(String, String)] the title and the body of pull request
     def create_title_and_body(target_branch)
-      local = ::GitReview::Local.instance
       source = local.source
       git_config = local.config
       commits = git_call("log --format='%H' HEAD...#{target_branch}").
@@ -352,6 +335,14 @@ HELP_TEXT
       tmpfile.unlink
 
       [title, body]
+    end
+
+    def github
+      @github ||= ::GitReview::Github.instance
+    end
+
+    def local
+      @local ||= ::GitReview::Local.instance
     end
 
   end

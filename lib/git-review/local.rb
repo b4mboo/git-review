@@ -4,7 +4,7 @@ require 'singleton'
 module GitReview
 
   # The local repository is where the git-review command is being called
-  # by default. It is (supposedly) not specific to Github.
+  # by default. It is (supposedly) able to handle systems other than Github.
   # TODO: remove Github-dependency
   class Local
 
@@ -138,7 +138,7 @@ module GitReview
 
     # @return [String] the current source branch
     def source_branch
-      ::GitReview::Github.instance.source_branch
+      git_call('branch').chomp.match(/\*(.*)/)[0][2..-1]
     end
 
     # @return [String] combine source repo and branch
