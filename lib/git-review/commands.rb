@@ -76,13 +76,13 @@ module GitReview
       request_number = @args.shift
       request = github.request_exists?(request_number)
       return unless request
-      create_local_branch = @args.shift == '--branch' ? '' : 'origin/'
+      create_local_branch = @args.shift == '--branch' ? '' : 'pr/'
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
       puts '  git checkout master'
       puts
-      git_call("checkout #{create_local_branch}#{request.head.ref}")
+      git_call("checkout #{create_local_branch}#{request.number}")
     end
 
 

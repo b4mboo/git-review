@@ -58,10 +58,7 @@ module GitReview
     end
 
     def update
-      repos = current_requests.collect { |request| request.head.repo.full_name }
-      repos.uniq.compact.each do |r|
-        git_call("fetch git@github.com:#{r}.git +refs/heads/*:refs/pr/#{r}/*")
-      end
+      git_call('fetch origin')
     end
 
     # @return [Array(String, String)] user and repo name from local git config
