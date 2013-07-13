@@ -53,7 +53,7 @@ module GitReview
       puts
       puts request.title
       puts
-      puts request.body
+      puts request.body unless request.body.empty?
       puts
       puts git_call(diff)
       puts

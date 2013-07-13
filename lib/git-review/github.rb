@@ -58,7 +58,7 @@ module GitReview
     end
 
     def update
-      repos = current_requests.collect { |request| request.head.full_name }
+      repos = current_requests.collect { |request| request.head.repo.full_name }
       repos.uniq.compact.each do |r|
         git_call("fetch git@github.com:#{r}.git +refs/heads/*:refs/pr/#{r}/*")
       end
@@ -97,7 +97,8 @@ module GitReview
     def commit_discussion(number)
       pull_commits = @github.pull_commits(source_repo, number)
       repo = @github.pull_request(source_repo, number).head.repo.full_name
-      discussion = pull_commits.collect { |commit|
+      discussion = ["Commits on pull request:\n\n"]
+      discussion += pull_commits.collect { |commit|
         # commit message
         name = commit.committer.login
         output = "\e[35m#{name}\e[m "
@@ -128,7 +129,8 @@ module GitReview
 
     def issue_discussion(number)
       comments = @github.issue_comments(source_repo, number)
-      discussion = comments.collect { |comment|
+      discussion = ["\nComments on pull request:\n\n"]
+      discussion += comments.collect { |comment|
         name = comment.user.login
         output = "\e[35m#{name}\e[m "
         output << "added a comment to \e[36m#{comment.id}\e[m"
@@ -145,8 +147,8 @@ module GitReview
 
     # show discussion for a request
     def discussion(number)
-      commit_discussion(number).insert(0, "Commits on pull request:\n\n") +
-      issue_discussion(number).insert(0, "\n Comments on pull request:\n\n")
+      commit_discussion(number) +
+      issue_discussion(number)
     end
 
     # delegate methods that interact with Github to Octokit client
