@@ -1,15 +1,15 @@
-require 'spec_helper'
+require_relative '../spec_helper'
 
-describe Request do
+describe 'Request' do
 
-  subject { Request.new }
+  subject { ::GitReview::Request.new }
 
   it 'has accessible attributes' do
     subject.should be_accessible
   end
 
   it 'has a nested attribute :head' do
-    subject.head.class.should == Commit
+    subject.head.class.should == ::GitReview::Commit
   end
 
 end

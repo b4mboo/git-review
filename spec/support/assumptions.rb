@@ -3,7 +3,7 @@
 # these assumptions have been made to navigate through the code.
 
 def assume_silence
-  GitReview.any_instance.stub(:puts)
+  ::GitReview::GitReview.any_instance.stub(:puts)
 end
 
 def assume(name, value)
@@ -35,7 +35,7 @@ def assume_valid_request_id
 end
 
 def assume_request_on_github(found = true, override = nil)
-  response = override || (found ? request : Request.new)
+  response = override || (found ? request : ::GitReview::Request.new)
   github.stub(:pull_request).with(source_repo, request_id).and_return(response)
 end
 
@@ -64,8 +64,28 @@ def assume_feature_branch(branch_exists = true)
   subject.stub(:git_call).with('branch -a').and_return(branches)
 end
 
+def assume_feature_branch(branch_name='foo')
+  ::GitReview::Local.instance.stub(:git_call).with('branch -a').
+      and_return("* master\n  #{branch_name}\n")
+end
+
+def assume_no_feature_branch
+  ::GitReview::Local.instance.stub(:git_call).with('branch -a').
+      and_return("* master\n")
+end
+
 def assume_branch_exist(location = :local, exists = true)
   subject.stub(:branch_exists?).with(location, branch_name).and_return(exists)
+end
+
+def assume_branch_exists(location=:local, branch_name='foo')
+  ::GitReview::Local.instance.stub(:branch_exists?).with(location, branch_name).
+      and_return(true)
+end
+
+def assume_branch_not_exists(location=:local, branch_name='foo')
+  ::GitReview::Local.instance.stub(:branch_exists?).with(location, branch_name).
+      and_return(false)
 end
 
 def assume_custom_target_branch_defined
@@ -116,7 +136,7 @@ def assume_create_pull_request
 end
 
 def assume_updated
-  subject.stub :update
+  ::GitReview::Github.instance.stub(:update)
 end
 
 def assume_pruning
@@ -129,9 +149,26 @@ def assume_unmerged_commits(commits_exist = true)
     and_return(commits_exist)
 end
 
+def assume_unmerged_commits
+  ::GitReview::Local.instance.stub(:unmerged_commits?).and_return(true)
+end
+
+
+def assume_no_unmerged_commits
+  ::GitReview::Local.instance.stub(:unmerged_commits?).and_return(false)
+end
+
 def assume_valid_command(valid = true)
   assume_arguments command
   subject.stub(:respond_to?).and_return(valid)
+end
+
+def assume_valid_command
+  ::GitReview::Commands.stub(:respond_to?).and_return(true)
+end
+
+def assume_invalid_command
+  ::GitReview::Commands.stub(:respond_to?).and_return(false)
 end
 
 def assume_repo_info_set
@@ -143,7 +180,7 @@ def assume_github_access_configured
 end
 
 def assume_error_raised
-  subject.stub(:help).and_raise(Errors::UnprocessableState)
+  subject.stub(:help).and_raise(::GitReview::Errors::UnprocessableState)
 end
 
 def assume_config_file_exists
@@ -157,10 +194,10 @@ def assume_config_file_loaded
 end
 
 def assume_token_present
-  Settings.instance.stub(:username).and_return('username')
-  Settings.instance.stub(:oauth_token).and_return('some_valid_token')
+  ::GitReview::Settings.instance.stub(:username).and_return('username')
+  ::GitReview::Settings.instance.stub(:oauth_token).and_return('some_valid_token')
 end
 
 def assume_token_missing
-  Settings.instance.stub(:oauth_token).and_return(nil)
+  ::GitReview::Settings.instance.stub(:oauth_token).and_return(nil)
 end
