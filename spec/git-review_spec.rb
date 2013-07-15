@@ -1,6 +1,4 @@
 require_relative 'spec_helper'
-require_relative '../lib/base/commands'
-require_relative '../lib/git-review'
 
 describe 'GitReview' do
 
@@ -36,9 +34,8 @@ describe 'GitReview' do
 
     before(:each) do
       assume_valid_command
-      gh.stub(:initialize_local_repo)
-      gh.stub(:local_repo).and_return(true)
-      gh.stub(:configure_github_access).and_return(true)
+      assume_github_configured
+      assume_source_repo_set
     end
 
     it 'proceeds to execute the command' do

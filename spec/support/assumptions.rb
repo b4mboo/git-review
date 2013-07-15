@@ -175,8 +175,12 @@ def assume_repo_info_set
   subject.stub(:repo_info).and_return([user, repo])
 end
 
-def assume_github_access_configured
-  subject.stub(:configure_github_access).and_return(true)
+def assume_github_configured
+  ::GitReview::Github.instance.stub(:configure_github_access).and_return(true)
+end
+
+def assume_source_repo_set
+  ::GitReview::Github.instance.stub(:source_repo).and_return(true)
 end
 
 def assume_error_raised

@@ -56,9 +56,8 @@ module GitReview
     # execute command only when it is valid
     def execute_command(command)
       github = ::GitReview::Github.instance
-      github.configure_github_access
-      if github.source_repo && github.github.login
-        github.update unless command == 'clean'
+      if github.configure_github_access && github.source_repo
+          github.update unless command == 'clean'
         ::GitReview::Commands.send(command)
       end
     end
