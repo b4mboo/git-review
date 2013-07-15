@@ -187,13 +187,13 @@ def assume_error_raised
   subject.stub(:help).and_raise(::GitReview::Errors::UnprocessableState)
 end
 
-def assume_config_file_exists
+def assume_config_file_exists(home_dir=nil, config_file=nil)
   Dir.stub(:home).and_return(home_dir)
   File.stub(:exists?).with(config_file).and_return(true)
 end
 
-def assume_config_file_loaded
-  assume_config_file_exists
+def assume_config_file_loaded(home_dir=nil, config_file=nil)
+  assume_config_file_exists(home_dir, config_file)
   YAML.stub(:load_file).with(config_file)
 end
 

@@ -32,6 +32,14 @@ module GitReview
       end
     end
 
+    def respond_to?(method)
+      if method.to_s =~ /(.*)=$/ ||  @config.keys.include?(method.to_sym)
+        true
+      else
+        super
+      end
+    end
+
   end
 
 end
