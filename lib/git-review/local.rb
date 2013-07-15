@@ -13,14 +13,14 @@ module GitReview
 
     attr_accessor :config
 
-    def initialize(path=nil)
+    def initialize
       # find root git directory if currently in subdirectory
-      root = path || git_call('rev-parse --show-toplevel').strip
-      repo = Grit::Repo.new(root)
-      @config = repo.config
-      add_pull_refspec
-    rescue
-      raise ::GitReview::Errors::InvalidGitRepositoryError
+      if git_call('rev-parse --show-toplevel').strip.empty?
+        raise ::GitReview::Errors::InvalidGitRepositoryError
+      else
+        add_pull_refspec
+        load_config
+      end
     end
 
     # @return [Array<String>] all existing branches
@@ -42,8 +42,8 @@ module GitReview
     end
 
     # clean a single request's obsolete branch
-    def clean_single(request_id, force=false)
-      request = ::GitReview::Github.instance.pull_request(source_repo, request_id)
+    def clean_single(number, force=false)
+      request = ::GitReview::Github.instance.pull_request(source_repo, number)
       if request && request.state == 'closed'
         # ensure there are no unmerged commits or '--force' flag has been set
         branch_name = request.head.ref
@@ -54,6 +54,8 @@ module GitReview
           delete_branch(branch_name)
         end
       end
+    rescue Octokit::NotFound
+      false
     end
 
     # clean all obsolete branches
@@ -176,10 +178,26 @@ module GitReview
     # add remote.origin.fetch to check out pull request locally
     # see {https://help.github.com/articles/checking-out-pull-requests-locally}
     def add_pull_refspec
-      config_list = git_call('config --list', false)
       refspec = '+refs/pull/*/head:refs/remotes/origin/pr/*'
       fetch_config = "config --local --add remote.origin.fetch #{refspec}"
       git_call(fetch_config, false) unless config_list.include?(refspec)
+    end
+
+    def load_config
+      @config = {}
+      config_list.split("\n").each do |line|
+        key, value = line.split(/=/, 2)
+        if @config[key]
+          @config[key] = [@config[key]].flatten << value
+        else
+          @config[key] = value
+        end
+      end
+      @config
+    end
+
+    def config_list
+      git_call('config --list', false)
     end
 
   end
