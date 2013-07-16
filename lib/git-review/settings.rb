@@ -1,12 +1,15 @@
 require 'fileutils'
-require 'singleton'
 require 'yaml'
 
 module GitReview
 
   class Settings
 
-    include Singleton
+    # acts like a singleton class but it's actually not
+    # use ::GitReview::Settings.instance everywhere except in tests
+    def self.instance
+      @instance ||= new
+    end
 
     # Read settings from ~/.git_review.yml upon initialization.
     def initialize

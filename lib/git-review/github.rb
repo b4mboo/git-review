@@ -9,21 +9,26 @@ require 'stringio'
 # Used to retrieve hostname
 require 'socket'
 require 'grit'
-require 'singleton'
 
 
 module GitReview
 
   class Github
 
-    include Singleton
     include Internals
 
     attr_reader :github
     attr_accessor :source_repo
 
+
+    # acts like a singleton class but it's actually not
+    # use ::GitReview::Github.instance everywhere except in tests
+    def self.instance
+      @instance ||= new
+    end
+
     def initialize
-      #configure_github_access
+      configure_github_access
     end
 
     # setup connection with Github via OAuth

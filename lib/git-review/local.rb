@@ -1,6 +1,3 @@
-require 'grit'
-require 'singleton'
-
 module GitReview
 
   # The local repository is where the git-review command is being called
@@ -8,10 +5,15 @@ module GitReview
   # TODO: remove Github-dependency
   class Local
 
-    include Singleton
     include Internals
 
     attr_accessor :config
+
+    # acts like a singleton class but it's actually not
+    # use ::GitReview::Local.instance everywhere except in tests
+    def self.instance
+      @instance ||= new
+    end
 
     def initialize
       # find root git directory if currently in subdirectory
