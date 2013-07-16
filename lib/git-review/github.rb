@@ -20,7 +20,6 @@ module GitReview
     attr_reader :github
     attr_accessor :source_repo
 
-
     # acts like a singleton class but it's actually not
     # use ::GitReview::Github.instance everywhere except in tests
     def self.instance
