@@ -3,39 +3,43 @@ require_relative 'spec_helper'
 describe 'GitReview' do
 
   let(:cmd) { ::GitReview::Commands }
-  let(:gh) { ::GitReview::Github.instance }
+  let(:gh) { ::GitReview::Github.any_instance }
 
   subject { ::GitReview::GitReview }
 
-  it 'shows help page if no arguments are given' do
-    subject.any_instance.should_receive(:help)
-    subject.new
-  end
+  describe '#initialize' do
 
-  it 'shows help page if argument is empty' do
-    subject.any_instance.should_receive(:help)
-    subject.new(%w())
-  end
+    it 'shows help page if no arguments are given' do
+      subject.any_instance.should_receive(:help)
+      subject.new
+    end
 
-  it 'checks whether the command is valid' do
-    subject.any_instance.stub(:help)
-    cmd.should_receive(:respond_to?).with('foo')
-    subject.new(%w(foo))
-  end
+    it 'shows help page if argument is empty' do
+      subject.any_instance.should_receive(:help)
+      subject.new(%w())
+    end
 
-  it 'stores arguments in Commands' do
-    cmd.stub(:respond_to?).and_return(true)
-    subject.any_instance.stub(:execute_command)
-    subject.new(%w(foo bar gee))
-    cmd.args.should == %w(bar gee)
+    it 'checks whether the command is valid' do
+      subject.any_instance.stub(:help)
+      cmd.should_receive(:respond_to?).with('foo')
+      subject.new(%w(foo))
+    end
+
+    it 'stores arguments in Commands' do
+      cmd.stub(:respond_to?).and_return(true)
+      subject.any_instance.stub(:execute_command)
+      subject.new(%w(foo bar baz))
+      cmd.args.should == %w(bar baz)
+    end
+
   end
 
   context 'when command is valid' do
 
     before(:each) do
-      assume_valid_command
-      assume_github_configured
-      assume_source_repo_set
+      cmd.stub(:respond_to?).and_return(true)
+      gh.stub(:configure_github_access).and_return(true)
+      gh.stub(:source_repo).and_return('foo')
     end
 
     it 'proceeds to execute the command' do
@@ -66,7 +70,7 @@ describe 'GitReview' do
   context 'when command is invalid' do
 
     before(:each) do
-      assume_invalid_command
+      cmd.stub(:respond_to?).and_return(false)
     end
 
     it 'notifies the user' do
