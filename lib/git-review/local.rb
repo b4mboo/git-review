@@ -100,6 +100,11 @@ module GitReview
       all_branches.include?(prefix + branch_name)
     end
 
+    # @return [Boolean] whether there are local changes not committed
+    def uncommitted_changes?
+      !git_call('diff HEAD').empty?
+    end
+
     # @param branch_name [String] name of the branch
     # @param verbose [Boolean] if verbose output
     # @return [Boolean] whether there are unmerged commits on the local or

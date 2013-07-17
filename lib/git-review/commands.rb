@@ -9,41 +9,38 @@ module GitReview
 
     # List all pending requests.
     def list
-      source_repo = local.source_repo
-      source = local.source
-      output = github.current_requests.collect do |request|
-        # need to use pull_request again to retrieve details about the
-        #   particular request
-        details = github.pull_request(source_repo, request.number)
+      output = github.current_requests_full.collect { |request|
         # find only pending (= unmerged) requests and output summary
         # explicitly look for local changes Github does not yet know about
-        next if local.merged?(details.head.sha)
-        date_string = format_time(details.updated_at)
-        comments_count = details.comments.to_i + details.review_comments.to_i
-        line = format_text(details.number, 8)
+        next if local.merged?(request.head.sha)
+        date_string = format_time(request.updated_at)
+        comments_count = request.comments.to_i + request.review_comments.to_i
+        line = format_text(request.number, 8)
         line << format_text(date_string, 11)
         line << format_text(comments_count, 10)
-        line << format_text(details.title, 91)
-        line
-      end
-      output.compact!
+        line << format_text(request.title, 91)
+      }.compact
+      source = local.source
       if output.empty?
         puts "No pending requests for '#{source}'."
       else
-        puts "Pending requests for '#{source}':"
-        puts 'ID      Updated    Comments  Title'
-        output.reverse! if @args.shift == '--reverse'
+        output.reverse! if next_arg == '--reverse'
+        puts "Pending requests for '#{source}':\n" +
+             "ID      Updated    Comments  Title"
         output.each { |line| puts line }
       end
     end
 
     # Show details for a single request.
     def show
-      request_number = @args.shift
+      request_number = next_arg
       request = github.request_exists?(request_number)
-      return unless request
+      unless request
+        puts 'Please specify a valid ID.'
+        return
+      end
       # determine whether to show full diff or just stats
-      option = @args.shift == '--full' ? '' : '--stat '
+      option = next_arg == '--full' ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
       comments_count = request.comments.to_i + request.review_comments.to_i
       puts 'ID        : ' + request.number.to_s
@@ -62,35 +59,45 @@ module GitReview
       puts github.discussion(request_number)
     end
 
-
     # Open a browser window and review a specified request.
     def browse
-      request_number = @args.shift
+      request_number = next_arg
       request = github.request_exists?(request_number)
+      unless request
+        puts 'Please specify a valid ID.'
+        return
+      end
       Launchy.open(request.html_url) if request
     end
 
-
     # Checkout a specified request's changes to your local repository.
     def checkout
-      request_number = @args.shift
+      request_number = next_arg
       request = github.request_exists?(request_number)
-      return unless request
-      create_local_branch = @args.shift == '--branch' ? '' : 'pr/'
+      unless request
+        puts 'Please specify a valid ID.'
+        return
+      end
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
       puts '  git checkout master'
       puts
-      git_call("checkout #{create_local_branch}#{request.number}")
+      if next_arg == '--branch'
+        git_call("checkout #{request.head.ref}")
+      else
+        git_call("checkout pr/#{request.number}")
+      end
     end
-
 
     # Add an approving comment to the request.
     def approve
-      request_number = @args.shift
+      request_number = next_arg
       request = github.request_exists?(request_number)
-      return unless request
+      unless request
+        puts 'Please specify a valid ID.'
+        return
+      end
       repo = github.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
@@ -102,36 +109,38 @@ module GitReview
       end
     end
 
-
     # Accept a specified request by merging it into master.
     def merge
-      request_number = @args.shift
+      request_number = next_arg
       request = github.request_exists?(request_number)
-      return unless request
+      unless request
+        puts 'Please specify a valid ID.'
+        return
+      end
       # FIXME: What options are allowed here?
-      option = @args.shift
+      option = next_arg
       unless request.head.repo
         # someone deleted the source repo
         user = request.head.user.login
         url = request.patch_url
         puts "Sorry, #{user} deleted the source repository."
-        puts 'git-review doesn\'t support this.'
-        puts 'Tell the contributor not to do this.'
+        puts "git-review doesn't support this."
+        puts "Tell the contributor not to do this."
         puts
-        puts 'You can still manually patch your repo by running:'
+        puts "You can still manually patch your repo by running:"
         puts
         puts "  curl #{url} | git am"
         puts
         return false
       end
-      message = "Accept request ##{request.number}" +
-        " and merge changes into \"#{local.target}\""
+      message = "Accept request ##{request.number} " +
+          "and merge changes into \"#{local.target}\""
       command = "merge #{option} -m '#{message}' #{request.head.sha}"
       puts
-      puts 'Request title:'
-      puts '  ' + request.title
+      puts "Request title:"
+      puts "  #{request.title}"
       puts
-      puts 'Merge command:'
+      puts "Merge command:"
       puts "  git #{command}"
       puts
       puts git_call(command)
@@ -140,9 +149,12 @@ module GitReview
 
     # Close a specified request.
     def close
-      request_number = @args.shift
+      request_number = next_arg
       request = github.request_exists?(request_number, 'open')
-      return unless request
+      unless request
+        puts 'Please specify a valid ID.'
+        return
+      end
       repo = github.source_repo
       github.close_issue(repo, request.number)
       unless github.request_exists?('open', request.number)
@@ -161,9 +173,9 @@ module GitReview
       original_branch = local.source_branch
       target_branch = local.target_branch
 
-      if @args.shift == '--new' || !local.on_feature_branch?
+      if next_arg == '--new' || !local.on_feature_branch?
         # ask for branch name if not provided
-        if (branch_name = @args.shift).nil?
+        if (branch_name = next_arg).nil?
           puts 'Please provide a name for the branch:'
           branch_name = gets.chomp
         end
@@ -174,7 +186,7 @@ module GitReview
         # make sure we are on the feature branch
         if local.source_branch == local_branch
           # stash any uncommitted changes
-          save_uncommitted_changes = !git_call('diff HEAD').empty?
+          save_uncommitted_changes = local.uncommitted_changes?
           git_call('stash') if save_uncommitted_changes
           # go back to master and get rid of pending commits (as these are now
           #   on the new branch)
@@ -255,8 +267,7 @@ module GitReview
           # git review clean ID --force
           local.clean_single(@args.first, @args.last == '--force')
         else
-          raise ::GitReview::Errors::InvalidArgumentError,
-                'Argument error. Please provide either an ID or "--all".'
+          puts 'Argument error. Please provide either an ID or "--all".'
       end
     end
 
@@ -343,6 +354,10 @@ HELP_TEXT
 
     def local
       @local ||= ::GitReview::Local.instance
+    end
+
+    def next_arg
+      @args.shift
     end
 
   end

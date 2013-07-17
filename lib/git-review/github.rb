@@ -51,14 +51,23 @@ module GitReview
     #   Instead of true, the request itself is returned, so another round-trip
     #   of pull_request can be avoided.
     def request_exists?(number, state='open')
+      return false if number.nil?
       request = @github.pull_request(source_repo, number)
       request.state == state ? request : false
     rescue Octokit::NotFound
       false
     end
 
+    # an alias to pull_requests
     def current_requests
       @github.pull_requests(source_repo)
+    end
+
+    # a more detailed collection of requests
+    def current_requests_full
+      @github.pull_requests(source_repo).collect { |request|
+        @github.pull_request(source_repo, request.number)
+      }
     end
 
     def update
