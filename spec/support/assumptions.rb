@@ -180,7 +180,7 @@ def assume_github_configured
 end
 
 def assume_source_repo_set
-  ::GitReview::Github.instance.stub(:source_repo).and_return(true)
+  ::GitReview::Github.instance.stub(:source_repo).and_return('foo')
 end
 
 def assume_error_raised
@@ -204,4 +204,20 @@ end
 
 def assume_token_missing
   ::GitReview::Settings.instance.stub(:oauth_token).and_return(nil)
+end
+
+def assume_request_not_found
+  ::GitReview::Github.instance.stub(:pull_request).and_raise(Octokit::NotFound)
+end
+
+def assume_open_request(request=nil)
+  r = request || Hashie::Mash.new
+  r.state = 'open'
+  ::GitReview::Github.instance.stub(:pull_request).and_return(r)
+end
+
+def assume_closed_request(request=nil)
+  r = request || Hashie::Mash.new
+  r.state = 'closed'
+  ::GitReview::Github.instance.stub(:pull_request).and_return(r)
 end
