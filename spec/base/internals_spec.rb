@@ -10,11 +10,12 @@ describe GitReview do
 
 
   describe 'initially' do
-
     before :all do
       # Allow to re-initialize an instance to be able to mock/stub it in tests.
-      GitReview.define_method :init do
-        initialize @args
+      class GitReview
+        def init(*args)
+          initialize @args
+        end
       end
     end
 
