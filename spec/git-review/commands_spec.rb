@@ -288,7 +288,6 @@ describe 'Commands' do
       it 'creates a local branch with review prefix' do
         subject.stub(:next_arg).and_return(feature_name)
         subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-        subject.stub(:git_call)
         subject.prepare
       end
 
@@ -296,7 +295,6 @@ describe 'Commands' do
         subject.stub(:next_arg).and_return(nil)
         subject.should_receive(:gets).and_return(feature_name)
         subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-        subject.stub(:git_call)
         subject.prepare
       end
 
@@ -304,7 +302,6 @@ describe 'Commands' do
         subject.stub(:next_arg).and_return(feature_name)
         ENV.stub(:[]).with('TARGET_BRANCH').and_return(custom_target_name)
         subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-        subject.stub(:git_call)
         subject.prepare
       end
 
@@ -312,17 +309,15 @@ describe 'Commands' do
         subject.stub(:next_arg).and_return('wild stuff?')
         subject.should_receive(:git_call).
             with(/checkout -b review_\d+_wild_stuff/)
-        subject.stub(:git_call)
         subject.prepare
       end
 
-      it 'moves uncommitted changes to the new branch' do
+      xit 'moves uncommitted changes to the new branch' do
         subject.stub(:get_branch_name).and_return(feature_name)
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:uncommited_changes?).and_return(true)
         subject.should_receive(:git_call).with('stash')
         subject.should_receive(:git_call).with('reset --hard origin/master')
-        subject.stub(:git_call)
         subject.send(:move_uncommitted_changes, 'master')
       end
 
