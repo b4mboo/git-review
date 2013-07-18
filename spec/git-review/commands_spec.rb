@@ -149,6 +149,7 @@ describe 'Commands' do
     context 'when the request is valid' do
 
       before(:each) do
+        subject.stub(:puts)
         github.stub(:request_exists?).and_return(request)
       end
 
@@ -233,6 +234,7 @@ describe 'Commands' do
         msg = "Accept request ##{request_number} " +
             "and merge changes into \"/master\""
         subject.should_receive(:git_call).with("merge  -m '#{msg}' #{head_sha}")
+        subject.stub(:puts)
         subject.merge
       end
 
@@ -268,6 +270,7 @@ describe 'Commands' do
       before(:each) do
         local.stub(:source_branch).and_return('master')
         local.stub(:target_branch).and_return('master')
+        subject.stub(:puts)
       end
 
       it 'creates a local branch with review prefix' do
