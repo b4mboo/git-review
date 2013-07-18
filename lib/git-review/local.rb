@@ -18,7 +18,7 @@ module GitReview
     def initialize
       # find root git directory if currently in subdirectory
       if git_call('rev-parse --show-toplevel').strip.empty?
-        raise ::GitReview::Errors::InvalidGitRepositoryError
+        raise ::GitReview::InvalidGitRepositoryError
       else
         add_pull_refspec
         load_config

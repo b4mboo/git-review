@@ -23,7 +23,7 @@ describe 'Local' do
       subject.any_instance.stub(:git_call).with('rev-parse --show-toplevel').
           and_return('')
       expect { subject.new }.
-          to raise_error(::GitReview::Errors::InvalidGitRepositoryError)
+          to raise_error(::GitReview::InvalidGitRepositoryError)
     end
 
   end

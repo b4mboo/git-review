@@ -16,7 +16,7 @@ module GitReview
       # If we need sth. to succeed, but it doesn't, then stop right there.
       if enforce_success and not last_command_successful?
         puts output unless output.empty?
-        raise ::GitReview::Errors::UnprocessableState
+        raise ::GitReview::UnprocessableState
       end
       output
     end
