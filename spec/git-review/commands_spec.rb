@@ -9,6 +9,10 @@ describe 'Commands' do
   let(:github) { ::GitReview::Github.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
 
+  before(:each) do
+    github.stub(:configure_github_access).and_return('username')
+  end
+
   describe '#help' do
 
     it 'shows the help page' do
