@@ -309,7 +309,7 @@ HELP_TEXT
     # @return [Array(String, String)] the title and the body of pull request
     def create_title_and_body(target_branch)
       source = local.source
-      git_config = local.config
+      login = github.github.login
       commits = git_call("log --format='%H' HEAD...#{target_branch}").
           lines.count
       puts "commits: #{commits}"
@@ -318,8 +318,7 @@ HELP_TEXT
         title = git_call("log --format='%s' HEAD...#{target_branch}").chomp
         body  = git_call("log --format='%b' HEAD...#{target_branch}").chomp
       else
-        title = "[Review] Request from '#{git_config['github.login']}'" +
-            " @ '#{source}'"
+        title = "[Review] Request from '#{login}' @ '#{source}'"
         body  = "Please review the following changes:\n"
         body += git_call("log --oneline HEAD...#{target_branch}").
             lines.map{|l| "  * #{l.chomp}"}.join("\n")
