@@ -6,9 +6,6 @@ require 'launchy'
 require 'time'
 # Use temporary files to allow editing a request's title and body.
 require 'tempfile'
-# Handle local git commands
-require 'grit'
-
 
 ## Our own dependencies
 

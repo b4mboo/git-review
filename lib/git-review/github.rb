@@ -8,7 +8,6 @@ require 'io/console'
 require 'stringio'
 # Used to retrieve hostname
 require 'socket'
-require 'grit'
 
 
 module GitReview

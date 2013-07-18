@@ -1,5 +1,3 @@
-require 'grit'
-
 module GitReview
 
   module Errors
@@ -10,7 +8,7 @@ module GitReview
       end
     end
 
-    class InvalidGitRepositoryError < Grit::InvalidGitRepositoryError
+    class InvalidGitRepositoryError < StandardError
       def message
         "It is not a valid git repository or doesn't have a valid remote url."
       end
