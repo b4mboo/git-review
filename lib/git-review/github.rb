@@ -77,7 +77,7 @@ module GitReview
     def repo_info_from_config
       git_config = ::GitReview::Local.instance.config
       url = git_config['remote.origin.url']
-      raise ::GitReview::Errors::InvalidGitRepositoryError if url.nil?
+      raise ::GitReview::InvalidGitRepositoryError if url.nil?
 
       user, project = github_url_matching(url)
       # if there are no results yet, look for 'insteadof' substitutions
@@ -180,9 +180,9 @@ module GitReview
         prepare_username_and_password
         prepare_description
         authorize
-      rescue ::GitReview::Errors::AuthenticationError => e
+      rescue ::GitReview::AuthenticationError => e
         warn e.message
-      rescue ::GitReview::Errors::UnprocessableState => e
+      rescue ::GitReview::UnprocessableState => e
         warn e.message
         exit 1
       end
@@ -232,9 +232,9 @@ module GitReview
         parser_response = Yajl::Parser.parse(response.body)
         save_oauth_token(parser_response['token'])
       elsif response.code == '401'
-        raise ::GitReview::Errors::AuthenticationError
+        raise ::GitReview::AuthenticationError
       else
-        raise ::GitReview::Errors::UnprocessableState, response.body
+        raise ::GitReview::UnprocessableState, response.body
       end
     end
 
