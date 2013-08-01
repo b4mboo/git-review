@@ -340,7 +340,7 @@ HELP_TEXT
     end
 
     def next_arg
-      @args.shift
+      @args.is_a?(Array) ? @args.shift : @args
     end
 
     def get_request_or_return
