@@ -36,7 +36,7 @@ module GitReview
       if settings.oauth_token && settings.username
         @github = Octokit::Client.new(
           :login          => settings.username,
-          :oauth_token    => settings.oauth_token,
+          :access_token    => settings.oauth_token,
           :auto_traversal => true
         )
         @github.login
