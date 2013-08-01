@@ -8,7 +8,7 @@ describe 'Github' do
     let(:settings) { ::GitReview::Settings.any_instance }
 
     it 'only authenticates once' do
-      settings.stub(:oauth_token).and_return('token')
+      settings.stub(:access_token).and_return('token')
       settings.stub(:username).and_return('username')
       subject.any_instance.should_not_receive(:configure_oauth)
       subject.new.configure_github_access
