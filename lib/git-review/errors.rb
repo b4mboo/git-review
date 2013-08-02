@@ -2,7 +2,7 @@ module GitReview
 
   class AuthenticationError < StandardError
     def message
-      "You provided the wrong username/password, please try again.\n"
+      'You provided the wrong username/password, please try again.'
     end
   end
 

@@ -122,6 +122,7 @@ module GitReview
     # TODO: Support creating requests to other repositories and branches (like
     #   the original repo, this has been forked from).
     def create
+      to_upstream = next_arg == '--upstream'
       # prepare original_branch and local_branch
       original_branch, local_branch = prepare
       # don't create request with uncommitted changes in current branch
@@ -135,7 +136,7 @@ module GitReview
       else
         # push latest commits to the remote branch (create if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
-        create_pull_request
+        create_pull_request(to_upstream)
         # return to the user's original branch
         # FIXME: keep track of original branch etc
         git_call("checkout #{original_branch}")
@@ -184,7 +185,7 @@ Available commands:
   merge <ID>                Accept a request by merging it into master.
   close <ID>                Close a request.
   prepare [--new]           Creates a new local branch for a request.
-  create                    Create a new request.
+  create [--upstream]       Create a new request.
   clean <ID> [--force]      Delete a request\'s remote and local branches.
   clean --all               Delete all obsolete branches.
 HELP_TEXT
@@ -266,19 +267,28 @@ HELP_TEXT
       end
     end
 
-    def create_pull_request
-      source_branch = local.source_branch
-      target_branch, target_repo = local.target_branch, local.target_repo
+    def create_pull_request(to_upstream=false)
+      # head is in the form of 'user:branch'
+      head = "#{github.github.login}:#{local.source_branch}"
+      # if to send a pull request to upstream repo, get the parent as target
+      target_repo = if to_upstream
+                      github.repository(github.source_repo).parent.full_name
+                    else
+                      local.target_repo
+                    end
+      base = local.target_branch
       # gather information before creating pull request
-      last_id = github.current_requests.collect(&:number).sort.last.to_i
-      title, body = create_title_and_body(target_branch)
+      last_id = github.pull_requests(target_repo).
+          collect(&:number).sort.last.to_i
+      title, body = create_title_and_body(base)
       # create the actual pull request
       github.create_pull_request(
-          target_repo, target_branch, source_branch, title, body
+          target_repo, base, head, title, body
       )
       # switch back to target_branch and check for success
-      git_call("checkout #{target_branch}")
-      new_request = github.current_requests.find { |r| r.title == title }
+      git_call("checkout #{base}")
+      new_request = github.pull_requests(target_repo).
+          find { |r| r.title == title }
       if new_request
         current_number = new_request.number
         if current_number > last_id
@@ -340,7 +350,7 @@ HELP_TEXT
     end
 
     def next_arg
-      @args.shift
+      @args.is_a?(Array) ? @args.shift : @args
     end
 
     def get_request_or_return
