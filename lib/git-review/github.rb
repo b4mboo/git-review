@@ -14,7 +14,7 @@ module GitReview
 
   class Github
 
-    include Internals
+    include ::GitReview::Internals
 
     attr_reader :github
     attr_accessor :source_repo

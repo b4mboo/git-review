@@ -2,7 +2,7 @@ module GitReview
 
   module Commands
 
-    include Internals
+    include ::GitReview::Internals
     extend self
 
     attr_accessor :args
