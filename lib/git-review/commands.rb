@@ -283,7 +283,7 @@ HELP_TEXT
 
       # make sure the new pull request is indeed created
       new_number = github.request_number_by_title(title)
-      if new_number and new_number > lastest_number
+      if new_number && new_number > lastest_number
         puts "Successfully created new request ##{new_number}"
         puts "https://github.com/#{target_repo}/pull/#{new_number}"
       else
