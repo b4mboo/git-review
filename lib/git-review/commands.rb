@@ -268,26 +268,26 @@ HELP_TEXT
     end
 
     def create_pull_request(to_upstream=false)
-      # head is in the form of 'user:branch'
-      head = "#{github.github.login}:#{local.source_branch}"
       # gather information before creating pull request
-      last_id = github.pull_requests(target_repo).
-          collect(&:number).sort.last.to_i
+      lastest_number = github.latest_request_number
+
+      target_repo = local.target_repo(to_upstream)
+      head = local.head
+      base = local.target_branch
       title, body = create_title_and_body(base)
+
       # create the actual pull request
-      github.create_pull_request(
-          target_repo, base, head, title, body
-      )
+      github.create_pull_request(target_repo, base, head, title, body)
       # switch back to target_branch and check for success
       git_call("checkout #{base}")
-      new_request = github.pull_requests(target_repo).
-          find { |r| r.title == title }
-      if new_request
-        current_number = new_request.number
-        if current_number > last_id
-          puts "Successfully created new request ##{current_number}"
-          puts "https://github.com/#{target_repo}/pull/#{current_number}"
-        end
+
+      # make sure the new pull request is indeed created
+      new_number = github.request_number_by_title(title)
+      if new_number and new_number > lastest_number
+        puts "Successfully created new request ##{new_number}"
+        puts "https://github.com/#{target_repo}/pull/#{new_number}"
+      else
+        puts "Pull request was not created for #{target_repo}."
       end
     end
 

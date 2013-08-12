@@ -179,6 +179,12 @@ module GitReview
       "#{target_repo}/#{target_branch}"
     end
 
+    # @return [String] the head string used for pull requests
+    def head
+      # in the form of 'user:branch'
+      "#{@config['user.name']}:#{source_branch}"
+    end
+
     # @return [Boolean] whether already on a feature branch
     def on_feature_branch?
       # If current and target are the same, we are not on a feature branch.

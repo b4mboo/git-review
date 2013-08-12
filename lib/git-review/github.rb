@@ -160,6 +160,17 @@ module GitReview
       issue_discussion(number)
     end
 
+    # show latest pull request number
+    def latest_request_number
+      current_requests.collect(&:number).sort.last.to_i
+    end
+
+    # get the number of the request that matches the title
+    def request_number_by_title(title)
+      request = current_requests.find { |r| r.title == title }
+      request.number if request
+    end
+
     # delegate methods that interact with Github to Octokit client
     def method_missing(method, *args)
       if @github.respond_to?(method)
