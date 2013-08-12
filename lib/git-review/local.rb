@@ -194,7 +194,7 @@ module GitReview
       @config = {}
       config_list.split("\n").each do |line|
         key, value = line.split(/=/, 2)
-        if @config[key]
+        if @config[key] && @config[key] != value
           @config[key] = [@config[key]].flatten << value
         else
           @config[key] = value
