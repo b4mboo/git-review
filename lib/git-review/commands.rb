@@ -270,13 +270,6 @@ HELP_TEXT
     def create_pull_request(to_upstream=false)
       # head is in the form of 'user:branch'
       head = "#{github.github.login}:#{local.source_branch}"
-      # if to send a pull request to upstream repo, get the parent as target
-      target_repo = if to_upstream
-                      github.repository(github.source_repo).parent.full_name
-                    else
-                      local.target_repo
-                    end
-      base = local.target_branch
       # gather information before creating pull request
       last_id = github.pull_requests(target_repo).
           collect(&:number).sort.last.to_i

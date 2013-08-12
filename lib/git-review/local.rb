@@ -32,7 +32,7 @@ module GitReview
 
     # @return [Array<String>] all open requests' branches shouldn't be deleted
     def protected_branches
-      ::GitReview::Github.instance.current_requests.collect { |r| r.head.ref }
+      github.current_requests.collect { |r| r.head.ref }
     end
 
     # @return [Array<String>] all review branches with 'review_' prefix
@@ -45,7 +45,7 @@ module GitReview
 
     # clean a single request's obsolete branch
     def clean_single(number, force=false)
-      request = ::GitReview::Github.instance.pull_request(source_repo, number)
+      request = github.pull_request(source_repo, number)
       if request && request.state == 'closed'
         # ensure there are no unmerged commits or '--force' flag has been set
         branch_name = request.head.ref
@@ -144,7 +144,7 @@ module GitReview
 
     # @return [String] the source repo
     def source_repo
-      ::GitReview::Github.instance.source_repo
+      github.source_repo
     end
 
     # @return [String] the current source branch
@@ -163,10 +163,15 @@ module GitReview
       ENV['TARGET_BRANCH'] || 'master'
     end
 
+    # if to send a pull request to upstream repo, get the parent as target
     # @return [String] the name of the target repo
-    def target_repo
+    def target_repo(upstream=false)
       # TODO: Manually override this and set arbitrary repositories
-      source_repo
+      if upstream
+        github.repository(source_repo).parent.full_name
+      else
+        source_repo
+      end
     end
 
     # @return [String] combine target repo and branch
@@ -205,6 +210,10 @@ module GitReview
 
     def config_list
       git_call('config --list', false)
+    end
+
+    def github
+      @github ||= ::GitReview::Github.instance
     end
 
   end
