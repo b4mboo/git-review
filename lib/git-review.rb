@@ -27,7 +27,7 @@ module GitReview
 
   class GitReview
 
-    include Internals
+    include ::GitReview::Internals
 
     def initialize(args=[])
       ::GitReview::Commands.args = args
