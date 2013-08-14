@@ -59,6 +59,12 @@ describe 'Local' do
       subject.load_config.should == {'foo' => ['bar', 'bar2'], 'baz' => 'qux'}
     end
 
+    it 'does not keep duplicate values for a key' do
+      config = "foo=bar\nbaz=qux\nfoo=bar"
+      subject.stub(:config_list).and_return(config)
+      subject.load_config.should == {'foo' => 'bar', 'baz' => 'qux'}
+    end
+
   end
 
   describe '#branch_exists?' do

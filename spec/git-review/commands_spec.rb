@@ -327,12 +327,16 @@ describe 'Commands' do
 
   describe '#create' do
 
-    context 'when on feature branch' do
+    before(:each) do
+      subject.stub(:prepare).and_return(['master', branch_name])
+    end
+
+    context 'when sending pull request to current repo' do
 
       before(:each) do
+        subject.stub(:next_arg).and_return(nil)
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
-        subject.stub(:prepare).and_return(['master', branch_name])
       end
 
       context 'when there are uncommitted changes' do
@@ -373,6 +377,53 @@ describe 'Commands' do
 
       end
 
+    end
+
+    context 'when sending pull request to upstream repo' do
+
+
+
+      let(:upstream) {
+        Hashie::Mash.new(:parent => {:full_name => 'upstream'})
+      }
+
+      before(:each) do
+        subject.stub(:next_arg).and_return('--upstream')
+        github.github.stub(:login).and_return('user')
+        local.stub(:source_branch).and_return(branch_name)
+        local.stub(:target_branch).and_return('master')
+        github.stub(:repository).and_return(upstream)
+      end
+    end
+
+  end
+
+  describe '#create_pull_request' do
+
+    before(:each) do
+      github.stub(:latest_request_number).and_return(1)
+      subject.stub(:create_title_and_body).and_return(['title', 'body'])
+      local.stub(:target_repo).and_return('parent:repo')
+      local.stub(:head).and_return('local:repo')
+      local.stub(:target_branch).and_return('master')
+      subject.stub(:git_call)
+    end
+
+    it 'sends pull request to upstream repo' do
+      github.should_receive(:create_pull_request).
+          with('parent:repo', 'master', 'local:repo', 'title', 'body')
+      github.stub(:request_number_by_title).and_return(2)
+      subject.should_receive(:puts).with(/Successfully/)
+      subject.should_receive(:puts).with(/pull\/2/)
+      subject.send(:create_pull_request, true)
+    end
+
+    it 'checks if pull request is indeed created' do
+      github.should_receive(:create_pull_request).
+          with('parent:repo', 'master', 'local:repo', 'title', 'body')
+      github.stub(:request_number_by_title).and_return(nil)
+      subject.should_receive(:puts).with(/not created for parent:repo/)
+      subject.send(:create_pull_request, true)
     end
 
   end

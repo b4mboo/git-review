@@ -14,7 +14,7 @@ module GitReview
 
   class Github
 
-    include Internals
+    include ::GitReview::Internals
 
     attr_reader :github
     attr_accessor :source_repo
@@ -36,7 +36,7 @@ module GitReview
       if settings.oauth_token && settings.username
         @github = Octokit::Client.new(
           :login          => settings.username,
-          :oauth_token    => settings.oauth_token,
+          :access_token    => settings.oauth_token,
           :auto_traversal => true
         )
         @github.login
@@ -158,6 +158,17 @@ module GitReview
     def discussion(number)
       commit_discussion(number) +
       issue_discussion(number)
+    end
+
+    # show latest pull request number
+    def latest_request_number
+      current_requests.collect(&:number).sort.last.to_i
+    end
+
+    # get the number of the request that matches the title
+    def request_number_by_title(title)
+      request = current_requests.find { |r| r.title == title }
+      request.number if request
     end
 
     # delegate methods that interact with Github to Octokit client
