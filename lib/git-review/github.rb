@@ -58,14 +58,14 @@ module GitReview
     end
 
     # an alias to pull_requests
-    def current_requests
-      @github.pull_requests(source_repo)
+    def current_requests(repo=source_repo)
+      @github.pull_requests(repo)
     end
 
     # a more detailed collection of requests
-    def current_requests_full
-      @github.pull_requests(source_repo).collect { |request|
-        @github.pull_request(source_repo, request.number)
+    def current_requests_full(repo=source_repo)
+      @github.pull_requests(repo).collect { |request|
+        @github.pull_request(repo, request.number)
       }
     end
 
@@ -161,13 +161,13 @@ module GitReview
     end
 
     # show latest pull request number
-    def latest_request_number
-      current_requests.collect(&:number).sort.last.to_i
+    def latest_request_number(repo=source_repo)
+      current_requests(repo).collect(&:number).sort.last.to_i
     end
 
     # get the number of the request that matches the title
-    def request_number_by_title(title)
-      request = current_requests.find { |r| r.title == title }
+    def request_number_by_title(title, repo=source_repo)
+      request = current_requests(repo).find { |r| r.title == title }
       request.number if request
     end
 
