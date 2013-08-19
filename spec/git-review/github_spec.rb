@@ -19,6 +19,7 @@ describe 'Github' do
   context 'when access is configured' do
 
     subject { ::GitReview::Github.new }
+
     before(:each) do
       ::GitReview::Github.any_instance.stub(:configure_github_access).
           and_return('username')
@@ -54,6 +55,39 @@ describe 'Github' do
 
   end
 
+  describe '#current_requests' do
 
+    subject { ::GitReview::Github.new }
+
+    before(:each) do
+      ::GitReview::Settings.any_instance.stub(:oauth_token).and_return('token')
+      ::GitReview::Settings.any_instance.stub(:username).and_return('login')
+    end
+
+    context 'when inquiring upstream repo' do
+
+      let(:repo) { 'foo/bar' }
+
+      it 'gets pull request from provided upstream repo' do
+        Octokit::Client.any_instance.should_receive(:pull_requests).with(repo)
+        subject.should_not_receive(:source_repo)
+        subject.current_requests(repo)
+      end
+
+    end
+
+    context 'when inquiring current repo' do
+
+      let(:repo) { 'foo/bar' }
+
+      it 'gets pull request from current source repo' do
+        subject.stub(:source_repo).and_return(repo)
+        Octokit::Client.any_instance.should_receive(:pull_requests).with(repo)
+        subject.current_requests
+      end
+
+    end
+
+  end
 
 end
