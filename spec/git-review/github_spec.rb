@@ -58,9 +58,10 @@ describe 'Github' do
   describe '#current_requests' do
 
     subject { ::GitReview::Github.new }
+
     before(:each) do
-      subject.stub(:configure_github_access).
-          and_return('username')
+      ::GitReview::Settings.any_instance.stub(:oauth_token).and_return('token')
+      ::GitReview::Settings.any_instance.stub(:username).and_return('login')
     end
 
     context 'when inquiring upstream repo' do
