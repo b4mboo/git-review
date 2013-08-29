@@ -362,6 +362,7 @@ describe 'Commands' do
         end
 
         it 'pushes the commits to a remote branch and creates a pull request' do
+          github.stub(:request_exists_for_branch?).and_return(false)
           subject.should_receive(:git_call).with(
               "push --set-upstream origin #{branch_name}", false, true
           )
@@ -369,7 +370,16 @@ describe 'Commands' do
           subject.create
         end
 
+        it 'does not create pull request if one already exists for the branch' do
+          github.stub(:request_exists_for_branch?).with(false).and_return(true)
+          subject.should_not_receive(:create_pull_request)
+          subject.should_receive(:puts).with(/already exists/)
+          subject.should_receive(:puts).with(/`git push`/)
+          subject.create(false)
+        end
+
         it 'lets the user return to the branch she was working on before' do
+          github.stub(:request_exists_for_branch?).and_return(false)
           subject.stub(:create_pull_request)
           subject.should_receive(:git_call).with("checkout master")
           subject.create
@@ -388,11 +398,20 @@ describe 'Commands' do
       }
 
       before(:each) do
-        subject.stub(:next_arg).and_return('--upstream')
-        github.github.stub(:login).and_return('user')
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
         github.stub(:repository).and_return(upstream)
+        subject.stub(:git_call)
+        subject.stub(:git_call).with('diff HEAD').and_return('')
+        subject.stub(:git_call).with(/cherry/).and_return('some commits')
+      end
+
+      it 'does not create pull request if one already exists for the branch' do
+        github.stub(:request_exists_for_branch?).with(true).and_return(true)
+        subject.should_not_receive(:create_pull_request)
+        subject.should_receive(:puts).with(/already exists/)
+        subject.should_receive(:puts).with(/`git push`/)
+        subject.create(true)
       end
     end
 

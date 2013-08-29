@@ -134,6 +134,11 @@ module GitReview
       if git_call("cherry #{local.target_branch}").empty?
         puts 'Nothing to push to remote yet. Commit something first.'
       else
+        if github.request_exists_for_branch?(upstream)
+          puts 'A pull request already exists for this branch.'
+          puts 'Please update the request directly using `git push`.'
+          return
+        end
         # push latest commits to the remote branch (create if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
         create_pull_request(to_upstream)

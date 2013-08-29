@@ -57,6 +57,13 @@ module GitReview
       false
     end
 
+    def request_exists_for_branch?(upstream=false, branch=local.source_branch)
+      target_repo = local.target_repo(upstream)
+      @github.pull_requests(target_repo).any? { |r|
+        r.head.ref == branch
+      }
+    end
+
     # an alias to pull_requests
     def current_requests(repo=source_repo)
       @github.pull_requests(repo)
@@ -75,7 +82,7 @@ module GitReview
 
     # @return [Array(String, String)] user and repo name from local git config
     def repo_info_from_config
-      git_config = ::GitReview::Local.instance.config
+      git_config = local.config
       url = git_config['remote.origin.url']
       raise ::GitReview::InvalidGitRepositoryError if url.nil?
 
@@ -271,6 +278,10 @@ module GitReview
         url.index(insteadof_url) and true_url != nil
       }
       first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
+    end
+
+    def local
+      @local ||= ::GitReview::Local.instance
     end
 
   end
