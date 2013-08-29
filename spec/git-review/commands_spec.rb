@@ -313,10 +313,20 @@ describe 'Commands' do
       }
 
       before(:each) do
-        github.github.stub(:login).and_return('user')
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
         github.stub(:repository).and_return(upstream)
+        subject.stub(:git_call)
+        subject.stub(:git_call).with('diff HEAD').and_return('')
+        subject.stub(:git_call).with(/cherry/).and_return('some commits')
+      end
+
+      it 'does not create pull request if one already exists for the branch' do
+        github.stub(:request_exists_on_upstream?).and_return(true)
+        subject.should_not_receive(:create_pull_request)
+        subject.should_receive(:puts).with(/already exists/)
+        subject.should_receive(:puts).with(/`git push`/)
+        subject.create(true)
       end
 
     end
