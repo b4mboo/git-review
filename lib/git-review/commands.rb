@@ -159,8 +159,14 @@ module GitReview
     # Start a console session (used for debugging)
     def console
       puts 'Entering debug console.'
-      require 'byebug'
-      byebug
+      if RUBY_VERSION == '2.0.0'
+        require 'byebug'
+        byebug
+      else
+        require 'ruby-debug'
+        Debugger.start
+        debugger
+      end
       puts 'Leaving debug console.'
     end
 
