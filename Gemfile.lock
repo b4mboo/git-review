@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     git-review (1.1.6)
+      gli
       launchy
       octokit
       yajl-ruby
@@ -9,25 +10,22 @@ PATH
 GEM
   remote: http://rubygems.org/
   specs:
-    addressable (2.3.4)
+    addressable (2.3.5)
+    byebug (1.8.2)
+      columnize (~> 0.3.6)
+      debugger-linecache (~> 1.2.0)
+    columnize (0.3.6)
+    debugger-linecache (1.2.0)
     diff-lcs (1.2.4)
-    faraday (0.8.7)
-      multipart-post (~> 1.1)
-    faraday_middleware (0.9.0)
-      faraday (>= 0.7.4, < 0.9)
+    faraday (0.8.8)
+      multipart-post (~> 1.2.0)
+    gli (2.7.0)
     hashie (2.0.5)
     launchy (2.3.0)
       addressable (~> 2.3)
-    multi_json (1.7.6)
     multipart-post (1.2.0)
-    netrc (0.7.7)
-    octokit (1.24.0)
-      addressable (~> 2.2)
-      faraday (~> 0.8)
-      faraday_middleware (~> 0.9)
-      hashie (~> 2.0)
-      multi_json (~> 1.3)
-      netrc (~> 0.7.7)
+    octokit (2.0.0)
+      sawyer (~> 0.3.0)
     rspec (2.13.0)
       rspec-core (~> 2.13.0)
       rspec-expectations (~> 2.13.0)
@@ -36,11 +34,17 @@ GEM
     rspec-expectations (2.13.0)
       diff-lcs (>= 1.1.3, < 2.0)
     rspec-mocks (2.13.1)
+    sawyer (0.3.0)
+      faraday (~> 0.8, < 0.10)
+      uri_template (~> 0.5.0)
+    uri_template (0.5.3)
     yajl-ruby (1.1.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  byebug
   git-review!
+  hashie
   rspec
