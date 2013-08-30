@@ -57,8 +57,8 @@ module GitReview
       false
     end
 
-    def request_exists_on_upstream?(branch=local.source_branch)
-      target_repo = local.target_repo(true)
+    def request_exists_for_branch?(upstream=false, branch=local.source_branch)
+      target_repo = local.target_repo(upstream)
       @github.pull_requests(target_repo).any? { |r|
         r.head.ref == branch
       }
