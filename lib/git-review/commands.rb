@@ -268,13 +268,13 @@ HELP_TEXT
     end
 
     def create_pull_request(to_upstream=false)
-      # gather information before creating pull request
-      lastest_number = github.latest_request_number
-
       target_repo = local.target_repo(to_upstream)
       head = local.head
       base = local.target_branch
       title, body = create_title_and_body(base)
+
+      # gather information before creating pull request
+      lastest_number = github.latest_request_number(target_repo)
 
       # create the actual pull request
       github.create_pull_request(target_repo, base, head, title, body)
@@ -282,7 +282,7 @@ HELP_TEXT
       git_call("checkout #{base}")
 
       # make sure the new pull request is indeed created
-      new_number = github.request_number_by_title(title)
+      new_number = github.request_number_by_title(title, target_repo)
       if new_number && new_number > lastest_number
         puts "Successfully created new request ##{new_number}"
         puts "https://github.com/#{target_repo}/pull/#{new_number}"
