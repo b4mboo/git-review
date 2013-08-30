@@ -101,6 +101,9 @@ $ git review prepare
 ```
 $ git review create
 > create a new request by creating all necessary local and remote branches
+
+$ git review create --upstream
+> send a new request to the upstream when working on a forked repo
 ```
 
 
