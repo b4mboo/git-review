@@ -21,6 +21,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'yajl-ruby'
   s.add_runtime_dependency 'gli'
   s.add_development_dependency 'rspec', '~> 2.13.0'
-  s.add_development_dependency 'byebug'
   s.add_development_dependency 'hashie'
 end
