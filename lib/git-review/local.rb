@@ -182,7 +182,7 @@ module GitReview
     # @return [String] the head string used for pull requests
     def head
       # in the form of 'user:branch'
-      "#{@config['github.login']}:#{source_branch}"
+      "#{github.github.login}:#{source_branch}"
     end
 
     # @return [Boolean] whether already on a feature branch
