@@ -5,16 +5,14 @@ module GitReview
     include ::GitReview::Internals
     extend self
 
-    attr_accessor :args
-
     # List all pending requests.
-    def list
+    def list(reverse=false)
       requests = github.current_requests_full.reject { |request|
         # find only pending (= unmerged) requests and output summary
         # explicitly look for local changes Github does not yet know about
         local.merged?(request.head.sha)
       }
-      requests.reverse! if next_arg == '--reverse'
+      requests.reverse! if reverse
       source = local.source
       if requests.empty?
         puts "No pending requests for '#{source}'."
@@ -26,10 +24,10 @@ module GitReview
     end
 
     # Show details for a single request.
-    def show
-      request = get_request_or_return
+    def show(number, full=false)
+      request = get_request_by_number(number)
       # determine whether to show full diff or just stats
-      option = next_arg == '--full' ? '' : '--stat '
+      option = full ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
       print_request_details(request)
       puts git_call(diff)
@@ -37,20 +35,20 @@ module GitReview
     end
 
     # Open a browser window and review a specified request.
-    def browse
-      request = get_request_or_return
-      Launchy.open(request.html_url) if request
+    def browse(number)
+      request = get_request_by_number(number)
+      Launchy.open(request.html_url)
     end
 
     # Checkout a specified request's changes to your local repository.
-    def checkout
-      request = get_request_or_return
+    def checkout(number, branch=false)
+      request = get_request_by_number(number)
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
       puts '  git checkout master'
       puts
-      if next_arg == '--branch'
+      if branch
         git_call("checkout #{request.head.ref}")
       else
         git_call("checkout pr/#{request.number}")
@@ -58,8 +56,8 @@ module GitReview
     end
 
     # Add an approving comment to the request.
-    def approve
-      request = get_request_or_return
+    def approve(number)
+      request = get_request_by_number(number)
       repo = github.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
@@ -72,13 +70,12 @@ module GitReview
     end
 
     # Accept a specified request by merging it into master.
-    def merge
-      request = get_request_or_return
+    def merge(number)
+      request = get_request_by_number(number)
       if request.head.repo
-        option = next_arg  # FIXME: What options are allowed here?
         message = "Accept request ##{request.number} " +
             "and merge changes into \"#{local.target}\""
-        command = "merge #{option} -m '#{message}' #{request.head.sha}"
+        command = "merge -m '#{message}' #{request.head.sha}"
         puts
         puts "Request title:"
         puts "  #{request.title}"
@@ -93,8 +90,8 @@ module GitReview
     end
 
     # Close a specified request.
-    def close
-      request = get_request_or_return
+    def close(number)
+      request = get_request_by_number(number)
       repo = github.source_repo
       github.close_issue(repo, request.number)
       unless github.request_exists?('open', request.number)
@@ -107,11 +104,11 @@ module GitReview
     #   changes, more often than not, they don't. Therefore we create a branch
     #   for them, to be able to use code review the way it is intended.
     # @return [Array(String, String)] the original branch and the local branch
-    def prepare
+    def prepare(new=false, name=nil)
       # remember original branch the user was currently working on
       original_branch = local.source_branch
-      if next_arg == '--new' || !local.on_feature_branch?
-        local_branch = move_uncommitted_changes(local.target_branch)
+      if new || !local.on_feature_branch?
+        local_branch = move_uncommitted_changes(local.target_branch, name)
       else
         local_branch = original_branch
       end
@@ -121,8 +118,7 @@ module GitReview
     # Create a new request.
     # TODO: Support creating requests to other repositories and branches (like
     #   the original repo, this has been forked from).
-    def create
-      to_upstream = next_arg == '--upstream'
+    def create(upstream=false)
       # prepare original_branch and local_branch
       original_branch, local_branch = prepare
       # don't create request with uncommitted changes in current branch
@@ -134,9 +130,14 @@ module GitReview
       if git_call("cherry #{local.target_branch}").empty?
         puts 'Nothing to push to remote yet. Commit something first.'
       else
+        if github.request_exists_for_branch?(upstream)
+          puts 'A pull request already exists for this branch.'
+          puts 'Please update the request directly using `git push`.'
+          return
+        end
         # push latest commits to the remote branch (create if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
-        create_pull_request(to_upstream)
+        create_pull_request(upstream)
         # return to the user's original branch
         # FIXME: keep track of original branch etc
         git_call("checkout #{original_branch}")
@@ -144,51 +145,29 @@ module GitReview
     end
 
     # delete obsolete branches (left over from already closed requests)
-    def clean
+    def clean(number=nil, force=false, all=false)
       # pruning is needed to remove deleted branches from your local track
       git_call('remote prune origin')
       # determine strategy to clean.
-      case @args.size
-        when 1
-          arg = next_arg
-          arg == '--all' ? local.clean_all : local.clean_single(arg)
-        when 2
-          # git review clean ID --force
-          local.clean_single(next_arg, next_arg == '--force')
-        else
-          raise ::GitReview::InvalidArgumentError
+      if all
+        local.clean_all
+      else
+        local.clean_single(number, force)
       end
     end
 
-    # Start a console session (used for debugging).
+    # Start a console session (used for debugging)
     def console
-      # TODO: Debugger for Ruby 2.0?
       puts 'Entering debug console.'
-      #request_exists?
-      require 'ruby-debug'
-      Debugger.start
-      debugger
+      if RUBY_VERSION == '2.0.0'
+        require 'byebug'
+        byebug
+      else
+        require 'ruby-debug'
+        Debugger.start
+        debugger
+      end
       puts 'Leaving debug console.'
-    end
-
-    # Show a quick reference of available commands.
-    def help
-      puts <<HELP_TEXT
-Usage: git review <command>
-Manage review workflow for projects hosted on GitHub (using pull requests).
-Available commands:
-  list [--reverse]          List all pending requests.
-  show <ID> [--full]        Show details for a single request.
-  browse <ID>               Open a browser window and review a request.
-  checkout <ID> [--branch]  Checkout a request\'s changes to your local repo.
-  approve <ID>              Add an approving comment to a request.
-  merge <ID>                Accept a request by merging it into master.
-  close <ID>                Close a request.
-  prepare [--new]           Creates a new local branch for a request.
-  create [--upstream]       Create a new request.
-  clean <ID> [--force]      Delete a request\'s remote and local branches.
-  clean --all               Delete all obsolete branches.
-HELP_TEXT
     end
 
   private
@@ -241,17 +220,16 @@ HELP_TEXT
     # ask for branch name if not provided
     # @return [String] sanitized branch name
     def get_branch_name
-      if (branch_name = next_arg).nil?
-        puts 'Please provide a name for the branch:'
-        branch_name = gets.chomp
-      end
+      puts 'Please provide a name for the branch:'
+      branch_name = gets.chomp
       branch_name.gsub(/\W+/, '_').downcase
     end
 
     # move uncommitted changes from target branch to local branch
     # @return [String] the new local branch uncommitted changes are moved to
-    def move_uncommitted_changes(target_branch)
-      local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{get_branch_name}"
+    def move_uncommitted_changes(target_branch, new_branch)
+      new_branch ||= get_branch_name
+      local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{new_branch}"
       git_call("checkout -b #{local_branch}")
       # make sure we are on the feature branch
       if local.source_branch == local_branch
@@ -342,12 +320,7 @@ HELP_TEXT
       @local ||= ::GitReview::Local.instance
     end
 
-    def next_arg
-      @args.is_a?(Array) ? @args.shift : @args
-    end
-
-    def get_request_or_return
-      request_number = next_arg || (raise ::GitReview::InvalidRequestIDError)
+    def get_request_by_number(request_number)
       request = github.request_exists?(request_number)
       request || (raise ::GitReview::InvalidRequestIDError)
     end

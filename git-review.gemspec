@@ -17,9 +17,9 @@ Gem::Specification.new do |s|
   s.description = 'Manage review workflow for projects hosted on GitHub (using pull requests).'
 
   s.add_runtime_dependency 'launchy'
-  s.add_runtime_dependency 'octokit'
+  s.add_runtime_dependency 'octokit', '~> 2.0.0'
   s.add_runtime_dependency 'yajl-ruby'
-
+  s.add_runtime_dependency 'gli'
   s.add_development_dependency 'rspec', '~> 2.13.0'
   s.add_development_dependency 'hashie'
 end

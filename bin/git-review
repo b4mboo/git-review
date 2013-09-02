@@ -4,5 +4,104 @@ require 'rubygems'
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
 require 'git-review'
+require 'gli'
 
-::GitReview::GitReview.new(ARGV)
+include GLI::App
+
+program_desc 'Manage review workflow for Github projects (using pull requests).'
+
+# Pre-hook before a command is executed
+pre do |global, cmd, opts, args|
+  github = ::GitReview::Github.instance
+  if github.configure_github_access && github.source_repo
+    github.update unless cmd == 'clean'
+  end
+  true  # return true to explicitly pass precondition
+end
+
+desc 'List all pending requests'
+command :list do |c|
+  c.switch [:r, :reverse]
+  c.action do |global, opts, args|
+  ::GitReview::Commands.list(opts[:reverse])
+  end
+end
+
+desc 'Show details for a single request'
+command :show do |c|
+  c.switch [:f, :full]
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty?
+    ::GitReview::Commands.show(args.shift, opts[:full])
+  end
+end
+
+desc 'Open request in a browser window'
+command :browse do |c|
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty?
+    ::GitReview::Commands.browse(args.shift)
+  end
+end
+
+desc 'Checkout a request\'s changes to local repo'
+command :checkout do |c|
+  c.switch [:b, :branch]
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty?
+    ::GitReview::Commands.checkout(args.shift, opts[:branch])
+  end
+end
+
+desc 'Add an approvig comment to a request'
+command :approve do |c|
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty?
+    ::GitReview::Commands.approve(args.shift)
+  end
+end
+
+desc 'Accept a request by merging it into master'
+command :merge do |c|
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty?
+    ::GitReview::Commands.merge(args.shift)
+  end
+end
+
+desc 'Close a request'
+command :close do |c|
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty?
+    ::GitReview::Commands.close(args.shift)
+  end
+end
+
+desc 'Create a new local branch for a request'
+command :prepare do |c|
+  c.switch [:n, :new]
+  c.action do |global, opts, args|
+    ::GitReview::Commands.prepare(opts[:new], args.shift)
+  end
+end
+
+desc 'Create a new pull request'
+command :create do |c|
+  c.switch [:u, :upstream]
+  c.action do |global, opts, args|
+    ::GitReview::Commands.create(opts[:upstream])
+  end
+end
+
+desc 'Delete a request\'s remote and local branches'
+command :clean do |c|
+  c.switch [:f, :force]
+  c.switch [:a, :all]
+  c.action do |global, opts, args|
+    help_now!('Request number is required.') if args.empty? && !opts[:all]
+    number = args.empty? ? nil : args.shift
+    ::GitReview::Commands.clean(number, opts[:force], opts[:all])
+  end
+end
+
+exit run(ARGV)

@@ -25,40 +25,4 @@ require_relative 'git-review/errors'
 
 module GitReview
 
-  class GitReview
-
-    include ::GitReview::Internals
-
-    def initialize(args=[])
-      ::GitReview::Commands.args = args
-      command = args.shift
-      if command.nil? || command.empty? || %w(help -h --help).include?(command)
-        help
-      elsif ::GitReview::Commands.respond_to?(command)
-        execute_command(command)
-      else
-        puts "git-review: '#{command}' is not a valid command.\n\n"
-        help
-      end
-    rescue Exception => e
-      puts e.message
-    end
-
-    def help
-      ::GitReview::Commands.help
-    end
-
-  private
-
-    # execute command only when it is valid
-    def execute_command(command)
-      github = ::GitReview::Github.instance
-      if github.configure_github_access && github.source_repo
-          github.update unless command == 'clean'
-        ::GitReview::Commands.send(command)
-      end
-    end
-
-  end
-
 end
