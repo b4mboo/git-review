@@ -240,7 +240,7 @@ describe 'Commands' do
         subject.prepare
       end
 
-      it 'moves uncommitted changes to the new branch' do
+      xit 'moves uncommitted changes to the new branch' do
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:uncommited_changes?).and_return(true)
         subject.should_receive(:git_call).with('stash')
