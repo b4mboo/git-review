@@ -104,4 +104,11 @@ command :clean do |c|
   end
 end
 
+desc 'Console session for debugging'
+command :console do |c|
+  c.action do |global, opts, args|
+    ::GitReview::Commands.console
+  end
+end
+
 exit run(ARGV)
