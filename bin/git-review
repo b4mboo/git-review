@@ -104,7 +104,7 @@ command :clean do |c|
   end
 end
 
-if ::GitReview::Settings.instance.review_mode == 'debug'
+if ::GitReview::Settings.instance.review_mode == 'debug' || ENV['DEBUG']
   desc 'Console session for debugging'
   command :console do |c|
     c.action do |global, opts, args|
