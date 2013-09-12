@@ -3,13 +3,13 @@ require_relative '../spec_helper'
 
 describe 'Local' do
 
+  subject { ::GitReview::Local.new }
+
   describe '.instance' do
 
-    subject { ::GitReview::Local }
-
     it 'gives back the same instance' do
-      first_call = subject.instance
-      second_call = subject.instance
+      first_call = ::GitReview::Local.instance
+      second_call = ::GitReview::Local.instance
       first_call.should == second_call
     end
 
@@ -17,20 +17,16 @@ describe 'Local' do
 
   describe '#initialize' do
 
-    subject { ::GitReview::Local }
-
     it 'raises error when the directory is not a valid git repo' do
-      subject.any_instance.stub(:git_call).with('rev-parse --show-toplevel').
-          and_return('')
-      expect { subject.new }.
+      ::GitReview::Local.any_instance.stub(:git_call).
+          with('rev-parse --show-toplevel').and_return('')
+      expect { ::GitReview::Local.new }.
           to raise_error(::GitReview::InvalidGitRepositoryError)
     end
 
   end
 
   describe '#add_pull_refspec' do
-
-    subject { ::GitReview::Local.new }
 
     it 'add refspec to local git config when it is not set' do
       refspec = '+refs/pull/*/head:refs/remotes/origin/pr/*'
@@ -44,8 +40,6 @@ describe 'Local' do
   end
 
   describe '#load_config' do
-
-    subject { ::GitReview::Local.new }
 
     it 'reads config into hash' do
       config = "foo=bar\nbaz=qux"
@@ -69,8 +63,6 @@ describe 'Local' do
 
   describe '#branch_exists?' do
 
-    subject { ::GitReview::Local.new }
-
     it 'returns false if location is neither local nor remote' do
       subject.branch_exists?(:foo, 'bar').should be_false
     end
@@ -88,8 +80,6 @@ describe 'Local' do
   end
 
   describe 'deleting a branch' do
-
-    subject { ::GitReview::Local.new }
 
     it 'removes a local branch with a given name' do
       branch_name = 'foo'
@@ -122,7 +112,6 @@ describe 'Local' do
 
   describe '#clean_single' do
 
-    subject { ::GitReview::Local.new }
     let(:gh) { ::GitReview::Github.any_instance }
 
     it 'queries latest info for the specific closed request from Github ' do
@@ -182,7 +171,6 @@ describe 'Local' do
 
   describe '#clean_all' do
 
-    subject { ::GitReview::Local.new }
     let(:gh) { ::GitReview::Github.any_instance }
 
     it 'does not delete protected branches' do
@@ -207,12 +195,28 @@ describe 'Local' do
 
   describe '#source_branch' do
 
-    subject { ::GitReview::Local.new }
-
     it 'extracts source branch' do
       branches = "* master\nreview_branch1\nreview_branch2\n"
       subject.stub(:git_call).with('branch').and_return(branches)
       subject.source_branch.should == 'master'
+    end
+
+  end
+
+  describe '#merged?' do
+
+    let(:sha) { '1234abcd' }
+
+    it 'finds all branches containing the commit' do
+      subject.should_receive(:git_call).with(/branch --contains #{sha}/).
+          and_return('')
+      subject.merged?(sha)
+    end
+
+    it 'confirms merged if target branch contains the commit' do
+      subject.stub(:target_branch).and_return('master')
+      subject.stub(:git_call).and_return("* master\n some_other_branch\n")
+      subject.merged?(sha).should be_true
     end
 
   end

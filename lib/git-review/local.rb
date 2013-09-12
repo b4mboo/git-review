@@ -139,7 +139,9 @@ module GitReview
 
     # @return [Boolean] whether a specified commit has already been merged.
     def merged?(sha)
-      not git_call("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
+      branches = git_call("branch --contains #{sha} 2>&1").split("\n").
+          collect { |b| b.delete('*').strip }
+      branches.include?(target_branch)
     end
 
     # @return [String] the source repo
