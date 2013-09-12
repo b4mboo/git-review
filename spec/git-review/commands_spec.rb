@@ -214,6 +214,7 @@ describe 'Commands' do
         local.stub(:target_branch).and_return('master')
         subject.stub(:puts)
         subject.stub(:git_call)
+        subject.stub(:create_feature_name).and_return(branch_name)
       end
 
       it 'creates a local branch with review prefix' do
@@ -234,15 +235,23 @@ describe 'Commands' do
       end
 
       it 'sanitizes provided branch names' do
-        subject.stub(:gets).and_return('wild stuff?')
-        subject.should_receive(:git_call).
-            with(/checkout -b review_\d+_wild_stuff/)
-        subject.prepare
+        subject.stub(:gets).and_return('wild stuff')
+        subject.send(:get_branch_name).should == 'wild_stuff'
       end
 
-      xit 'moves uncommitted changes to the new branch' do
+    end
+
+    context 'when on feature branch' do
+
+      before(:each) do
         local.stub(:source_branch).and_return(branch_name)
-        local.stub(:uncommited_changes?).and_return(true)
+        local.stub(:target_branch).and_return('master')
+        subject.stub(:git_call)
+        subject.stub(:create_feature_name).and_return(branch_name)
+      end
+
+      it 'moves uncommitted changes to the new branch' do
+        local.stub(:uncommitted_changes?).and_return(true)
         subject.should_receive(:git_call).with('stash')
         subject.should_receive(:git_call).with('reset --hard origin/master')
         subject.send(:move_uncommitted_changes, 'master', feature_name)
