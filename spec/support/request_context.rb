@@ -11,7 +11,7 @@ shared_context 'request_context' do
   let(:title) { 'some title' }
   let(:body) { 'some body' }
   let(:feature_name) { 'some_name' }
-  let(:head_ref) { "review_#{Time.now.strftime("%y%m%d")}_#{feature_name}"}
+  let(:head_ref) { "review_010113_#{feature_name}"}
   let(:custom_target_name) { 'custom_target_name' }
   let(:branch_name) { head_ref }
 
