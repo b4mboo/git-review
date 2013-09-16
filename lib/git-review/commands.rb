@@ -122,14 +122,13 @@ module GitReview
       # prepare original_branch and local_branch
       original_branch, local_branch = prepare
       # don't create request with uncommitted changes in current branch
-      unless git_call('diff HEAD').empty?
+      if local.uncommitted_changes?
         puts 'You have uncommitted changes.'
         puts 'Please stash or commit before creating the request.'
         return
       end
-      if git_call("cherry #{local.target_branch}").empty?
-        puts 'Nothing to push to remote yet. Commit something first.'
-      else
+      if local.new_commits?(upstream)
+        # feature branch differs from local or upstream master
         if github.request_exists_for_branch?(upstream)
           puts 'A pull request already exists for this branch.'
           puts 'Please update the request directly using `git push`.'
@@ -141,6 +140,8 @@ module GitReview
         # return to the user's original branch
         # FIXME: keep track of original branch etc
         git_call("checkout #{original_branch}")
+      else
+        puts 'Nothing to push to remote yet. Commit something first.'
       end
     end
 

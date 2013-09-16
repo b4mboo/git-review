@@ -272,12 +272,13 @@ describe 'Commands' do
       before(:each) do
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
+        local.stub(:new_commits?).with(false).and_return(true)
       end
 
       context 'when there are uncommitted changes' do
 
         before(:each) do
-          subject.stub(:git_call).with('diff HEAD').and_return('some diffs')
+          local.stub(:uncommitted_changes?).and_return(true)
         end
 
         it 'warns the user about uncommitted changes' do
@@ -291,9 +292,8 @@ describe 'Commands' do
       context 'when there are no uncommitted changes' do
 
         before(:each) do
+          local.stub(:uncommitted_changes?).and_return(false)
           subject.stub(:git_call)
-          subject.stub(:git_call).with('diff HEAD').and_return('')
-          subject.stub(:git_call).with(/cherry/).and_return('some commits')
         end
 
         it 'pushes the commits to a remote branch and creates a pull request' do
@@ -305,7 +305,7 @@ describe 'Commands' do
           subject.create
         end
 
-        it 'does not create pull request if one already exists for the branch' do
+        it 'does not create pull request if it already exists for the branch' do
           github.stub(:request_exists_for_branch?).with(false).and_return(true)
           subject.should_not_receive(:create_pull_request)
           subject.should_receive(:puts).with(/already exists/)
@@ -316,7 +316,7 @@ describe 'Commands' do
         it 'lets the user return to the branch she was working on before' do
           github.stub(:request_exists_for_branch?).and_return(false)
           subject.stub(:create_pull_request)
-          subject.should_receive(:git_call).with("checkout master")
+          subject.should_receive(:git_call).with('checkout master')
           subject.create
         end
 
@@ -333,17 +333,25 @@ describe 'Commands' do
       before(:each) do
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
+        local.stub(:uncommitted_changes?).and_return(false)
         github.stub(:repository).and_return(upstream)
         subject.stub(:git_call)
-        subject.stub(:git_call).with('diff HEAD').and_return('')
-        subject.stub(:git_call).with(/cherry/).and_return('some commits')
+        subject.stub(:puts)
       end
 
       it 'does not create pull request if one already exists for the branch' do
+        local.stub(:new_commits?).and_return(true)
         github.stub(:request_exists_for_branch?).with(true).and_return(true)
         subject.should_not_receive(:create_pull_request)
         subject.should_receive(:puts).with(/already exists/)
         subject.should_receive(:puts).with(/`git push`/)
+        subject.create(true)
+      end
+
+      it 'checks if current branch differ from upstream master' do
+        local.should_receive(:new_commits?).with(true).and_return(false)
+        subject.stub(:puts)
+        subject.should_not_receive(:create_pull_request)
         subject.create(true)
       end
 
