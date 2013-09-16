@@ -137,6 +137,12 @@ module GitReview
       end
     end
 
+    # @return [Boolean] whether there are commits not in target branch yet
+    def new_commits?(upstream=false)
+      target = upstream ? 'upstream/master' : target_branch
+      not git_call("cherry #{target}").empty?
+    end
+
     # @return [Boolean] whether a specified commit has already been merged.
     def merged?(sha)
       not git_call("rev-list #{sha} ^HEAD 2>&1").split("\n").size > 0
