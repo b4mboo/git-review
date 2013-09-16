@@ -225,11 +225,16 @@ module GitReview
       branch_name.gsub(/\W+/, '_').downcase
     end
 
+    # @return [String] the complete feature branch name
+    def create_feature_name(new_branch)
+      "review_#{Time.now.strftime("%y%m%d")}_#{new_branch}"
+    end
+
     # move uncommitted changes from target branch to local branch
     # @return [String] the new local branch uncommitted changes are moved to
     def move_uncommitted_changes(target_branch, new_branch)
       new_branch ||= get_branch_name
-      local_branch = "review_#{Time.now.strftime("%y%m%d")}_#{new_branch}"
+      local_branch = create_feature_name(new_branch)
       git_call("checkout -b #{local_branch}")
       # make sure we are on the feature branch
       if local.source_branch == local_branch
