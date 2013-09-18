@@ -125,14 +125,14 @@ describe 'Commands' do
       subject.stub(:puts)
     end
 
-    it 'creates a headless state in the local repo with the requests code' do
+    it 'creates a local branch in the local repo with the requests code' do
       subject.should_receive(:git_call).with("checkout pr/#{request_number}")
       subject.checkout(1)
     end
 
-    it 'creates a local branch if the optional param --branch is appended' do
-      subject.should_receive(:git_call).with("checkout #{head_ref}")
-      subject.checkout(1, true)
+    it 'creates a headless state if --no-branch is specified' do
+      subject.should_receive(:git_call).with("checkout #{head_sha}")
+      subject.checkout(1, false)
     end
 
   end

@@ -41,7 +41,7 @@ module GitReview
     end
 
     # Checkout a specified request's changes to your local repository.
-    def checkout(number, branch=false)
+    def checkout(number, branch=true)
       request = get_request_by_number(number)
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
@@ -49,9 +49,9 @@ module GitReview
       puts '  git checkout master'
       puts
       if branch
-        git_call("checkout #{request.head.ref}")
-      else
         git_call("checkout pr/#{request.number}")
+      else
+        git_call("checkout #{request.head.sha}")
       end
     end
 
