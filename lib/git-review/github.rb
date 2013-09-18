@@ -161,6 +161,15 @@ module GitReview
       discussion.compact.flatten unless discussion.empty?
     end
 
+    # get the number of comments, including comments on commits
+    def comments_count(number)
+      issue_c = @github.issue_comments(source_repo, number).size
+      commits_c = @github.pull_commits(source_repo, number).inject(0) { |sum, c|
+        sum + @github.commit_comments(source_repo, c.sha).size
+      }
+      issue_c + commits_c
+    end
+
     # show discussion for a request
     def discussion(number)
       commit_discussion(number) +

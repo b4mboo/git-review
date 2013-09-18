@@ -175,7 +175,7 @@ module GitReview
 
     def print_request(request)
       date_string = format_time(request.updated_at)
-      comments_count = request.comments.to_i + request.review_comments.to_i
+      comments_count = github.comments_count(request.number)
       line = format_text(request.number, 8)
       line << format_text(date_string, 11)
       line << format_text(comments_count, 10)
