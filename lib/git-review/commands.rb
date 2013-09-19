@@ -50,6 +50,7 @@ module GitReview
       puts
       if branch
         git_call("checkout pr/#{request.number}")
+        rename_branch(request)
       else
         git_call("checkout #{request.head.sha}")
       end
@@ -329,6 +330,18 @@ module GitReview
     def get_request_by_number(request_number)
       request = github.request_exists?(request_number)
       request || (raise ::GitReview::InvalidRequestIDError)
+    end
+
+    def rename_branch(request)
+      ref = request.head.ref
+      user = request.head.user.login
+      number = request.number
+      new_name = "#{ref}_#{user}_pr_#{number}"
+      if local.branch_exists?(:local, new_name)
+        git_call("checkout #{new_name}")
+      else
+        git_call("branch -m #{new_name}")
+      end
     end
 
   end
