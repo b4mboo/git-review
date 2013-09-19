@@ -55,12 +55,12 @@ $ git review browse 42
 
 ```
 $ git review checkout 42
-> checkout changes from request #42 to your local repository in a headless state
+> checkout remote branch from request #42 and create a local branch from it
 ```
 
 ```
-$ git review checkout 42 --branch
-> checkout remote branch from request #42 and create a local branch from it
+$ git review checkout 42 --no-branch
+> checkout changes from request #42 to your local repository in a headless state
 ```
 
 
