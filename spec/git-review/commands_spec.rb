@@ -33,15 +33,13 @@ describe 'Commands' do
       it 'shows them' do
         subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
         subject.should_not_receive(:puts).with(/No pending requests/)
-        subject.should_receive(:print_request).with(req1).ordered
-        subject.should_receive(:print_request).with(req2).ordered
+        subject.should_receive(:print_requests).with([req1, req2], false)
         subject.list
       end
 
       it 'sorts the output with --reverse option' do
         subject.stub(:puts)
-        subject.should_receive(:print_request).with(req2).ordered
-        subject.should_receive(:print_request).with(req1).ordered
+        subject.should_receive(:print_requests).with([req1, req2], true)
         subject.list(true)
       end
 

@@ -71,9 +71,15 @@ module GitReview
 
     # a more detailed collection of requests
     def current_requests_full(repo=source_repo)
-      @github.pull_requests(repo).collect { |request|
-        @github.pull_request(repo, request.number)
-      }
+      threads = []
+      requests = []
+      @github.pull_requests(repo).each do |req|
+        threads << Thread.new {
+          requests << @github.pull_request(repo, req.number)
+        }
+      end
+      threads.each { |t| t.join }
+      requests
     end
 
     def update
@@ -144,7 +150,8 @@ module GitReview
     end
 
     def issue_discussion(number)
-      comments = @github.issue_comments(source_repo, number)
+      comments = @github.issue_comments(source_repo, number) +
+          @github.review_comments(source_repo, number)
       discussion = ["\nComments on pull request:\n\n"]
       discussion += comments.collect { |comment|
         name = comment.user.login
@@ -159,6 +166,14 @@ module GitReview
         output << "\n\n"
       }
       discussion.compact.flatten unless discussion.empty?
+    end
+
+    # get the number of comments, including comments on commits
+    def comments_count(request)
+      issue_c = request.comments + request.review_comments
+      commits_c = @github.pull_commits(source_repo, request.number).
+          inject(0) { |sum, c| sum + c.commit.comment_count }
+      issue_c + commits_c
     end
 
     # show discussion for a request
