@@ -12,14 +12,13 @@ module GitReview
         # explicitly look for local changes Github does not yet know about
         local.merged?(request.head.sha)
       }
-      requests.reverse! if reverse
       source = local.source
       if requests.empty?
         puts "No pending requests for '#{source}'."
       else
         puts "Pending requests for '#{source}':"
         puts "ID      Updated    Comments  Title"
-        requests.each { |request| print_request(request) }
+        print_requests(requests, reverse)
       end
     end
 
@@ -173,18 +172,31 @@ module GitReview
 
   private
 
-    def print_request(request)
+    def request_summary_line(request)
       date_string = format_time(request.updated_at)
-      comments_count = request.comments.to_i + request.review_comments.to_i
+      comments_count = github.comments_count(request)
       line = format_text(request.number, 8)
       line << format_text(date_string, 11)
       line << format_text(comments_count, 10)
       line << format_text(request.title, 91)
-      puts line
+      line
+    end
+
+    def print_requests(requests, reverse=false)
+      # put all output lines in a hash first, keyed by request number
+      # this is to make sure the order is still correct even if we use
+      #   multi-threading to retrieve the requests
+      output = {}
+      requests.each { |req| output[req.number] = request_summary_line(req) }
+      numbers = output.keys.sort
+      numbers.reverse! if reverse
+      numbers.each do |n|
+        puts output[n]
+      end
     end
 
     def print_request_details(request)
-      comments_count = request.comments.to_i + request.review_comments.to_i
+      comments_count = github.comments_count(request)
       puts 'ID        : ' + request.number.to_s
       puts 'Label     : ' + request.head.label
       puts 'Updated   : ' + format_time(request.updated_at)
