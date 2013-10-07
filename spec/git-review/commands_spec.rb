@@ -37,7 +37,7 @@ describe 'Commands' do
         subject.list
       end
 
-      it 'allows to sort the list in "--reverse" order' do
+      it 'allows to sort the list by adding ' + '--reverse'.pink do
         subject.stub(:puts)
         subject.should_receive(:print_requests).with([req1, req2], true)
         subject.list(true)
@@ -80,7 +80,7 @@ describe 'Commands' do
 
   describe 'show ID (--full)'.pink do
 
-    it 'requires a valid request number as "ID"' do
+    it 'requires a valid request number as ' + 'ID'.pink do
       github.stub(:request_exists?).and_return(false)
       expect { subject.show(0) }.
           to raise_error(::GitReview::InvalidRequestIDError)
