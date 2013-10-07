@@ -19,7 +19,7 @@ describe 'Commands' do
       local.stub(:source).and_return('some_source')
     end
 
-    context 'when listing all unmerged pull requests' do
+    context 'with open pull requests' do
 
       let(:req1) { request.clone }
       let(:req2) { request.clone }
@@ -30,14 +30,14 @@ describe 'Commands' do
         local.stub(:merged?).and_return(false)
       end
 
-      it 'shows them' do
+      it 'prints a list of all open requests' do
         subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
         subject.should_not_receive(:puts).with(/No pending requests/)
         subject.should_receive(:print_requests).with([req1, req2], false)
         subject.list
       end
 
-      it 'sorts the output with --reverse option' do
+      it 'allows to sort the list in "--reverse" order' do
         subject.stub(:puts)
         subject.should_receive(:print_requests).with([req1, req2], true)
         subject.list(true)
@@ -45,14 +45,14 @@ describe 'Commands' do
 
     end
 
-    context 'when pull requests are already merged' do
+    context 'with closed pull requests' do
 
       before(:each) do
         github.stub(:current_requests_full).and_return([request])
         local.stub(:merged?).and_return(true)
       end
 
-      it 'does not list them' do
+      it 'ignores closed requests and does not list them' do
         subject.should_receive(:puts).
             with(/No pending requests for 'some_source'/)
         subject.should_not_receive(:print_request)
@@ -61,12 +61,19 @@ describe 'Commands' do
 
     end
 
-    it 'knows when there are no open pull requests' do
-      github.stub(:current_requests_full).and_return([])
-      subject.should_receive(:puts).
+    context 'without pull requests' do
+
+      before(:each) do
+        github.stub(:current_requests_full).and_return([])
+      end
+
+      it 'does not print a list' do
+        subject.should_receive(:puts).
           with(/No pending requests for 'some_source'/)
-      subject.should_not_receive(:print_request)
-      subject.list
+        subject.should_not_receive(:print_request)
+        subject.list
+      end
+
     end
 
   end
