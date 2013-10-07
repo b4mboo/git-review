@@ -86,14 +86,14 @@ describe 'Commands' do
           to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    context 'when the pull request number is valid' do
+    context 'with a valid request number' do
 
       before(:each) do
         subject.stub(:get_request_by_number).and_return(request)
         subject.stub(:puts)
       end
 
-      it 'shows stats of the request' do
+      it 'shows the request\'s stats' do
         subject.should_receive(:git_call).
             with("diff --color=always --stat HEAD...#{head_sha}")
         subject.stub(:print_request_details)
@@ -101,7 +101,7 @@ describe 'Commands' do
         subject.show(1)
       end
 
-      it 'shows full diff with --full option' do
+      it 'shows the request\'s full diff when adding ' + '--full'.pink do
         subject.should_receive(:git_call).
             with("diff --color=always HEAD...#{head_sha}")
         subject.stub(:print_request_details)
