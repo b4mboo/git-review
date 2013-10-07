@@ -22,7 +22,7 @@ require_relative 'git-review/commands'
 # Include all kinds of custom-defined errors.
 require_relative 'git-review/errors'
 # Allow easy string colorization in the console.
-require_relative 'git-review/colorize_strings'
+require_relative 'git-review/strings'
 
 
 module GitReview

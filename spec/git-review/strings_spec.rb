@@ -1,5 +1,5 @@
 require_relative '../spec_helper'
-require_relative '../../lib/git-review/colorize_strings'
+require_relative '../../lib/git-review/strings'
 
 describe 'String Colorization' do
 
