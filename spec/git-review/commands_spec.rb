@@ -13,7 +13,7 @@ describe 'Commands' do
     github.stub(:configure_github_access).and_return('username')
   end
 
-  describe '#list (--reverse)' do
+  describe 'list (--reverse)'.pink do
 
     before(:each) do
       local.stub(:source).and_return('some_source')
@@ -78,7 +78,7 @@ describe 'Commands' do
 
   end
 
-  describe '#show ID (--full)' do
+  describe 'show ID (--full)'.pink do
 
     it 'requires a valid request number as "ID"' do
       github.stub(:request_exists?).and_return(false)
@@ -113,7 +113,7 @@ describe 'Commands' do
 
   end
 
-  describe '#browse ID' do
+  describe 'browse ID'.pink do
 
     it 'opens the pull request page on GitHub in a browser' do
       subject.stub(:get_request_by_number).and_return(request)
@@ -123,7 +123,7 @@ describe 'Commands' do
 
   end
 
-  describe '#checkout ID' do
+  describe 'checkout ID'.pink do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -181,7 +181,7 @@ describe 'Commands' do
 
   end
 
-  describe '#approve ID' do
+  describe 'approve ID'.pink do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -208,7 +208,7 @@ describe 'Commands' do
 
   end
 
-  describe '#merge ID' do
+  describe 'merge ID'.pink do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -232,7 +232,7 @@ describe 'Commands' do
 
   end
 
-  describe '#close ID' do
+  describe 'close ID'.pink do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -249,7 +249,7 @@ describe 'Commands' do
 
   end
 
-  describe '#prepare' do
+  describe 'prepare'.pink do
 
     context 'when on master/target branch' do
 
@@ -305,7 +305,7 @@ describe 'Commands' do
 
   end
 
-  describe '#create' do
+  describe 'create'.pink do
 
     before(:each) do
       subject.stub(:prepare).and_return(['master', branch_name])
@@ -433,7 +433,7 @@ describe 'Commands' do
 
   end
 
-  describe '#clean ID (--force) / --all' do
+  describe 'clean ID (--force) / --all'.pink do
 
     before(:each) do
       subject.stub(:git_call).with('remote prune origin')
