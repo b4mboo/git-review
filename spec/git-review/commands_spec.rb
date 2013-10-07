@@ -13,7 +13,7 @@ describe 'Commands' do
     github.stub(:configure_github_access).and_return('username')
   end
 
-  describe '#list' do
+  describe '#list (--reverse)' do
 
     before(:each) do
       local.stub(:source).and_return('some_source')
@@ -78,9 +78,9 @@ describe 'Commands' do
 
   end
 
-  describe '#show' do
+  describe '#show ID (--full)' do
 
-    it 'requires a valid request number' do
+    it 'requires a valid request number as "ID"' do
       github.stub(:request_exists?).and_return(false)
       expect { subject.show(0) }.
           to raise_error(::GitReview::InvalidRequestIDError)
@@ -113,7 +113,7 @@ describe 'Commands' do
 
   end
 
-  describe '#browse' do
+  describe '#browse ID' do
 
     it 'opens the pull request page on GitHub in a browser' do
       subject.stub(:get_request_by_number).and_return(request)
@@ -123,7 +123,7 @@ describe 'Commands' do
 
   end
 
-  describe '#checkout' do
+  describe '#checkout ID' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -181,7 +181,7 @@ describe 'Commands' do
 
   end
 
-  describe '#approve' do
+  describe '#approve ID' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -208,7 +208,7 @@ describe 'Commands' do
 
   end
 
-  describe '#merge' do
+  describe '#merge ID' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -232,7 +232,7 @@ describe 'Commands' do
 
   end
 
-  describe '#close' do
+  describe '#close ID' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
@@ -433,7 +433,7 @@ describe 'Commands' do
 
   end
 
-  describe '#clean' do
+  describe '#clean ID (--force) / --all' do
 
     before(:each) do
       subject.stub(:git_call).with('remote prune origin')
