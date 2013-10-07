@@ -8,9 +8,12 @@ describe 'Commands' do
   subject { ::GitReview::Commands }
   let(:github) { ::GitReview::Github.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
+  let(:invalid_id) { 0 }
+  let(:valid_id) { 42 }
 
   before(:each) do
     github.stub(:configure_github_access).and_return('username')
+    subject.stub(:puts)
   end
 
   describe 'list (--reverse)'.pink do
@@ -67,7 +70,7 @@ describe 'Commands' do
         github.stub(:current_requests_full).and_return([])
       end
 
-      it 'does not print a list' do
+      it 'does not print a list when there are no requests' do
         subject.should_receive(:puts).
           with(/No pending requests for 'some_source'/)
         subject.should_not_receive(:print_request)
@@ -80,45 +83,49 @@ describe 'Commands' do
 
   describe 'show ID (--full)'.pink do
 
+    before(:each) do
+      github.stub(:request_exists?).and_return(request)
+    end
+
     it 'requires a valid request number as ' + 'ID'.pink do
       github.stub(:request_exists?).and_return(false)
-      expect { subject.show(0) }.
+      expect { subject.show(invalid_id) }.
           to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    context 'with a valid request number' do
+    it 'shows the request\'s stats' do
+      subject.should_receive(:git_call).
+          with("diff --color=always --stat HEAD...#{head_sha}")
+      subject.stub(:print_request_details)
+      subject.stub(:print_request_discussions)
+      subject.show(valid_id)
+    end
 
-      before(:each) do
-        subject.stub(:get_request_by_number).and_return(request)
-        subject.stub(:puts)
-      end
-
-      it 'shows the request\'s stats' do
-        subject.should_receive(:git_call).
-            with("diff --color=always --stat HEAD...#{head_sha}")
-        subject.stub(:print_request_details)
-        subject.stub(:print_request_discussions)
-        subject.show(1)
-      end
-
-      it 'shows the request\'s full diff when adding ' + '--full'.pink do
-        subject.should_receive(:git_call).
-            with("diff --color=always HEAD...#{head_sha}")
-        subject.stub(:print_request_details)
-        subject.stub(:print_request_discussions)
-        subject.show(1, true)
-      end
-
+    it 'shows the request\'s full diff when adding ' + '--full'.pink do
+      subject.should_receive(:git_call).
+          with("diff --color=always HEAD...#{head_sha}")
+      subject.stub(:print_request_details)
+      subject.stub(:print_request_discussions)
+      subject.show(valid_id, true)
     end
 
   end
 
   describe 'browse ID'.pink do
 
-    it 'opens the pull request page on GitHub in a browser' do
-      subject.stub(:get_request_by_number).and_return(request)
+    before(:each) do
+      github.stub(:request_exists?).and_return(request)
+    end
+
+    it 'requires a valid request number as ' + 'ID'.pink do
+      github.stub(:request_exists?).and_return(false)
+      expect { subject.browse(invalid_id) }.
+        to raise_error(::GitReview::InvalidRequestIDError)
+    end
+
+    it 'opens the pull request\'s page on GitHub in a browser' do
       Launchy.should_receive(:open).with(html_url)
-      subject.browse(1)
+      subject.browse(valid_id)
     end
 
   end
