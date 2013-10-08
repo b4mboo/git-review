@@ -134,7 +134,6 @@ describe 'Commands' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
-      subject.stub(:puts)
     end
 
     it 'creates a local branch in the local repo with the requests code' do
@@ -233,7 +232,6 @@ describe 'Commands' do
       msg = "Accept request ##{request_number} " +
           "and merge changes into \"/master\""
       subject.should_receive(:git_call).with("merge -m '#{msg}' #{head_sha}")
-      subject.stub(:puts)
       subject.merge(1)
     end
 
@@ -263,7 +261,6 @@ describe 'Commands' do
       before(:each) do
         local.stub(:source_branch).and_return('master')
         local.stub(:target_branch).and_return('master')
-        subject.stub(:puts)
         subject.stub(:git_call)
         subject.stub(:create_feature_name).and_return(branch_name)
       end
@@ -333,7 +330,6 @@ describe 'Commands' do
         end
 
         it 'warns the user about uncommitted changes' do
-          subject.stub(:puts)
           subject.should_receive(:puts).with(/uncommitted changes/)
           subject.create
         end
@@ -387,7 +383,6 @@ describe 'Commands' do
         local.stub(:uncommitted_changes?).and_return(false)
         github.stub(:repository).and_return(upstream)
         subject.stub(:git_call)
-        subject.stub(:puts)
       end
 
       it 'does not create pull request if one already exists for the branch' do
@@ -401,7 +396,6 @@ describe 'Commands' do
 
       it 'checks if current branch differ from upstream master' do
         local.should_receive(:new_commits?).with(true).and_return(false)
-        subject.stub(:puts)
         subject.should_not_receive(:create_pull_request)
         subject.create(true)
       end
