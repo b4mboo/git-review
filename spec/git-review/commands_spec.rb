@@ -130,20 +130,26 @@ describe 'Commands' do
 
   end
 
-  describe 'checkout ID'.pink do
+  describe 'checkout ID (--no-branch)'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      github.stub(:request_exists?).and_return(request)
     end
 
-    it 'creates a local branch in the local repo with the requests code' do
-      subject.stub(:rename_branch)
+    it 'requires a valid request number as ' + 'ID'.pink do
+      github.stub(:request_exists?).and_return(false)
+      expect { subject.checkout invalid_id }.
+        to raise_error(::GitReview::InvalidRequestIDError)
+    end
+
+    it 'creates a branch on the local repo with the request\'s code' do
+      subject.stub :rename_branch
       subject.should_receive(:git_call).with("checkout pr/#{request_number}")
-      subject.checkout(1)
+      subject.checkout 1
     end
 
-    it 'creates a headless state if --no-branch is specified' do
-      subject.stub(:rename_branch)
+    it 'optionally creates a headless state by adding ' + '--no-branch'.pink do
+      subject.stub :rename_branch
       subject.should_receive(:git_call).with("checkout #{head_sha}")
       subject.checkout(1, false)
     end
