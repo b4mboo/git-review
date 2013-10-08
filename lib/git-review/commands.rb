@@ -166,6 +166,37 @@ module GitReview
     def console(number = nil)
       puts 'Entering debug console.'
       request = get_request_by_number(number) if number
+
+      # Playground (BEFORE)...
+
+      # check requests for remotes
+      repo = request[:head][:repo][:full_name]
+      if request[:head][:repo][:full_name] == github.source_repo
+        remote = 'origin'
+      else
+        remote = "review_#{request[:head][:repo][:owner][:login]}"
+      end
+      remote_exist = lambda { git_call('remote').split("\n").include?(remote) }
+
+      # add new remote
+      git_call "remote add #{remote} git@github.com:#{repo}.git" unless remote_exist.call
+      git_call "fetch #{remote}"
+
+      # track remote branch
+      branch = true
+      branch_name = request[:head][:ref]
+      if branch
+        if local.branch_exists?(:local, branch_name)
+          git_call "checkout #{branch_name}"
+        else
+          git_call "checkout --track -b #{branch_name} #{remote}/#{branch_name}"
+        end
+      else
+        git_call "checkout #{remote}/#{branch_name}"
+      end
+
+
+      # FIXME: Rescue and output a warning if a required gem is missing.
       if RUBY_VERSION == '2.0.0'
         require 'byebug'
         byebug
@@ -173,6 +204,15 @@ module GitReview
         require 'ruby-debug'
         Debugger.start
         debugger
+      end
+
+      # Playground (AFTER)...
+
+      # cleanup remotes.
+      unless remote == 'origin'
+        git_call "checkout #{local.target_branch}"
+        git_call "branch -D #{branch_name}"
+        git_call "remote remove #{remote}" if remote_exist.call
       end
       puts 'Leaving debug console.'
     end
