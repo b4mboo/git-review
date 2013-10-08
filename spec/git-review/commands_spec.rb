@@ -144,51 +144,14 @@ describe 'Commands' do
 
     it 'creates a branch on the local repo with the request\'s code' do
       subject.stub :rename_branch
-      subject.should_receive(:git_call).with("checkout pr/#{request_number}")
+      subject.should_receive(:git_call).with("checkout #{request.head.ref}")
       subject.checkout 1
     end
 
     it 'optionally creates a headless state by adding ' + '--no-branch'.pink do
       subject.stub :rename_branch
-      subject.should_receive(:git_call).with("checkout #{head_sha}")
+      subject.should_receive(:git_call).with("checkout origin/#{request.head.ref}")
       subject.checkout(1, false)
-    end
-
-    describe '#rename_branch' do
-
-      let(:branch_name) {
-        ref = request.head.ref
-        user = request.head.user.login
-        number = request.number
-        "#{ref}_#{user}_pr_#{number}"
-      }
-
-      context 'when the new branch does not exist' do
-
-        before(:each) do
-          local.stub(:branch_exists?).and_return(false)
-        end
-
-        it 'renames branch from pr/<number> to a more meaningful name' do
-          subject.should_receive(:git_call).with("branch -m #{branch_name}")
-          subject.send(:rename_branch,request)
-        end
-
-      end
-
-      context 'when the new branch already exists' do
-
-        before(:each) do
-          local.stub(:branch_exists?).and_return(true)
-        end
-
-        it 'checks out that branch instead' do
-          subject.should_receive(:git_call).with("checkout #{branch_name}")
-          subject.send(:rename_branch,request)
-        end
-
-      end
-
     end
 
   end
