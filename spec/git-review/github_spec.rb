@@ -22,7 +22,7 @@ describe 'Github' do
 
     before(:each) do
       ::GitReview::Github.any_instance.stub(:configure_access).
-          and_return('username')
+        and_return('username')
     end
 
     describe '#url_matching' do

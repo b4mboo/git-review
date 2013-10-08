@@ -5,8 +5,8 @@ describe 'Commands' do
   include_context 'request_context'
 
   subject { ::GitReview::Commands }
-  let(:github) { ::GitReview::Github.instance }
-  let(:local) { ::GitReview::Local.instance }
+  let(:github) { ::GitReview::Github.any_instance }
+  let(:local) { ::GitReview::Local.any_instance }
   let(:invalid_id) { 0 }
   let(:valid_id) { 42 }
 
