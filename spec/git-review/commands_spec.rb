@@ -5,19 +5,19 @@ describe 'Commands' do
   include_context 'request_context'
 
   subject { ::GitReview::Commands }
-  let(:github) { ::GitReview::Github.any_instance }
-  let(:local) { ::GitReview::Local.any_instance }
+  let(:github) { ::GitReview::Github.instance }
+  let(:local) { ::GitReview::Local.instance }
   let(:invalid_id) { 0 }
   let(:valid_id) { 42 }
 
-  before(:each) do
+  before :each do
     github.stub(:configure_access).and_return('username')
-    subject.stub(:puts)
+    subject.stub :puts
   end
 
   describe 'list (--reverse)'.pink do
 
-    before(:each) do
+    before :each do
       local.stub(:source).and_return('some_source')
     end
 
@@ -26,8 +26,9 @@ describe 'Commands' do
       let(:req1) { request.clone }
       let(:req2) { request.clone }
 
-      before(:each) do
-        req1.title, req2.title = 'first', 'second'
+      before :each do
+        req1.title = 'first'
+        req2.title = 'second'
         github.stub(:current_requests_full).and_return([req1, req2])
         local.stub(:merged?).and_return(false)
       end
@@ -40,24 +41,24 @@ describe 'Commands' do
       end
 
       it 'allows to sort the list by adding ' + '--reverse'.pink do
-        subject.stub(:puts)
+        subject.stub :puts
         subject.should_receive(:print_requests).with([req1, req2], true)
-        subject.list(true)
+        subject.list true
       end
 
     end
 
     context 'with closed pull requests' do
 
-      before(:each) do
+      before :each do
         github.stub(:current_requests_full).and_return([request])
         local.stub(:merged?).and_return(true)
       end
 
       it 'ignores closed requests and does not list them' do
         subject.should_receive(:puts).
-            with(/No pending requests for 'some_source'/)
-        subject.should_not_receive(:print_request)
+          with(/No pending requests for 'some_source'/)
+        subject.should_not_receive :print_request
         subject.list
       end
 
@@ -65,14 +66,14 @@ describe 'Commands' do
 
     context 'without pull requests' do
 
-      before(:each) do
+      before :each do
         github.stub(:current_requests_full).and_return([])
       end
 
       it 'does not print a list when there are no requests' do
         subject.should_receive(:puts).
           with(/No pending requests for 'some_source'/)
-        subject.should_not_receive(:print_request)
+        subject.should_not_receive :print_request
         subject.list
       end
 
@@ -82,29 +83,29 @@ describe 'Commands' do
 
   describe 'show ID (--full)'.pink do
 
-    before(:each) do
+    before :each do
       github.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
       github.stub(:request_exists?).and_return(false)
-      expect { subject.show(invalid_id) }.
-          to raise_error(::GitReview::InvalidRequestIDError)
+      expect { subject.show invalid_id }.
+        to raise_error(::GitReview::InvalidRequestIDError)
     end
 
     it 'shows the request\'s stats' do
       subject.should_receive(:git_call).
-          with("diff --color=always --stat HEAD...#{head_sha}")
-      subject.stub(:print_request_details)
-      subject.stub(:print_request_discussions)
-      subject.show(valid_id)
+        with("diff --color=always --stat HEAD...#{head_sha}")
+      subject.stub :print_request_details
+      subject.stub :print_request_discussions
+      subject.show valid_id
     end
 
     it 'shows the request\'s full diff when adding ' + '--full'.pink do
       subject.should_receive(:git_call).
-          with("diff --color=always HEAD...#{head_sha}")
-      subject.stub(:print_request_details)
-      subject.stub(:print_request_discussions)
+        with("diff --color=always HEAD...#{head_sha}")
+      subject.stub :print_request_details
+      subject.stub :print_request_discussions
       subject.show(valid_id, true)
     end
 
@@ -112,19 +113,19 @@ describe 'Commands' do
 
   describe 'browse ID'.pink do
 
-    before(:each) do
+    before :each do
       github.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
       github.stub(:request_exists?).and_return(false)
-      expect { subject.browse(invalid_id) }.
+      expect { subject.browse invalid_id }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
     it 'opens the pull request\'s page on GitHub in a browser' do
       Launchy.should_receive(:open).with(html_url)
-      subject.browse(valid_id)
+      subject.browse valid_id
     end
 
   end

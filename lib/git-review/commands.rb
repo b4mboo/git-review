@@ -37,7 +37,7 @@ module GitReview
     # Open a browser window and review a specified request.
     def browse(number)
       request = get_request_by_number(number)
-      Launchy.open(request.html_url)
+      Launchy.open request.html_url
     end
 
     # Checkout a specified request's changes to your local repository.
