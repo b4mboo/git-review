@@ -28,7 +28,7 @@ module GitReview
       # Determine whether to show full diff or stats only.
       option = full ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
-      # TODO: Re-introduce request model to keep this OO.
+      # TODO: Refactor into using Request model.
       print_request_details request
       puts git_call(diff)
       print_request_discussions request
