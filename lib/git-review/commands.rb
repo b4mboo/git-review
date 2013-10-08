@@ -154,8 +154,9 @@ module GitReview
     end
 
     # Start a console session (used for debugging)
-    def console
+    def console(number = nil)
       puts 'Entering debug console.'
+      request = get_request_by_number(number) if number
       if RUBY_VERSION == '2.0.0'
         require 'byebug'
         byebug
