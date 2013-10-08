@@ -48,7 +48,16 @@ module GitReview
       puts
       puts '  git checkout master'.pink
       puts
-      git_call "checkout #{branch ? '' : 'origin/'}#{request.head.ref}"
+      branch_name = request.head.ref
+      if branch
+        if local.branch_exists?(:local, branch_name)
+          git_call "checkout #{branch_name}"
+        else
+          git_call "checkout --track -b #{branch_name} origin/#{branch_name}"
+        end
+      else
+        git_call "checkout origin/#{branch_name}"
+      end
     end
 
     # Add an approving comment to the request.
