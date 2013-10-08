@@ -1,4 +1,6 @@
 *.gem
 *~
-.idea
-Gemfile.lock
+
+/.idea
+/tmp
+/Gemfile.lock
