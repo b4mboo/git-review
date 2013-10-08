@@ -113,19 +113,23 @@ describe 'Local' do
 
   describe '#clean_single' do
 
-    let(:gh) { ::GitReview::Github.any_instance }
+    let(:github) { ::GitReview::Github.any_instance }
+
+    before :each do
+      github.stub(:configure_access).and_return('username')
+    end
 
     it 'queries latest info for the specific closed request from Github ' do
       request_number = 1
       repo = 'foo'
       subject.stub(:source_repo).and_return(repo)
-      gh.should_receive(:pull_request).with(repo, request_number)
+      github.should_receive(:pull_request).with(repo, request_number)
       subject.clean_single(request_number)
     end
 
     it 'does not delete anything if request is not found' do
       invalid_request_number = 123
-      gh.stub(:pull_request).and_raise(Octokit::NotFound)
+      github.stub(:pull_request).and_raise(Octokit::NotFound)
       subject.should_not_receive(:delete_branch)
       subject.clean_single(invalid_request_number)
     end
@@ -134,7 +138,7 @@ describe 'Local' do
       open_request_number = 123
       request = Hashie::Mash.new({state: 'open',
                                   number: open_request_number})
-      gh.stub(:pull_request).and_return(request)
+      github.stub(:pull_request).and_return(request)
       subject.should_not_receive(:delete_branch)
       subject.clean_single(open_request_number)
     end
@@ -144,7 +148,7 @@ describe 'Local' do
       request_number = 1
       request = Hashie::Mash.new({head: {ref: 'some_branch'},
                                   state: 'closed'})
-      gh.stub(:pull_request).and_return(request)
+      github.stub(:pull_request).and_return(request)
       subject.should_receive(:delete_branch).with('some_branch')
       subject.clean_single(request_number)
     end
@@ -153,7 +157,7 @@ describe 'Local' do
       subject.stub(:unmerged_commits?).and_return(true)
       request_number = 1
       request = Hashie::Mash.new({number: request_number})
-      gh.stub(:pull_request).and_return(request)
+      github.stub(:pull_request).and_return(request)
       subject.should_not_receive(:delete_branch)
       subject.clean_single(request_number)
     end
@@ -163,7 +167,7 @@ describe 'Local' do
       request_number = 1
       request = Hashie::Mash.new({head: {ref: 'some_branch'},
                                   state: 'closed'})
-      gh.stub(:pull_request).and_return(request)
+      github.stub(:pull_request).and_return(request)
       subject.should_receive(:delete_branch)
       subject.clean_single(request_number, force=true)
     end
@@ -171,8 +175,6 @@ describe 'Local' do
   end
 
   describe '#clean_all' do
-
-    let(:gh) { ::GitReview::Github.any_instance }
 
     it 'does not delete protected branches' do
       subject.stub(:unmerged_commits?).and_return(false)
