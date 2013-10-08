@@ -1,6 +1,6 @@
-class String
+module Colorizable
 
-  # Takes a color code (= an integer) and formats the String accordingly.
+  # Takes a color code (= an integer) and formats the Colorizable accordingly.
   def colorize(color_code)
     "\e[#{color_code}m#{self}\e[0m"
   end
@@ -28,4 +28,8 @@ class String
     colorize 35
   end
 
+end
+
+class String
+  include Colorizable
 end

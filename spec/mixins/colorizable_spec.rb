@@ -1,11 +1,10 @@
 require_relative '../spec_helper'
-require_relative '../../lib/git-review/strings'
 
-describe 'String Colorization' do
+describe 'Colorizable module' do
 
   subject { "Paint me like one of your French girls." }
 
-  it 'allows to set an arbitrary color code for any String' do
+  it 'allows to set an arbitrary color code for any Colorizable' do
     color_code = 42
     expect(subject.colorize(color_code)).
       to eq("\e[#{color_code}m#{subject}\e[0m")
