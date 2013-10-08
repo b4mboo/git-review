@@ -6,31 +6,32 @@ module GitReview
     extend self
 
     # List all pending requests.
-    def list(reverse=false)
-      requests = github.current_requests_full.reject { |request|
-        # find only pending (= unmerged) requests and output summary
-        # explicitly look for local changes Github does not yet know about
-        local.merged?(request.head.sha)
-      }
+    def list(reverse = false)
+      requests = github.current_requests_full.reject do |request|
+        # Find only pending (= unmerged) requests and output summary.
+        # Explicitly look for local changes Github does not yet know about.
+        local.merged? request.head.sha
+      end
       source = local.source
       if requests.empty?
         puts "No pending requests for '#{source}'."
       else
         puts "Pending requests for '#{source}':"
-        puts "ID      Updated    Comments  Title"
+        puts "ID      Updated    Comments  Title".pink
         print_requests(requests, reverse)
       end
     end
 
     # Show details for a single request.
-    def show(number, full=false)
+    def show(number, full = false)
       request = get_request_by_number(number)
-      # determine whether to show full diff or just stats
+      # Determine whether to show full diff or stats only.
       option = full ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
-      print_request_details(request)
+      # TODO: Re-introduce request model to keep this OO.
+      print_request_details request
       puts git_call(diff)
-      print_request_discussions(request)
+      print_request_discussions request
     end
 
     # Open a browser window and review a specified request.
