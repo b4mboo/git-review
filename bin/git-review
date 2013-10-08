@@ -13,7 +13,7 @@ program_desc 'Manage review workflow for Github projects (using pull requests).'
 # Pre-hook before a command is executed
 pre do |global, cmd, opts, args|
   github = ::GitReview::Github.instance
-  if github.configure_github_access && github.source_repo
+  if github.configure_access && github.source_repo
     github.update unless cmd == 'clean'
   end
   true  # return true to explicitly pass precondition

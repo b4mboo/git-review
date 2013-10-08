@@ -12,7 +12,7 @@ describe 'Commands' do
   let(:valid_id) { 42 }
 
   before(:each) do
-    github.stub(:configure_github_access).and_return('username')
+    github.stub(:configure_access).and_return('username')
     subject.stub(:puts)
   end
 

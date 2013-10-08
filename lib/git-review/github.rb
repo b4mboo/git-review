@@ -26,12 +26,12 @@ module GitReview
     end
 
     def initialize
-      configure_github_access
+      configure_access
     end
 
     # setup connection with Github via OAuth
     # @return [String] the username logged in
-    def configure_github_access
+    def configure_access
       settings = ::GitReview::Settings.instance
       if settings.oauth_token && settings.username
         @github = Octokit::Client.new(
@@ -42,7 +42,7 @@ module GitReview
         @github.login
       else
         configure_oauth
-        configure_github_access
+        configure_access
       end
     end
 
@@ -92,14 +92,14 @@ module GitReview
       url = git_config['remote.origin.url']
       raise ::GitReview::InvalidGitRepositoryError if url.nil?
 
-      user, project = github_url_matching(url)
+      user, project = url_matching(url)
       # if there are no results yet, look for 'insteadof' substitutions
       #   in URL and try again
       unless user && project
-        insteadof_url, true_url = github_insteadof_matching(git_config, url)
+        insteadof_url, true_url = insteadof_matching(git_config, url)
         if insteadof_url and true_url
           url = url.sub(insteadof_url, true_url)
-          user, project = github_url_matching(url)
+          user, project = url_matching(url)
         end
       end
       [user, project]
@@ -280,13 +280,13 @@ module GitReview
     end
 
     # extract user and project name from GitHub URL.
-    def github_url_matching(url)
+    def url_matching(url)
       matches = /github\.com.(.*?)\/(.*)/.match(url)
       matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
     end
 
     # look for 'insteadof' substitutions in URL.
-    def github_insteadof_matching(config, url)
+    def insteadof_matching(config, url)
       first_match = config.keys.collect { |key|
         [config[key], /url\.(.*github\.com.*)\.insteadof/.match(key)]
       }.find { |insteadof_url, true_url|
