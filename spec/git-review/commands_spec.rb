@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require_relative '../support/request_context'
 
 describe 'Commands' do
 
