@@ -198,7 +198,7 @@ describe 'Commands' do
       comment = 'Reviewed and approved.'
       github.should_receive(:add_comment).
         with('some_source', request_number, 'Reviewed and approved.').
-        and_return(:body => comment)
+        and_return(body: comment)
       subject.should_receive(:puts).with(/Successfully approved request./)
       subject.approve(1)
     end
@@ -207,7 +207,7 @@ describe 'Commands' do
       message = 'fail'
       github.should_receive(:add_comment).
         with('some_source', request_number, 'Reviewed and approved.').
-        and_return(:body => nil, :message => message)
+        and_return(body: nil, message: message)
       subject.should_receive(:puts).with(message)
       subject.approve(1)
     end
@@ -377,7 +377,7 @@ describe 'Commands' do
     context 'when sending pull request to upstream repo' do
 
       let(:upstream) {
-        Hashie::Mash.new(:parent => {:full_name => 'upstream'})
+        Hashie::Mash.new(parent: {full_name: 'upstream'})
       }
 
       before(:each) do

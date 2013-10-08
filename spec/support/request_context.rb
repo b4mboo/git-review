@@ -17,21 +17,21 @@ shared_context 'request_context' do
 
   let(:request) {
     Hashie::Mash.new(
-        :html_url => html_url,
-        :number => request_number,
-        :state => 'open',
-        :title => title,
-        :body => body,
-        :updated_at => Time.now.to_s,
-        :head => {
-          :sha => head_sha,
-          :ref => head_ref,
-          :label => head_label,
-          :repo => head_repo,
-          :user => { :login => 'user' }
+        html_url: html_url,
+        number: request_number,
+        state: 'open',
+        title: title,
+        body: body,
+        updated_at: Time.now.to_s,
+        head: {
+          sha: head_sha,
+          ref: head_ref,
+          label: head_label,
+          repo: head_repo,
+          user: { login: 'user' }
         },
-        :comments => 0,
-        :review_comments => 0
+        comments: 0,
+        review_comments: 0
     )
   }
 

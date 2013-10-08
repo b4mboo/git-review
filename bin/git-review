@@ -46,7 +46,7 @@ end
 
 desc 'Checkout a request\'s changes to local repo'
 command :checkout do |c|
-  c.switch [:b, :branch], :default_value => true
+  c.switch [:b, :branch], default_value: true
   c.action do |global, opts, args|
     help_now!('Request number is required.') if args.empty?
     ::GitReview::Commands.checkout(args.shift, opts[:branch])

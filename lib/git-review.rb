@@ -1,6 +1,5 @@
 ### Dependencies
 
-
 ## External Dependencies
 
 # Provide access to GitHub's API.
@@ -11,7 +10,6 @@ require 'launchy'
 require 'time'
 # Use temporary files to allow editing a request's title and body.
 require 'tempfile'
-
 
 ## Internal dependencies
 

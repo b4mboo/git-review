@@ -20,7 +20,7 @@ describe 'Accessible module' do
   end
 
   it 'initializes instances variables with provided defaults' do
-    subject = Foo.new(:bar => test_string,)
+    subject = Foo.new(bar: test_string,)
     subject.bar.should == test_string
   end
 
@@ -45,7 +45,7 @@ describe 'Accessible module' do
   end
 
   it 'sets attributes from a hash' do
-    subject.update_attributes :bar => test_string, :baz => test_string
+    subject.update_attributes bar: test_string, baz: test_string
     subject.bar.should == test_string
     subject.baz.should == test_string
   end
@@ -53,8 +53,8 @@ describe 'Accessible module' do
   it 'recursively sets nested accessible attributes' do
     subject.baz = Baz.new
     subject.update_attributes(
-      :bar => test_string,
-      :baz => { :berk => test_string }
+      bar: test_string,
+      baz: { berk: test_string }
     )
     subject.baz.class.should == Baz
     subject.baz.berk.should == test_string

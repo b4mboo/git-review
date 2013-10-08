@@ -39,6 +39,7 @@ describe 'Local' do
 
   end
 
+
   describe '#load_config' do
 
     it 'reads config into hash' do
@@ -131,8 +132,8 @@ describe 'Local' do
 
     it 'does not delete the branch if request is not closed' do
       open_request_number = 123
-      request = Hashie::Mash.new({:state => 'open',
-                                  :number => open_request_number})
+      request = Hashie::Mash.new({state: 'open',
+                                  number: open_request_number})
       gh.stub(:pull_request).and_return(request)
       subject.should_not_receive(:delete_branch)
       subject.clean_single(open_request_number)
@@ -141,8 +142,8 @@ describe 'Local' do
     it 'deletes branch if request is found and no unmerged commits' do
       subject.stub(:unmerged_commits?).and_return(false)
       request_number = 1
-      request = Hashie::Mash.new({:head => {:ref => 'some_branch'},
-                                  :state => 'closed'})
+      request = Hashie::Mash.new({head: {ref: 'some_branch'},
+                                  state: 'closed'})
       gh.stub(:pull_request).and_return(request)
       subject.should_receive(:delete_branch).with('some_branch')
       subject.clean_single(request_number)
@@ -151,7 +152,7 @@ describe 'Local' do
     it 'does not delete branch if there is unmerged commits' do
       subject.stub(:unmerged_commits?).and_return(true)
       request_number = 1
-      request = Hashie::Mash.new({:number => request_number})
+      request = Hashie::Mash.new({number: request_number})
       gh.stub(:pull_request).and_return(request)
       subject.should_not_receive(:delete_branch)
       subject.clean_single(request_number)
@@ -160,8 +161,8 @@ describe 'Local' do
     it 'ignores unmerged commits if force deletion is set' do
       subject.stub(:unmerged_commits?).and_return(true)
       request_number = 1
-      request = Hashie::Mash.new({:head => {:ref => 'some_branch'},
-                                  :state => 'closed'})
+      request = Hashie::Mash.new({head: {ref: 'some_branch'},
+                                  state: 'closed'})
       gh.stub(:pull_request).and_return(request)
       subject.should_receive(:delete_branch)
       subject.clean_single(request_number, force=true)

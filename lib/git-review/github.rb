@@ -9,7 +9,6 @@ require 'stringio'
 # Used to retrieve hostname
 require 'socket'
 
-
 module GitReview
 
   class Github
@@ -35,9 +34,9 @@ module GitReview
       settings = ::GitReview::Settings.instance
       if settings.oauth_token && settings.username
         @github = Octokit::Client.new(
-          :login          => settings.username,
-          :access_token    => settings.oauth_token,
-          :auto_traversal => true
+          login: settings.username,
+          access_token: settings.oauth_token,
+          auto_traversal: true
         )
         @github.login
       else
@@ -256,8 +255,8 @@ module GitReview
       req.basic_auth(@username, @password)
       req.body = Yajl::Encoder.encode(
         {
-          :scopes => %w(repo),
-          :note   => @description
+          scopes: %w(repo),
+          note: @description
         }
       )
       response = http.request(req)

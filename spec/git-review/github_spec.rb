@@ -44,8 +44,7 @@ describe 'Github' do
       it 'from insteadof url' do
         url = 'git@github.com:foo/bar.git'
         config = {
-            'url.git@github.com:a/b.git.insteadof' =>
-                'git@github.com:foo/bar.git'
+          'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git'
         }
         subject.send(:insteadof_matching, config, url).
             should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)

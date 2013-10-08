@@ -7,7 +7,7 @@ describe 'Nestable module' do
 
   class Baz
     extend Nestable
-    nests :foo => Foo
+    nests foo: Foo
   end
 
   subject { Baz.new }

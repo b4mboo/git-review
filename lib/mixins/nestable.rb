@@ -3,6 +3,7 @@ module Nestable
   def nests(mapping)
     # Setup an accessor for all nested instances.
     attr_accessor *mapping.keys
+
     # Create a nested instance automatically on initialize.
     define_method(:initialize) do |arguments = nil|
       mapping.each do |attribute, klass|
@@ -10,7 +11,6 @@ module Nestable
       end
       super arguments if arguments
     end
-
   end
 
 end

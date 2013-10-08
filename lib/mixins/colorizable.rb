@@ -5,7 +5,6 @@ module Colorizable
     "\e[#{color_code}m#{self}\e[0m"
   end
 
-
   # A couple of presets to keep the code clean.
 
   def red
