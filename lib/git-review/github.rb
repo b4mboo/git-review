@@ -44,6 +44,11 @@ module GitReview
       end
     end
 
+    def get_request_by_number(request_number)
+      request = request_exists?(request_number)
+      request || (raise ::GitReview::InvalidRequestIDError)
+    end
+
     # @return [Boolean, Hash] the specified request if exists, otherwise false.
     #   Instead of true, the request itself is returned, so another round-trip
     #   of pull_request can be avoided.

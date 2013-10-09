@@ -172,7 +172,7 @@ describe 'Commands' do
   describe 'approve ID'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      provider.stub(:get_request_by_number).and_return(request)
       provider.stub(:source_repo).and_return('some_source')
     end
 
@@ -199,7 +199,7 @@ describe 'Commands' do
   describe 'merge ID'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      provider.stub(:get_request_by_number).and_return(request)
       provider.stub(:source_repo)
     end
 
@@ -222,7 +222,7 @@ describe 'Commands' do
   describe 'close ID'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      provider.stub(:get_request_by_number).and_return(request)
       provider.stub(:source_repo).and_return('some_source')
     end
 

@@ -24,7 +24,7 @@ module GitReview
 
     # Show details for a single request.
     def show(number, full = false)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       # Determine whether to show full diff or stats only.
       option = full ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
@@ -36,13 +36,13 @@ module GitReview
 
     # Open a browser window and review a specified request.
     def browse(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       Launchy.open request.html_url
     end
 
     # Checkout a specified request's changes to your local repository.
     def checkout(number, branch = true)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
@@ -66,7 +66,7 @@ module GitReview
 
     # Add an approving comment to the request.
     def approve(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       repo = server.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
@@ -80,7 +80,7 @@ module GitReview
 
     # Accept a specified request by merging it into master.
     def merge(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       if request.head.repo
         message = "Accept request ##{request.number} " +
             "and merge changes into \"#{local.target}\""
@@ -100,7 +100,7 @@ module GitReview
 
     # Close a specified request.
     def close(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       repo = server.source_repo
       server.close_issue(repo, request.number)
       unless server.request_exists?('open', request.number)
@@ -169,7 +169,7 @@ module GitReview
     # Start a console session (used for debugging)
     def console(number = nil)
       puts 'Entering debug console.'
-      request = get_request_by_number(number) if number
+      request = server.get_request_by_number(number) if number
 
       # Playground (BEFORE)...
 
@@ -388,11 +388,6 @@ module GitReview
 
     def local
       @local ||= ::GitReview::Local.instance
-    end
-
-    def get_request_by_number(request_number)
-      request = server.request_exists?(request_number)
-      request || (raise ::GitReview::InvalidRequestIDError)
     end
 
   end
