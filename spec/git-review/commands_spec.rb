@@ -132,7 +132,9 @@ describe 'Commands' do
 
   describe 'checkout ID (--no-branch)'.pink do
 
-    before(:each) do
+    let(:branch_name) { request.head.ref }
+
+    before :each do
       github.stub(:request_exists?).and_return(request)
     end
 
@@ -143,14 +145,20 @@ describe 'Commands' do
     end
 
     it 'creates a branch on the local repo with the request\'s code' do
-      subject.stub :rename_branch
-      subject.should_receive(:git_call).with("checkout #{request.head.ref}")
+      local.stub(:branch_exists?).with(:local, branch_name).and_return(true)
+      subject.should_receive(:git_call).with("checkout #{branch_name}")
+      subject.checkout 1
+    end
+
+    it 'switches branches if the branch already exists locally' do
+      local.stub(:branch_exists?).with(:local, branch_name).and_return(false)
+      subject.should_receive(:git_call).
+        with("checkout --track -b #{branch_name} origin/#{branch_name}")
       subject.checkout 1
     end
 
     it 'optionally creates a headless state by adding ' + '--no-branch'.pink do
-      subject.stub :rename_branch
-      subject.should_receive(:git_call).with("checkout origin/#{request.head.ref}")
+      subject.should_receive(:git_call).with("checkout origin/#{branch_name}")
       subject.checkout(1, false)
     end
 
