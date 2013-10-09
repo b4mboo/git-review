@@ -96,8 +96,10 @@ describe 'Github' do
   end
 
   it 'constructs the remote url from a given repo name' do
-    repo_name = 'user/repo'
-    subject.remote_url_for(repo_name).should == "git@github.com:#{repo_name}.git"
+    user = 'user'
+    repo = 'repo'
+    subject.should_receive(:repo_info_from_config).and_return([user, repo])
+    subject.remote_url_for(user).should == "git@github.com:#{user}/#{repo}.git"
   end
 
 end

@@ -215,8 +215,8 @@ module GitReview
 
     # FIXME: Needs to be moved into Server class, as its result is dependent of
     # the actual provider (i.e. GitHub or BitBucket).
-    def remote_url_for(repo_name)
-      "git@github.com:#{repo_name}.git"
+    def remote_url_for(user_name)
+      "git@github.com:#{user_name}/#{repo_info_from_config.last}.git"
     end
 
     private
