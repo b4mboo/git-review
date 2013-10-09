@@ -15,6 +15,23 @@ describe 'Local' do
 
   end
 
+  describe 'handling remotes' do
+
+    let(:remote) { 'review_batman' }
+
+    it 'lists all locally configured remotes' do
+      subject.should_receive(:git_call).with('remote').
+        and_return("origin\n#{remote}\n")
+      subject.remotes.should == ['origin', remote]
+    end
+
+    it 'determines whether a remote already exists' do
+      subject.should_receive(:remotes).and_return([remote])
+      subject.remote_exists?(remote).should be_true
+    end
+
+  end
+
   describe '#initialize' do
 
     it 'raises error when the directory is not a valid git repo' do
@@ -38,7 +55,6 @@ describe 'Local' do
     end
 
   end
-
 
   describe '#load_config' do
 

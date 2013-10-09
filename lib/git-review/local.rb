@@ -25,6 +25,14 @@ module GitReview
       end
     end
 
+    def remotes
+      git_call('remote').split("\n")
+    end
+
+    def remote_exists?(name)
+      remotes.include? name
+    end
+
     # @return [Array<String>] all existing branches
     def all_branches
       git_call('branch -a').split("\n").collect { |s| s.strip }
