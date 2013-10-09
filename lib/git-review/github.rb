@@ -44,6 +44,7 @@ module GitReview
       end
     end
 
+    # Ensure we find the right request.
     def get_request_by_number(request_number)
       request = request_exists?(request_number)
       request || (raise ::GitReview::InvalidRequestIDError)
@@ -52,6 +53,7 @@ module GitReview
     # @return [Boolean, Hash] the specified request if exists, otherwise false.
     #   Instead of true, the request itself is returned, so another round-trip
     #   of pull_request can be avoided.
+    # FIXME: Question mark methods should only ever return Booleans.
     def request_exists?(number, state='open')
       return false if number.nil?
       request = @github.pull_request(source_repo, number)
