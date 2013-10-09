@@ -48,15 +48,19 @@ module GitReview
       puts
       puts '  git checkout master'.pink
       puts
+      # Ensure we are looking at the right remote.
+      remote = local.remote_for_request(request)
+      git_call "fetch #{remote}"
+      # Checkout the right branch.
       branch_name = request.head.ref
       if branch
         if local.branch_exists?(:local, branch_name)
           git_call "checkout #{branch_name}"
         else
-          git_call "checkout --track -b #{branch_name} origin/#{branch_name}"
+          git_call "checkout --track -b #{branch_name} #{remote}/#{branch_name}"
         end
       else
-        git_call "checkout origin/#{branch_name}"
+        git_call "checkout #{remote}/#{branch_name}"
       end
     end
 
@@ -170,21 +174,21 @@ module GitReview
       # Playground (BEFORE)...
 
       # check requests for remotes
-      repo = request[:head][:repo][:full_name]
-      if request[:head][:repo][:full_name] == github.source_repo
+      repo_name = request.head.repo.full_name
+      if repo_name == server.source_repo
         remote = 'origin'
       else
-        remote = "review_#{request[:head][:repo][:owner][:login]}"
+        remote = "review_#{request.head.repo.owner.login}"
       end
       remote_exist = lambda { git_call('remote').split("\n").include?(remote) }
 
       # add new remote
-      git_call "remote add #{remote} git@github.com:#{repo}.git" unless remote_exist.call
+      git_call "remote add #{remote} git@github.com:#{repo_name}.git" unless remote_exist.call
       git_call "fetch #{remote}"
 
       # track remote branch
       branch = true
-      branch_name = request[:head][:ref]
+      branch_name = request.head.ref
       if branch
         if local.branch_exists?(:local, branch_name)
           git_call "checkout #{branch_name}"

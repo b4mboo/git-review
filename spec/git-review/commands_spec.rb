@@ -132,10 +132,10 @@ describe 'Commands' do
 
   describe 'checkout ID (--no-branch)'.pink do
 
-    let(:branch_name) { request.head.ref }
-
     before :each do
       provider.stub(:request_exists?).and_return(request)
+      local.stub(:remote_for_request).with(request).and_return(remote)
+      subject.stub(:git_call).with("fetch #{remote}")
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
@@ -153,12 +153,19 @@ describe 'Commands' do
     it 'switches branches if the branch already exists locally' do
       local.stub(:branch_exists?).with(:local, branch_name).and_return(false)
       subject.should_receive(:git_call).
-        with("checkout --track -b #{branch_name} origin/#{branch_name}")
+        with("checkout --track -b #{branch_name} #{remote}/#{branch_name}")
       subject.checkout 1
     end
 
     it 'optionally creates a headless state by adding ' + '--no-branch'.pink do
-      subject.should_receive(:git_call).with("checkout origin/#{branch_name}")
+      subject.should_receive(:git_call).with("checkout #{remote}/#{branch_name}")
+      subject.checkout(1, false)
+    end
+
+    it 'adds a new remote if the request originates from a fork' do
+      local.should_receive(:remote_for_request).with(request).and_return(remote)
+      subject.should_receive(:git_call).with("fetch #{remote}")
+      subject.should_receive(:git_call).with("checkout #{remote}/#{branch_name}")
       subject.checkout(1, false)
     end
 
