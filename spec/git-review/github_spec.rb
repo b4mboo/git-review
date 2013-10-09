@@ -2,7 +2,9 @@ require_relative '../spec_helper'
 
 describe 'Github' do
 
-  describe '#configure_access' do
+  subject { ::GitReview::Github.new }
+
+  context '#configure_access' do
 
     subject { ::GitReview::Github }
     let(:settings) { ::GitReview::Settings.any_instance }
@@ -18,7 +20,6 @@ describe 'Github' do
 
   context 'when access is configured' do
 
-    subject { ::GitReview::Github.new }
     let(:settings) { ::GitReview::Settings.any_instance }
     let(:username) { 'foobar' }
 
@@ -61,9 +62,7 @@ describe 'Github' do
 
   end
 
-  describe '#current_requests' do
-
-    subject { ::GitReview::Github.new }
+  context '#current_requests' do
 
     before(:each) do
       ::GitReview::Settings.any_instance.stub(:oauth_token).and_return('token')
@@ -94,6 +93,11 @@ describe 'Github' do
 
     end
 
+  end
+
+  it 'constructs the remote url from a given repo name' do
+    repo_name = 'user/repo'
+    subject.remote_url_for(repo_name).should == "git@github.com:#{repo_name}.git"
   end
 
 end

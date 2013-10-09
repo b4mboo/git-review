@@ -213,7 +213,13 @@ module GitReview
       "https://github.com/#{target_repo}/pull/#{request_number}"
     end
 
-  private
+    # FIXME: Needs to be moved into Server class, as its result is dependent of
+    # the actual provider (i.e. GitHub or BitBucket).
+    def remote_url_for(repo_name)
+      "git@github.com:#{repo_name}.git"
+    end
+
+    private
 
     def configure_oauth
       begin
