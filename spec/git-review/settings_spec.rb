@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe 'Settings' do
 
   let(:home_dir) { '/home/foo/' }
-  let(:config_file) { home_dir + '.git_review.yml' }
+  let(:config_file) { [home_dir, '.git_review.yml'].join }
 
   describe '#initialize' do
 
@@ -20,7 +20,8 @@ describe 'Settings' do
 
   context 'when config file is loaded' do
 
-    subject { ::GitReview::Settings.new }
+    subject { ::GitReview::Settings }
+    let(:value) { "foobar" }
 
     before(:each) do
       Dir.stub(:home).and_return(home_dir)
@@ -30,14 +31,14 @@ describe 'Settings' do
 
     it 'allows to save changes back to the file' do
       File.should_receive(:open).with(config_file, 'w')
-      subject.save!
+      subject.new.save!
     end
 
     it 'offers convenient access to config options' do
-      value = 'bar'
-      subject.foo = value
-      subject.instance_variable_get(:@config)[:foo].should == value
-      subject.foo.should == value
+      setting = subject.new
+      setting.foo = value
+      setting.instance_variable_get(:@config)[:foo].should == value
+      setting.foo.should eq value
     end
 
   end

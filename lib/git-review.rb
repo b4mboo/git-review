@@ -26,9 +26,9 @@ require_relative 'git-review/errors'
 # Factory to get git API client..
 require_relative 'git-review/server'
 # Communicate with Github via API.
-require_relative 'git-review/github'
+require_relative 'git-review/provider/github'
 # Communicate with Bitbucket via API.
-require_relative 'git-review/bitbucket'
+require_relative 'git-review/provider/bitbucket'
 
 # Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'

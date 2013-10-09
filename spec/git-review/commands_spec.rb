@@ -5,14 +5,13 @@ describe 'Commands' do
   include_context 'request_context'
 
   subject { ::GitReview::Commands }
-  let(:github) { ::GitReview::Github.any_instance }
+  let(:server) { ::GitReview::Server.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
   let(:invalid_id) { 0 }
   let(:valid_id) { 42 }
 
   before :each do
-    github.stub(:configure_access).and_return('username')
-    subject.stub :puts
+    server.stub(:configure_access).and_return('username')
   end
 
   describe 'list (--reverse)'.pink do
@@ -29,7 +28,7 @@ describe 'Commands' do
       before :each do
         req1.title = 'first'
         req2.title = 'second'
-        github.stub(:current_requests_full).and_return([req1, req2])
+        server.stub(:current_requests_full).and_return([req1, req2])
         local.stub(:merged?).and_return(false)
       end
 
@@ -41,7 +40,6 @@ describe 'Commands' do
       end
 
       it 'allows to sort the list by adding ' + '--reverse'.pink do
-        subject.stub :puts
         subject.should_receive(:print_requests).with([req1, req2], true)
         subject.list true
       end
@@ -51,13 +49,12 @@ describe 'Commands' do
     context 'with closed pull requests' do
 
       before :each do
-        github.stub(:current_requests_full).and_return([request])
+        server.stub(:current_requests_full).and_return([request])
         local.stub(:merged?).and_return(true)
       end
 
       it 'ignores closed requests and does not list them' do
-        subject.should_receive(:puts).
-          with(/No pending requests for 'some_source'/)
+        subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
         subject.should_not_receive :print_request
         subject.list
       end
@@ -67,12 +64,11 @@ describe 'Commands' do
     context 'without pull requests' do
 
       before :each do
-        github.stub(:current_requests_full).and_return([])
+        server.stub(:current_requests_full).and_return([])
       end
 
       it 'does not print a list when there are no requests' do
-        subject.should_receive(:puts).
-          with(/No pending requests for 'some_source'/)
+        subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
         subject.should_not_receive :print_request
         subject.list
       end
@@ -84,11 +80,11 @@ describe 'Commands' do
   describe 'show ID (--full)'.pink do
 
     before :each do
-      github.stub(:request_exists?).and_return(request)
+      server.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      github.stub(:request_exists?).and_return(false)
+      server.stub(:request_exists?).and_return(false)
       expect { subject.show invalid_id }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
@@ -114,16 +110,16 @@ describe 'Commands' do
   describe 'browse ID'.pink do
 
     before :each do
-      github.stub(:request_exists?).and_return(request)
+      server.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      github.stub(:request_exists?).and_return(false)
+      server.stub(:request_exists?).and_return(false)
       expect { subject.browse invalid_id }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'opens the pull request\'s page on GitHub in a browser' do
+    it 'opens the pull request\'s page on provider in a browser' do
       Launchy.should_receive(:open).with(html_url)
       subject.browse valid_id
     end
@@ -135,11 +131,11 @@ describe 'Commands' do
     let(:branch_name) { request.head.ref }
 
     before :each do
-      github.stub(:request_exists?).and_return(request)
+      server.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      github.stub(:request_exists?).and_return(false)
+      server.stub(:request_exists?).and_return(false)
       expect { subject.checkout invalid_id }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
@@ -168,12 +164,12 @@ describe 'Commands' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
-      github.stub(:source_repo).and_return('some_source')
+      server.stub(:source_repo).and_return('some_source')
     end
 
     it 'posts an approving comment in your name to the requests page' do
       comment = 'Reviewed and approved.'
-      github.should_receive(:add_comment).
+      server.should_receive(:add_comment).
         with('some_source', request_number, 'Reviewed and approved.').
         and_return(body: comment)
       subject.should_receive(:puts).with(/Successfully approved request./)
@@ -182,7 +178,7 @@ describe 'Commands' do
 
     it 'outputs any errors that might occur when trying to post a comment' do
       message = 'fail'
-      github.should_receive(:add_comment).
+      server.should_receive(:add_comment).
         with('some_source', request_number, 'Reviewed and approved.').
         and_return(body: nil, message: message)
       subject.should_receive(:puts).with(message)
@@ -195,7 +191,7 @@ describe 'Commands' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
-      github.stub(:source_repo)
+      server.stub(:source_repo)
     end
 
     it 'does not proceed if source repo no longer exists' do
@@ -207,7 +203,7 @@ describe 'Commands' do
 
     it 'merges the request with your current branch' do
       msg = "Accept request ##{request_number} " +
-          "and merge changes into \"/master\""
+        "and merge changes into \"/master\""
       subject.should_receive(:git_call).with("merge -m '#{msg}' #{head_sha}")
       subject.merge(1)
     end
@@ -218,12 +214,12 @@ describe 'Commands' do
 
     before(:each) do
       subject.stub(:get_request_by_number).and_return(request)
-      github.stub(:source_repo).and_return('some_source')
+      server.stub(:source_repo).and_return('some_source')
     end
 
     it 'closes the request' do
-      github.should_receive(:close_issue).with('some_source', request_number)
-      github.should_receive(:request_exists?).
+      server.should_receive(:close_issue).with('some_source', request_number)
+      server.should_receive(:request_exists?).
           with('open', request_number).and_return(false)
       subject.should_receive(:puts).with(/Successfully closed request./)
       subject.close(1)
@@ -321,7 +317,7 @@ describe 'Commands' do
         end
 
         it 'pushes the commits to a remote branch and creates a pull request' do
-          github.stub(:request_exists_for_branch?).and_return(false)
+          server.stub(:request_exists_for_branch?).and_return(false)
           subject.should_receive(:git_call).with(
               "push --set-upstream origin #{branch_name}", false, true
           )
@@ -330,7 +326,7 @@ describe 'Commands' do
         end
 
         it 'does not create pull request if it already exists for the branch' do
-          github.stub(:request_exists_for_branch?).with(false).and_return(true)
+          server.stub(:request_exists_for_branch?).with(false).and_return(true)
           subject.should_not_receive(:create_pull_request)
           subject.should_receive(:puts).with(/already exists/)
           subject.should_receive(:puts).with(/`git push`/)
@@ -338,7 +334,7 @@ describe 'Commands' do
         end
 
         it 'lets the user return to the branch she was working on before' do
-          github.stub(:request_exists_for_branch?).and_return(false)
+          server.stub(:request_exists_for_branch?).and_return(false)
           subject.stub(:create_pull_request)
           subject.should_receive(:git_call).with('checkout master')
           subject.create
@@ -358,13 +354,13 @@ describe 'Commands' do
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
         local.stub(:uncommitted_changes?).and_return(false)
-        github.stub(:repository).and_return(upstream)
+        server.stub(:repository).and_return(upstream)
         subject.stub(:git_call)
       end
 
       it 'does not create pull request if one already exists for the branch' do
         local.stub(:new_commits?).and_return(true)
-        github.stub(:request_exists_for_branch?).with(true).and_return(true)
+        server.stub(:request_exists_for_branch?).with(true).and_return(true)
         subject.should_not_receive(:create_pull_request)
         subject.should_receive(:puts).with(/already exists/)
         subject.should_receive(:puts).with(/`git push`/)
@@ -384,7 +380,7 @@ describe 'Commands' do
   describe '#create_pull_request' do
 
     before(:each) do
-      github.stub(:latest_request_number).and_return(1)
+      server.stub(:latest_request_number).and_return(1)
       subject.stub(:create_title_and_body).and_return(['title', 'body'])
       local.stub(:target_repo).and_return('parent:repo')
       local.stub(:head).and_return('local:repo')
@@ -393,18 +389,18 @@ describe 'Commands' do
     end
 
     it 'sends pull request to upstream repo' do
-      github.should_receive(:create_pull_request).
+      server.should_receive(:create_pull_request).
           with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      github.stub(:request_number_by_title).and_return(2)
+      server.stub(:request_number_by_title).and_return(2)
       subject.should_receive(:puts).with(/Successfully/)
       subject.should_receive(:puts).with(/pull\/2/)
       subject.send(:create_pull_request, true)
     end
 
     it 'checks if pull request is indeed created' do
-      github.should_receive(:create_pull_request).
+      server.should_receive(:create_pull_request).
           with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      github.stub(:request_number_by_title).and_return(nil)
+      server.stub(:request_number_by_title).and_return(nil)
       subject.should_receive(:puts).with(/not created for parent:repo/)
       subject.send(:create_pull_request, true)
     end

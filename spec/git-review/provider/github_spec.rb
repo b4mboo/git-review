@@ -1,10 +1,10 @@
-require_relative '../spec_helper'
+require_relative '../../spec_helper'
 
-describe 'Github' do
+describe 'Provider Github' do
 
   describe '#configure_access' do
 
-    subject { ::GitReview::Github }
+    subject { ::GitReview::Provider::Github }
     let(:settings) { ::GitReview::Settings.any_instance }
 
     it 'only authenticates once' do
@@ -18,30 +18,28 @@ describe 'Github' do
 
   context 'when access is configured' do
 
-    subject { ::GitReview::Github.new }
+    subject { ::GitReview::Provider::Github.new }
     let(:settings) { ::GitReview::Settings.any_instance }
-    let(:username) { 'foobar' }
 
     before(:each) do
-      ::GitReview::Github.any_instance.stub(:configure_access).
-        and_return('username')
+      ::GitReview::Provider::Github.any_instance.stub(:configure_access).and_return('username')
     end
 
     it 'should return a login' do
-      settings.stub(:username).and_return(username)
-      subject.login.should be username
+      settings.stub(:username).and_return('username')
+      subject.login.should eq 'username'
     end
 
     describe '#url_matching' do
 
       it 'extracts info from git url' do
-        url = 'git@github.com:xystushi/git-review.git'
-        subject.send(:url_matching, url).should == %w(xystushi git-review)
+        url = 'git@github.com:foo/bar.git'
+        subject.send(:url_matching, url).should == %w(foo bar)
       end
 
       it 'extracts info from http url' do
-        url = 'https://github.com/xystushi/git-review.git'
-        subject.send(:url_matching, url).should == %w(xystushi git-review)
+        url = 'https://github.com/foo/bar.git'
+        subject.send(:url_matching, url).should == %w(foo bar)
       end
 
     end
@@ -50,11 +48,9 @@ describe 'Github' do
 
       it 'from insteadof url' do
         url = 'git@github.com:foo/bar.git'
-        config = {
-          'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git'
-        }
+        config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
         subject.send(:insteadof_matching, config, url).
-            should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
+          should eq %w(git@github.com:foo/bar.git git@github.com:a/b.git)
       end
 
     end
@@ -63,7 +59,7 @@ describe 'Github' do
 
   describe '#current_requests' do
 
-    subject { ::GitReview::Github.new }
+    subject { ::GitReview::Provider::Github.new }
 
     before(:each) do
       ::GitReview::Settings.any_instance.stub(:oauth_token).and_return('token')
@@ -87,8 +83,8 @@ describe 'Github' do
       let(:repo) { 'foo/bar' }
 
       it 'gets pull request from current source repo' do
-        subject.stub(:source_repo).and_return(repo)
         Octokit::Client.any_instance.should_receive(:pull_requests).with(repo)
+        subject.stub(:source_repo).and_return(repo)
         subject.current_requests
       end
 

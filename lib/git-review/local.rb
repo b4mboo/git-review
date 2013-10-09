@@ -44,7 +44,7 @@ module GitReview
     end
 
     # clean a single request's obsolete branch
-    def clean_single(number, force=false)
+    def clean_single(number, force = false)
       request = server.pull_request(source_repo, number)
       if request && request.state == 'closed'
         # ensure there are no unmerged commits or '--force' flag has been set

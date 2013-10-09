@@ -13,7 +13,7 @@ describe 'Server' do
 
     context 'for bitbucket repositories' do
 
-      let(:bitbucket) { ::GitReview::Bitbucket.any_instance }
+      let(:bitbucket) { ::GitReview::Provider::Bitbucket.any_instance }
 
       before :each do
         bitbucket.stub(:configure_access).and_return('username')
@@ -21,14 +21,14 @@ describe 'Server' do
 
       it 'returns a bitbucket provider instance' do
         subject.any_instance.stub(:fetch_origin_url).and_return('git@bitbucket.org:foo/bar.git')
-        subject.new.provider.should be_an_instance_of(::GitReview::Bitbucket)
+        subject.new.provider.should be_an_instance_of(::GitReview::Provider::Bitbucket)
       end
 
     end
 
     context 'for github repositories' do
 
-      let(:github) { ::GitReview::Github.any_instance }
+      let(:github) { ::GitReview::Provider::Github.any_instance }
 
       before :each do
         github.stub(:configure_access).and_return('username')
@@ -36,7 +36,7 @@ describe 'Server' do
 
       it 'returns a github provider instance' do
         subject.any_instance.stub(:fetch_origin_url).and_return('git@github.com:foo/bar.git')
-        subject.new.provider.should be_an_instance_of(::GitReview::Github)
+        subject.new.provider.should be_an_instance_of(::GitReview::Provider::Github)
       end
 
     end

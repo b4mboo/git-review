@@ -2,12 +2,30 @@ module GitReview
 
   class Server
 
+    extend Forwardable
     include ::GitReview::Internals
 
     attr_reader :provider
 
+    def_delegators(
+      :provider,
+      :configure_access,
+      :request_url_for,
+      :create_pull_request,
+      :source_repo,
+      :current_requests_full,
+      :request_exists?,
+      :source_repo,
+      :add_comment,
+      :close_issue,
+      :request_exists_for_branch?,
+      :repository,
+      :latest_request_number,
+      :request_number_by_title
+    )
+
     def self.instance
-      @instance ||= new.provider
+      @instance ||= new
     end
 
     def initialize
@@ -19,9 +37,9 @@ module GitReview
     def init_provider
       @provider = case
       when bitbucket_provider?
-        GitReview::Bitbucket.new
+        GitReview::Provider::Bitbucket.new
       when github_provider?
-        GitReview::Github.new
+        GitReview::Provider::Github.new
       else
         raise InvalidGitProviderError.new
       end
