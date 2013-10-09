@@ -31,7 +31,6 @@ module GitReview
     # setup connection with Github via OAuth
     # @return [String] the username logged in
     def configure_access
-      settings = ::GitReview::Settings.instance
       if settings.oauth_token && settings.username
         @github = Octokit::Client.new(
           login: settings.username,
@@ -205,6 +204,15 @@ module GitReview
       @github.respond_to?(method) || super
     end
 
+    def login
+      settings.username
+    end
+
+    # FIXME: Remove this method after merging create_pull_request from commands.rb, currently no specs
+    def request_url_for(target_repo, request_number)
+      "https://github.com/#{target_repo}/pull/#{request_number}"
+    end
+
   private
 
     def configure_oauth
@@ -296,6 +304,10 @@ module GitReview
 
     def local
       @local ||= ::GitReview::Local.instance
+    end
+
+    def settings
+      @settings ||= ::GitReview::Settings.instance
     end
 
   end

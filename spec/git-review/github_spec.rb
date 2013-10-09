@@ -19,10 +19,17 @@ describe 'Github' do
   context 'when access is configured' do
 
     subject { ::GitReview::Github.new }
+    let(:settings) { ::GitReview::Settings.any_instance }
+    let(:username) { 'foobar' }
 
     before(:each) do
       ::GitReview::Github.any_instance.stub(:configure_access).
         and_return('username')
+    end
+
+    it 'should return a login' do
+      settings.stub(:username).and_return(username)
+      subject.login.should be username
     end
 
     describe '#url_matching' do

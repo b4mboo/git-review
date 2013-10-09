@@ -32,7 +32,7 @@ module GitReview
 
     # @return [Array<String>] all open requests' branches shouldn't be deleted
     def protected_branches
-      github.current_requests.collect { |r| r.head.ref }
+      server.current_requests.collect { |r| r.head.ref }
     end
 
     # @return [Array<String>] all review branches with 'review_' prefix
@@ -45,7 +45,7 @@ module GitReview
 
     # clean a single request's obsolete branch
     def clean_single(number, force=false)
-      request = github.pull_request(source_repo, number)
+      request = server.pull_request(source_repo, number)
       if request && request.state == 'closed'
         # ensure there are no unmerged commits or '--force' flag has been set
         branch_name = request.head.ref
@@ -152,7 +152,7 @@ module GitReview
 
     # @return [String] the source repo
     def source_repo
-      github.source_repo
+      server.source_repo
     end
 
     # @return [String] the current source branch
@@ -176,7 +176,7 @@ module GitReview
     def target_repo(upstream=false)
       # TODO: Manually override this and set arbitrary repositories
       if upstream
-        github.repository(source_repo).parent.full_name
+        server.repository(source_repo).parent.full_name
       else
         source_repo
       end
@@ -226,8 +226,8 @@ module GitReview
       git_call('config --list', false)
     end
 
-    def github
-      @github ||= ::GitReview::Github.instance
+    def server
+      @server ||= ::GitReview::Server.instance
     end
 
   end

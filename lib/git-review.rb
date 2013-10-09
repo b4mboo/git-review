@@ -21,10 +21,14 @@ require_relative 'git-review/commands'
 require_relative 'git-review/settings'
 # Deal with local git repository.
 require_relative 'git-review/local'
-# Communicate with Github via API.
-require_relative 'git-review/github'
 # Include all kinds of custom-defined errors.
 require_relative 'git-review/errors'
+# Factory to get git API client..
+require_relative 'git-review/server'
+# Communicate with Github via API.
+require_relative 'git-review/github'
+# Communicate with Bitbucket via API.
+require_relative 'git-review/bitbucket'
 
 # Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'

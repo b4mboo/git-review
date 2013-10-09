@@ -6,6 +6,12 @@ module GitReview
     end
   end
 
+  class InvalidGitProviderError < StandardError
+    def message
+      "It is not a valid git provider."
+    end
+  end
+
   class InvalidGitRepositoryError < StandardError
     def message
       "It is not a valid git repository or doesn't have a valid remote url."

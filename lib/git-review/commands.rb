@@ -7,9 +7,9 @@ module GitReview
 
     # List all pending requests.
     def list(reverse = false)
-      requests = github.current_requests_full.reject do |request|
+      requests = server.current_requests_full.reject do |request|
         # Find only pending (= unmerged) requests and output summary.
-        # Explicitly look for local changes Github does not yet know about.
+        # Explicitly look for local changes git does not yet know about.
         local.merged? request.head.sha
       end
       source = local.source
@@ -54,10 +54,10 @@ module GitReview
     # Add an approving comment to the request.
     def approve(number)
       request = get_request_by_number(number)
-      repo = github.source_repo
+      repo = server.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
-      response = github.add_comment(repo, request.number, comment)
+      response = server.add_comment(repo, request.number, comment)
       if response[:body] == comment
         puts 'Successfully approved request.'
       else
@@ -88,9 +88,9 @@ module GitReview
     # Close a specified request.
     def close(number)
       request = get_request_by_number(number)
-      repo = github.source_repo
-      github.close_issue(repo, request.number)
-      unless github.request_exists?('open', request.number)
+      repo = server.source_repo
+      server.close_issue(repo, request.number)
+      unless server.request_exists?('open', request.number)
         puts 'Successfully closed request.'
       end
     end
@@ -125,7 +125,7 @@ module GitReview
       end
       if local.new_commits?(upstream)
         # feature branch differs from local or upstream master
-        if github.request_exists_for_branch?(upstream)
+        if server.request_exists_for_branch?(upstream)
           puts 'A pull request already exists for this branch.'
           puts 'Please update the request directly using `git push`.'
           return
@@ -171,7 +171,7 @@ module GitReview
 
     def request_summary_line(request)
       date_string = format_time(request.updated_at)
-      comments_count = github.comments_count(request)
+      comments_count = server.comments_count(request)
       line = format_text(request.number, 8)
       line << format_text(date_string, 11)
       line << format_text(comments_count, 10)
@@ -193,7 +193,7 @@ module GitReview
     end
 
     def print_request_details(request)
-      comments_count = github.comments_count(request)
+      comments_count = server.comments_count(request)
       puts 'ID        : ' + request.number.to_s
       puts 'Label     : ' + request.head.label
       puts 'Updated   : ' + format_time(request.updated_at)
@@ -210,7 +210,7 @@ module GitReview
     def print_request_discussions(request)
       puts 'Progress  :'
       puts
-      puts github.discussion(request.number)
+      puts server.discussion(request.number)
     end
 
     # someone deleted the source repo
@@ -260,6 +260,7 @@ module GitReview
       end
     end
 
+    # FIXME: move create pull request into provider
     def create_pull_request(to_upstream=false)
       target_repo = local.target_repo(to_upstream)
       head = local.head
@@ -267,18 +268,18 @@ module GitReview
       title, body = create_title_and_body(base)
 
       # gather information before creating pull request
-      lastest_number = github.latest_request_number(target_repo)
+      lastest_number = server.latest_request_number(target_repo)
 
       # create the actual pull request
-      github.create_pull_request(target_repo, base, head, title, body)
+      server.create_pull_request(target_repo, base, head, title, body)
       # switch back to target_branch and check for success
       git_call("checkout #{base}")
 
       # make sure the new pull request is indeed created
-      new_number = github.request_number_by_title(title, target_repo)
+      new_number = server.request_number_by_title(title, target_repo)
       if new_number && new_number > lastest_number
         puts "Successfully created new request ##{new_number}"
-        puts "https://github.com/#{target_repo}/pull/#{new_number}"
+        puts server.request_url_for target_repo, new_number
       else
         puts "Pull request was not created for #{target_repo}."
       end
@@ -288,7 +289,7 @@ module GitReview
     # @return [Array(String, String)] the title and the body of pull request
     def create_title_and_body(target_branch)
       source = local.source
-      login = github.github.login
+      login = server.login
       commits = git_call("log --format='%H' HEAD...#{target_branch}").
           lines.count
       puts "commits: #{commits}"
@@ -327,8 +328,8 @@ module GitReview
       [title, body]
     end
 
-    def github
-      @github ||= ::GitReview::Github.instance
+    def server
+      @server ||= ::GitReview::Server.instance
     end
 
     def local
@@ -336,7 +337,7 @@ module GitReview
     end
 
     def get_request_by_number(request_number)
-      request = github.request_exists?(request_number)
+      request = server.request_exists?(request_number)
       request || (raise ::GitReview::InvalidRequestIDError)
     end
 
