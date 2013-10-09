@@ -20,7 +20,6 @@ module GitReview
       if git_call('rev-parse --show-toplevel').strip.empty?
         raise ::GitReview::InvalidGitRepositoryError
       else
-        add_pull_refspec
         load_config
       end
     end
@@ -246,14 +245,6 @@ module GitReview
       # If they are different, but we are on master, we should still to switch
       # to a separate branch (since master makes for a poor feature branch).
       source_branch != target_branch && source_branch != 'master'
-    end
-
-    # add remote.origin.fetch to check out pull request locally
-    # see {https://help.github.com/articles/checking-out-pull-requests-locally}
-    def add_pull_refspec
-      refspec = '+refs/pull/*/head:refs/remotes/origin/pr/*'
-      fetch_config = "config --local --add remote.origin.fetch #{refspec}"
-      git_call(fetch_config, false) unless config_list.include?(refspec)
     end
 
     def load_config

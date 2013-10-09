@@ -80,19 +80,6 @@ describe 'Local' do
 
   end
 
-  describe '#add_pull_refspec' do
-
-    it 'add refspec to local git config when it is not set' do
-      refspec = '+refs/pull/*/head:refs/remotes/origin/pr/*'
-      new_config = "config --local --add remote.origin.fetch #{refspec}"
-      config = 'remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*'
-      subject.stub(:config_list).and_return(config)
-      subject.should_receive(:git_call).with(new_config, false)
-      subject.add_pull_refspec
-    end
-
-  end
-
   describe '#load_config' do
 
     it 'reads config into hash' do
