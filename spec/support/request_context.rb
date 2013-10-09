@@ -14,6 +14,7 @@ shared_context 'request_context' do
   let(:head_ref) { "review_010113_#{feature_name}"}
   let(:custom_target_name) { 'custom_target_name' }
   let(:branch_name) { head_ref }
+  let(:user_login) { 'user' }
 
   let(:request) {
     Hashie::Mash.new(
@@ -27,8 +28,13 @@ shared_context 'request_context' do
           sha: head_sha,
           ref: head_ref,
           label: head_label,
-          repo: head_repo,
-          user: { login: 'user' }
+          repo: {
+            full_name: head_repo,
+            owner: {
+              login: user_login
+            }
+          },
+          user: { login: user_login }
         },
         comments: 0,
         review_comments: 0
