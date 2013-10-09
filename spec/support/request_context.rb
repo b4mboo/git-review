@@ -4,6 +4,7 @@ shared_context 'request_context' do
 
   let(:source_repo) { '/' }
   let(:request_number) { 42 }
+  let(:invalid_number) { 0 }
   let(:html_url) { 'some/path/to/github' }
   let(:head_sha) { 'head_sha' }
   let(:head_label) { 'head_label' }
