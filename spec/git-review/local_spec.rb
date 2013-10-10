@@ -40,6 +40,13 @@ describe 'Local' do
       }
     end
 
+    it 'knows all remotes for existing local branches' do
+      subject.should_receive(:git_call).with('branch -lvv').and_return(
+        "* review_000000_foobar        00aa0aa [#{remote}/review_000000_foobar] Foo!\n"
+      )
+      subject.remotes_for_branches.should == [remote]
+    end
+
     it 'finds existing remotes for a given url' do
       subject.should_receive(:remotes_with_urls).
         and_return(remote => { fetch: remote_url, push: remote_url })
@@ -69,7 +76,23 @@ describe 'Local' do
 
     it 'removes obsolete remotes with review prefix when cleaning up' do
       subject.should_receive(:remotes).and_return([remote])
+      subject.should_receive(:remotes_for_branches).and_return([])
       subject.should_receive(:git_call).with("remote remove #{remote}")
+      subject.clean_remotes
+    end
+
+    it 'keeps review remotes if there is a local branch referencing it' do
+      subject.should_receive(:remotes).and_return([remote])
+      subject.should_receive(:remotes_for_branches).and_return([remote])
+      subject.should_not_receive(:git_call).with("remote remove #{remote}")
+      subject.clean_remotes
+    end
+
+    it 'keeps review remotes if they have no review prefix' do
+      remote = 'origin'
+      subject.should_receive(:remotes).and_return([remote])
+      subject.should_receive(:remotes_for_branches).and_return([])
+      subject.should_not_receive(:git_call).with("remote remove #{remote}")
       subject.clean_remotes
     end
 

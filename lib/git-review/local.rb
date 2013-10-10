@@ -73,12 +73,26 @@ module GitReview
 
     # Remove obsolete remotes with review prefix.
     def clean_remotes
-      remotes.each { |remote| git_call "remote remove #{remote}" }
+      protected_remotes = remotes_for_branches
+      remotes.each do |remote|
+        # Only remove review remotes that aren't referenced by current branches.
+        if remote.index('review_') == 0 && !protected_remotes.include?(remote)
+          git_call "remote remove #{remote}"
+        end
+      end
     end
 
     # Prune all configured remotes.
     def prune_remotes
       remotes.each { |remote| git_call "remote prune #{remote}" }
+    end
+
+    # Find all remotes which are currently referenced by local branches.
+    def remotes_for_branches
+      remotes = git_call("branch -lvv").gsub('* ', '').split("\n").map do |line|
+        line.split(" ")[2][1..-2].split('/').first
+      end
+      remotes.uniq
     end
 
     # @return [Array<String>] all existing branches
