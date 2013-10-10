@@ -5,11 +5,11 @@ describe 'Commands' do
   include_context 'request_context'
 
   subject { ::GitReview::Commands }
-  let(:provider) { ::GitReview::Github.any_instance }
+  let(:github) { ::GitReview::Github.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
 
   before :each do
-    provider.stub(:configure_access).and_return('username')
+    github.stub(:configure_access).and_return('username')
     subject.stub :puts
   end
 
@@ -27,7 +27,7 @@ describe 'Commands' do
       before :each do
         req1.title = 'first'
         req2.title = 'second'
-        provider.stub(:current_requests_full).and_return([req1, req2])
+        github.stub(:current_requests_full).and_return([req1, req2])
         local.stub(:merged?).and_return(false)
       end
 
@@ -49,7 +49,7 @@ describe 'Commands' do
     context 'with closed pull requests' do
 
       before :each do
-        provider.stub(:current_requests_full).and_return([request])
+        github.stub(:current_requests_full).and_return([request])
         local.stub(:merged?).and_return(true)
       end
 
@@ -65,7 +65,7 @@ describe 'Commands' do
     context 'without pull requests' do
 
       before :each do
-        provider.stub(:current_requests_full).and_return([])
+        github.stub(:current_requests_full).and_return([])
       end
 
       it 'does not print a list when there are no requests' do
@@ -82,11 +82,11 @@ describe 'Commands' do
   describe 'show ID (--full)'.pink do
 
     before :each do
-      provider.stub(:request_exists?).and_return(request)
+      github.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      provider.stub(:request_exists?).and_return(false)
+      github.stub(:request_exists?).and_return(false)
       expect { subject.show invalid_number }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
@@ -112,11 +112,11 @@ describe 'Commands' do
   describe 'browse ID'.pink do
 
     before :each do
-      provider.stub(:request_exists?).and_return(request)
+      github.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      provider.stub(:request_exists?).and_return(false)
+      github.stub(:request_exists?).and_return(false)
       expect { subject.browse invalid_number }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
@@ -132,13 +132,13 @@ describe 'Commands' do
   describe 'checkout ID (--no-branch)'.pink do
 
     before :each do
-      provider.stub(:request_exists?).and_return(request)
       local.stub(:remote_for_request).with(request).and_return(remote)
       subject.stub(:git_call).with("fetch #{remote}")
+      github.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      provider.stub(:request_exists?).and_return(false)
+      github.stub(:request_exists?).and_return(false)
       expect { subject.checkout invalid_number }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
@@ -173,13 +173,13 @@ describe 'Commands' do
   describe 'approve ID'.pink do
 
     before(:each) do
-      provider.stub(:get_request_by_number).and_return(request)
-      provider.stub(:source_repo).and_return('some_source')
+      github.stub(:get_request_by_number).and_return(request)
+      github.stub(:source_repo).and_return('some_source')
     end
 
     it 'posts an approving comment in your name to the requests page' do
       comment = 'Reviewed and approved.'
-      provider.should_receive(:add_comment).
+      github.should_receive(:add_comment).
         with('some_source', request_number, 'Reviewed and approved.').
         and_return(body: comment)
       subject.should_receive(:puts).with(/Successfully approved request./)
@@ -188,7 +188,7 @@ describe 'Commands' do
 
     it 'outputs any errors that might occur when trying to post a comment' do
       message = 'fail'
-      provider.should_receive(:add_comment).
+      github.should_receive(:add_comment).
         with('some_source', request_number, 'Reviewed and approved.').
         and_return(body: nil, message: message)
       subject.should_receive(:puts).with(message)
@@ -200,8 +200,8 @@ describe 'Commands' do
   describe 'merge ID'.pink do
 
     before(:each) do
-      provider.stub(:get_request_by_number).and_return(request)
-      provider.stub(:source_repo)
+      github.stub(:get_request_by_number).and_return(request)
+      github.stub(:source_repo)
     end
 
     it 'does not proceed if source repo no longer exists' do
@@ -223,13 +223,13 @@ describe 'Commands' do
   describe 'close ID'.pink do
 
     before(:each) do
-      provider.stub(:get_request_by_number).and_return(request)
-      provider.stub(:source_repo).and_return('some_source')
+      github.stub(:get_request_by_number).and_return(request)
+      github.stub(:source_repo).and_return('some_source')
     end
 
     it 'closes the request' do
-      provider.should_receive(:close_issue).with('some_source', request_number)
-      provider.should_receive(:request_exists?).
+      github.should_receive(:close_issue).with('some_source', request_number)
+      github.should_receive(:request_exists?).
           with('open', request_number).and_return(false)
       subject.should_receive(:puts).with(/Successfully closed request./)
       subject.close(1)
@@ -327,7 +327,7 @@ describe 'Commands' do
         end
 
         it 'pushes the commits to a remote branch and creates a pull request' do
-          provider.stub(:request_exists_for_branch?).and_return(false)
+          github.stub(:request_exists_for_branch?).and_return(false)
           subject.should_receive(:git_call).with(
               "push --set-upstream origin #{branch_name}", false, true
           )
@@ -336,7 +336,7 @@ describe 'Commands' do
         end
 
         it 'does not create pull request if it already exists for the branch' do
-          provider.stub(:request_exists_for_branch?).with(false).and_return(true)
+          github.stub(:request_exists_for_branch?).with(false).and_return(true)
           subject.should_not_receive(:create_pull_request)
           subject.should_receive(:puts).with(/already exists/)
           subject.should_receive(:puts).with(/`git push`/)
@@ -344,7 +344,7 @@ describe 'Commands' do
         end
 
         it 'lets the user return to the branch she was working on before' do
-          provider.stub(:request_exists_for_branch?).and_return(false)
+          github.stub(:request_exists_for_branch?).and_return(false)
           subject.stub(:create_pull_request)
           subject.should_receive(:git_call).with('checkout master')
           subject.create
@@ -364,13 +364,13 @@ describe 'Commands' do
         local.stub(:source_branch).and_return(branch_name)
         local.stub(:target_branch).and_return('master')
         local.stub(:uncommitted_changes?).and_return(false)
-        provider.stub(:repository).and_return(upstream)
+        github.stub(:repository).and_return(upstream)
         subject.stub(:git_call)
       end
 
       it 'does not create pull request if one already exists for the branch' do
         local.stub(:new_commits?).and_return(true)
-        provider.stub(:request_exists_for_branch?).with(true).and_return(true)
+        github.stub(:request_exists_for_branch?).with(true).and_return(true)
         subject.should_not_receive(:create_pull_request)
         subject.should_receive(:puts).with(/already exists/)
         subject.should_receive(:puts).with(/`git push`/)
@@ -390,7 +390,7 @@ describe 'Commands' do
   describe '#create_pull_request' do
 
     before(:each) do
-      provider.stub(:latest_request_number).and_return(1)
+      github.stub(:latest_request_number).and_return(1)
       subject.stub(:create_title_and_body).and_return(['title', 'body'])
       local.stub(:target_repo).and_return('parent:repo')
       local.stub(:head).and_return('local:repo')
@@ -399,18 +399,18 @@ describe 'Commands' do
     end
 
     it 'sends pull request to upstream repo' do
-      provider.should_receive(:create_pull_request).
+      github.should_receive(:create_pull_request).
           with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      provider.stub(:request_number_by_title).and_return(2)
+      github.stub(:request_number_by_title).and_return(2)
       subject.should_receive(:puts).with(/Successfully/)
       subject.should_receive(:puts).with(/pull\/2/)
       subject.send(:create_pull_request, true)
     end
 
     it 'checks if pull request is indeed created' do
-      provider.should_receive(:create_pull_request).
+      github.should_receive(:create_pull_request).
           with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      provider.stub(:request_number_by_title).and_return(nil)
+      github.stub(:request_number_by_title).and_return(nil)
       subject.should_receive(:puts).with(/not created for parent:repo/)
       subject.send(:create_pull_request, true)
     end
