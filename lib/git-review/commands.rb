@@ -207,7 +207,7 @@ module GitReview
 
     private
 
-    def request_summary_line(request)
+    def request_summary(request)
       line = request.number.review_ljust(8)
       line << request.updated_at.review_time.review_ljust(11)
       line << server.comments_count(request).review_ljust(10)
@@ -220,7 +220,7 @@ module GitReview
       # this is to make sure the order is still correct even if we use
       #   multi-threading to retrieve the requests
       output = {}
-      requests.each { |req| output[req.number] = request_summary_line(req) }
+      requests.each { |req| output[req.number] = request_summary(req) }
       numbers = output.keys.sort
       numbers.reverse! if reverse
       numbers.each do |n|

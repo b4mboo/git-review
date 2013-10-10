@@ -30,17 +30,17 @@ require_relative 'git-review/provider/github'
 # Communicate with Bitbucket via API.
 require_relative 'git-review/provider/bitbucket'
 
-# Include custom string helpers.
-require_relative 'mixins/string'
-# Include custom time helpers.
-require_relative 'mixins/time'
-
 # Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'
 # Allow to access a model's attributes in various ways (feels railsy).
 require_relative 'mixins/accessible'
 # Allow to nest models in other model's attributes.
 require_relative 'mixins/nestable'
+
+# Include custom string helpers.
+require_relative 'mixins/string'
+# Include custom time helpers.
+require_relative 'mixins/time'
 
 # Add some POROs to get some structure into the entities git-review deals with.
 require_relative 'models/repository'
