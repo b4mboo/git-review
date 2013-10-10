@@ -191,7 +191,13 @@ describe 'Commands' do
 
     before :each do
       provider.stub(:request_exists?).and_return(request)
-      server.stub(:source_repo)
+      server.stub :source_repo
+    end
+
+    it 'requires a valid request number as ' + 'ID'.pink do
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.merge invalid_number }.
+        to raise_error(::GitReview::InvalidRequestIDError)
     end
 
     it 'merges the request with your current branch' do
@@ -213,17 +219,23 @@ describe 'Commands' do
 
   describe 'close ID'.pink do
 
-    before(:each) do
-      server.stub(:get_request_by_number).and_return(request)
-      server.stub(:source_repo).and_return('some_source')
+    before :each do
+      provider.stub(:request_exists?).and_return(request)
+      server.stub(:source_repo).and_return(head_repo)
     end
 
-    it 'closes the request' do
-      server.should_receive(:close_issue).with('some_source', request_number)
+    it 'requires a valid request number as ' + 'ID'.pink do
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.close invalid_number }.
+        to raise_error(::GitReview::InvalidRequestIDError)
+    end
+
+    it 'closes an open request' do
+      server.should_receive(:close_issue).with(head_repo, request_number)
       server.should_receive(:request_exists?).
-          with('open', request_number).and_return(false)
+          with(state, request_number).and_return(false)
       subject.should_receive(:puts).with(/Successfully closed request./)
-      subject.close(1)
+      subject.close request_number
     end
 
   end
