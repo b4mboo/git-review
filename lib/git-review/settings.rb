@@ -1,46 +1,51 @@
 require 'fileutils'
 require 'yaml'
+require 'hashie'
 
 module GitReview
 
   class Settings
 
-    # acts like a singleton class but it's actually not
-    # use ::GitReview::Settings.instance everywhere except in tests
     def self.instance
       @instance ||= new
     end
 
-    # Read settings from ~/.git_review.yml upon initialization.
-    def initialize
-      @config_file = File.join(Dir.home, '.git_review.yml')
-      @config = YAML.load_file(@config_file) if File.exists?(@config_file)
-      @config ||= {}
-    end
-
-    # Write settings back to file.
     def save!
-      File.open(@config_file, 'w') do |file|
-        file.write(YAML.dump(@config))
-      end
+      File.write(file, dumped)
     end
 
-    # Allow to access config options.
     def method_missing(method, *args)
-      # Determine whether to set or get an attribute.
-      if method.to_s =~ /(.*)=$/
-        @config[$1.to_sym] = args.shift
+      if args.empty?
+        config.send(method)
       else
-        @config[method.to_sym]
+        config.send(method, args.shift)
       end
     end
 
     def respond_to?(method)
-      if method.to_s =~ /(.*)=$/ ||  @config.keys.include?(method.to_sym)
-        true
+      config.respond_to?(method) || super
+    end
+
+    protected
+
+    def config
+      @config ||= Hashie::Mash.new loaded
+    end
+
+    def file
+      @file ||= File.join(Dir.home, '.git_review.yml')
+    end
+
+    def loaded
+      if File.exists? file
+        YAML.load_file(file)
       else
-        super
+        {}
       end
+    end
+
+    def dumped
+      YAML.dump config.to_hash
     end
 
   end

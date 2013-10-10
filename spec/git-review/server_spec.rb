@@ -7,7 +7,7 @@ describe 'Server' do
     subject { ::GitReview::Server }
 
     it 'creates a unique provider instance' do
-      subject.stub(:fetch_origin_url).and_return('git@bitbucket.org:foo/bar.git')
+      subject.any_instance.stub(:fetch_origin_url).and_return('git@bitbucket.org:foo/bar.git')
       subject.instance.object_id.should equal(subject.instance.object_id)
     end
 

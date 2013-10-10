@@ -342,7 +342,7 @@ module GitReview
       login = server.login
       commits = git_call("log --format='%H' HEAD...#{target_branch}").
           lines.count
-      puts "commits: #{commits}"
+      puts "Commits: #{commits}"
       if commits == 1
         # we can create a really specific title and body
         title = git_call("log --format='%s' HEAD...#{target_branch}").chomp
@@ -370,7 +370,7 @@ module GitReview
 
       tmpfile.rewind
       lines = tmpfile.read.lines.to_a
-      puts lines.inspect
+      #puts lines.inspect
       title = lines.shift.chomp
       lines.shift if lines[0].chomp.empty?
       body = lines.join

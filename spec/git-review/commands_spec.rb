@@ -12,6 +12,7 @@ describe 'Commands' do
 
   before :each do
     server.stub(:configure_access).and_return('username')
+    subject.stub :puts
   end
 
   describe 'list (--reverse)'.pink do

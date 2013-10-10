@@ -1,5 +1,3 @@
-require 'hashie'
-
 shared_context 'request_context' do
 
   let(:source_repo) { '/' }

@@ -9,19 +9,27 @@ module GitReview
 
     def_delegators(
       :provider,
+
       :configure_access,
+      :request_exists?,
+      :request_exists_for_branch?,
+      :current_requests,
+      :current_requests_full,
+      :update,
+      :repo_info_from_config,
+      :source_repo,
+      :commit_discussion,
+      :issue_discussion,
+      :comments_count,
+      :discussion,
+      :latest_request_number,
+      :request_number_by_title,
+      :login,
       :request_url_for,
       :create_pull_request,
-      :source_repo,
-      :current_requests_full,
-      :request_exists?,
-      :source_repo,
       :add_comment,
       :close_issue,
-      :request_exists_for_branch?,
-      :repository,
-      :latest_request_number,
-      :request_number_by_title
+      :repository
     )
 
     def self.instance
