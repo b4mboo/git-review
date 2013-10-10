@@ -183,19 +183,32 @@ module GitReview
       request = server.get_request_by_number(number) if number
 
       # FIXME: Rescue and output a warning if a required gem is missing.
-      if RUBY_VERSION == '2.0.0'
-        require 'byebug'
-        byebug
+      if RUBY_VERSION.to_f >= 2
+        begin
+          require 'byebug'
+          byebug
+        rescue LoadError => e
+          puts
+          puts 'Missing debugger, please install byebug:'
+          puts '  gem install byebug'
+          puts
+        end
       else
-        require 'ruby-debug'
-        Debugger.start
-        debugger
+        begin
+          require 'ruby-debug'
+          Debugger.start
+          debugger
+        rescue LoadError => e
+          puts
+          puts 'Missing debugger, please install ruby-debug:'
+          puts '  gem install ruby-debug'
+          puts
+        end
       end
-
       puts 'Leaving debug console.'
     end
 
-  private
+    private
 
     def request_summary_line(request)
       date_string = format_time(request.updated_at)
