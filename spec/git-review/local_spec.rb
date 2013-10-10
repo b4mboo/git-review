@@ -15,6 +15,60 @@ describe 'Local' do
 
   end
 
+  describe 'handling remotes' do
+
+    include_context 'request_context'
+    let(:server) { double :server }
+
+    it 'lists all locally configured remotes' do
+      subject.should_receive(:git_call).with('remote').
+        and_return("origin\n#{remote}\n")
+      subject.remotes.should == ['origin', remote]
+    end
+
+    it 'determines whether a remote already exists' do
+      subject.should_receive(:remotes).and_return([remote])
+      subject.remote_exists?(remote).should be_true
+    end
+
+    it 'knows the remotes\'s with their respective urls' do
+      subject.should_receive(:git_call).with('remote -vv').and_return(
+        "#{remote}\t#{remote_url} (fetch)\n#{remote}\t#{remote_url} (push)\n"
+      )
+      subject.remotes_with_urls.should == {
+        remote => { fetch: remote_url, push: remote_url }
+      }
+    end
+
+    it 'finds existing remotes for a given url' do
+      subject.should_receive(:remotes_with_urls).
+        and_return(remote => { fetch: remote_url, push: remote_url })
+      subject.remotes_for_url(remote_url).should == [remote]
+    end
+
+    it 'finds an existing remote for a request' do
+      subject.stub(:server).and_return(server)
+      server.should_receive(:remote_url_for).
+        with(user_login).and_return(remote_url)
+      subject.should_receive(:remotes_for_url).
+        with(remote_url).and_return([remote])
+      subject.remote_for_request(request).should == remote
+    end
+
+    it 'adds a new remote for a request if necessary' do
+      subject.stub(:server).and_return(server)
+      server.should_receive(:remote_url_for).
+        with(user_login).and_return(remote_url)
+      subject.should_receive(:remotes_for_url).
+        with(remote_url).and_return([])
+      subject.should_receive(:git_call).with(
+        "remote add review_#{user_login} #{remote_url}", false, true
+      )
+      subject.remote_for_request(request).should == remote
+    end
+
+  end
+
   describe '#initialize' do
 
     it 'raises error when the directory is not a valid git repo' do
@@ -22,19 +76,6 @@ describe 'Local' do
           with('rev-parse --show-toplevel').and_return('')
       expect { ::GitReview::Local.new }.
           to raise_error(::GitReview::InvalidGitRepositoryError)
-    end
-
-  end
-
-  describe '#add_pull_refspec' do
-
-    it 'add refspec to local git config when it is not set' do
-      refspec = '+refs/pull/*/head:refs/remotes/origin/pr/*'
-      new_config = "config --local --add remote.origin.fetch #{refspec}"
-      config = 'remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*'
-      subject.stub(:config_list).and_return(config)
-      subject.should_receive(:git_call).with(new_config, false)
-      subject.add_pull_refspec
     end
 
   end

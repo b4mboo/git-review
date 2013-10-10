@@ -24,7 +24,7 @@ module GitReview
 
     # Show details for a single request.
     def show(number, full = false)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       # Determine whether to show full diff or stats only.
       option = full ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
@@ -36,33 +36,38 @@ module GitReview
 
     # Open a browser window and review a specified request.
     def browse(number)
-      request = get_request_by_number(number)
-      Launchy.open request.html_url
+      request = server.get_request_by_number(number)
+      # FIXME: Use request.html_url as soon as we are using our Request model.
+      Launchy.open request._links.html.href
     end
 
     # Checkout a specified request's changes to your local repository.
     def checkout(number, branch = true)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
       puts '  git checkout master'.pink
       puts
+      # Ensure we are looking at the right remote.
+      remote = local.remote_for_request(request)
+      git_call "fetch #{remote}"
+      # Checkout the right branch.
       branch_name = request.head.ref
       if branch
         if local.branch_exists?(:local, branch_name)
           git_call "checkout #{branch_name}"
         else
-          git_call "checkout --track -b #{branch_name} origin/#{branch_name}"
+          git_call "checkout --track -b #{branch_name} #{remote}/#{branch_name}"
         end
       else
-        git_call "checkout origin/#{branch_name}"
+        git_call "checkout #{remote}/#{branch_name}"
       end
     end
 
     # Add an approving comment to the request.
     def approve(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       repo = server.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
@@ -76,7 +81,7 @@ module GitReview
 
     # Accept a specified request by merging it into master.
     def merge(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       if request.head.repo
         message = "Accept request ##{request.number} " +
             "and merge changes into \"#{local.target}\""
@@ -96,7 +101,7 @@ module GitReview
 
     # Close a specified request.
     def close(number)
-      request = get_request_by_number(number)
+      request = server.get_request_by_number(number)
       repo = server.source_repo
       server.close_issue(repo, request.number)
       unless server.request_exists?('open', request.number)
@@ -165,26 +170,26 @@ module GitReview
     # Start a console session (used for debugging)
     def console(number = nil)
       puts 'Entering debug console.'
-      request = get_request_by_number(number) if number
+      request = server.get_request_by_number(number) if number
 
       # Playground (BEFORE)...
 
       # check requests for remotes
-      repo = request[:head][:repo][:full_name]
-      if request[:head][:repo][:full_name] == github.source_repo
+      repo_name = request.head.repo.full_name
+      if repo_name == server.source_repo
         remote = 'origin'
       else
-        remote = "review_#{request[:head][:repo][:owner][:login]}"
+        remote = "review_#{request.head.repo.owner.login}"
       end
       remote_exist = lambda { git_call('remote').split("\n").include?(remote) }
 
       # add new remote
-      git_call "remote add #{remote} git@github.com:#{repo}.git" unless remote_exist.call
+      git_call "remote add #{remote} git@github.com:#{repo_name}.git" unless remote_exist.call
       git_call "fetch #{remote}"
 
       # track remote branch
       branch = true
-      branch_name = request[:head][:ref]
+      branch_name = request.head.ref
       if branch
         if local.branch_exists?(:local, branch_name)
           git_call "checkout #{branch_name}"
@@ -384,11 +389,6 @@ module GitReview
 
     def local
       @local ||= ::GitReview::Local.instance
-    end
-
-    def get_request_by_number(request_number)
-      request = server.request_exists?(request_number)
-      request || (raise ::GitReview::InvalidRequestIDError)
     end
 
   end
