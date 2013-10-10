@@ -9,7 +9,7 @@ module GitReview
 
   module Provider
 
-    class Github
+    class Github < Base
 
       include ::GitReview::Helpers
 

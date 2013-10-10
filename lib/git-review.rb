@@ -25,6 +25,8 @@ require_relative 'git-review/local'
 require_relative 'git-review/errors'
 # Factory to get git API client..
 require_relative 'git-review/server'
+# Generic base class for shared provider methods.
+require_relative 'git-review/provider/base'
 # Communicate with Github via API.
 require_relative 'git-review/provider/github'
 # Communicate with Bitbucket via API.

@@ -2,7 +2,7 @@ module GitReview
 
   module Provider
 
-    class Bitbucket
+    class Bitbucket < Base
 
       include ::GitReview::Helpers
 

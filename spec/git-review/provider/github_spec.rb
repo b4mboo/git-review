@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe 'Provider Github' do
+describe 'Provider: Github' do
 
   subject { ::GitReview::Provider::Github }
 
