@@ -122,6 +122,7 @@ describe 'Commands' do
     end
 
     it 'opens a browser at the provider\'s page for the pull request' do
+      request.stub_chain(:_links, :html, :href).and_return(html_url)
       Launchy.should_receive(:open).with(html_url)
       subject.browse request_number
     end
