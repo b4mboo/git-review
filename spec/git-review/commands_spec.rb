@@ -426,9 +426,8 @@ describe 'Commands' do
 
   describe 'clean ID (--force) / --all'.pink do
 
-    before(:each) do
+    before :each do
       subject.stub(:git_call).with('remote prune origin')
-      allow_message_expectations_on_nil
     end
 
     it 'removes a single obsolete branch with review prefix' do
