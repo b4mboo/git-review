@@ -3,7 +3,7 @@ module GitReview
   class Server
 
     extend Forwardable
-    include ::GitReview::Internals
+    include ::GitReview::Helpers
 
     attr_reader :provider
 

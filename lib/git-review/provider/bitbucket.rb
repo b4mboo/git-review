@@ -4,7 +4,7 @@ module GitReview
 
     class Bitbucket
 
-      include ::GitReview::Internals
+      include ::GitReview::Helpers
 
       attr_reader :bitbucket
       attr_accessor :source_repo

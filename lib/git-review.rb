@@ -8,13 +8,13 @@ require 'octokit'
 require 'launchy'
 # Parse time strings from git back into Time objects.
 require 'time'
-# Use temporary files to allow editing a request's title and body.
+# Use temporary files to allow editing a request's.
 require 'tempfile'
 
 ## Internal dependencies
 
-# Include helper functions to make GitReview work as expected.
-require_relative 'git-review/internals'
+# Include helper functions to make it work as expected.
+require_relative 'git-review/helpers'
 # Provide available commands.
 require_relative 'git-review/commands'
 # Read and write settings from/to the filesystem.
@@ -29,6 +29,11 @@ require_relative 'git-review/server'
 require_relative 'git-review/provider/github'
 # Communicate with Bitbucket via API.
 require_relative 'git-review/provider/bitbucket'
+
+# Include custom string helpers.
+require_relative 'mixins/string'
+# Include custom time helpers.
+require_relative 'mixins/time'
 
 # Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'

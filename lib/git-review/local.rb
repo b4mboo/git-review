@@ -5,7 +5,7 @@ module GitReview
   # TODO: remove Github-dependency
   class Local
 
-    include ::GitReview::Internals
+    include ::GitReview::Helpers
 
     attr_accessor :config
 

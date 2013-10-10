@@ -2,7 +2,7 @@ module GitReview
 
   module Commands
 
-    include ::GitReview::Internals
+    include ::GitReview::Helpers
     extend self
 
     # List all pending requests.
@@ -182,7 +182,6 @@ module GitReview
       puts 'Entering debug console.'
       request = server.get_request_by_number(number) if number
 
-      # FIXME: Rescue and output a warning if a required gem is missing.
       if RUBY_VERSION.to_f >= 2
         begin
           require 'byebug'
@@ -211,12 +210,10 @@ module GitReview
     private
 
     def request_summary_line(request)
-      date_string = format_time(request.updated_at)
-      comments_count = server.comments_count(request)
-      line = format_text(request.number, 8)
-      line << format_text(date_string, 11)
-      line << format_text(comments_count, 10)
-      line << format_text(request.title, 91)
+      line = request.number.review_ljust(8)
+      line << request.updated_at.review_time.review_ljust(11)
+      line << server.comments_count(request).review_ljust(10)
+      line << request.title.review_ljust(91)
       line
     end
 
@@ -237,7 +234,7 @@ module GitReview
       comments_count = server.comments_count(request)
       puts 'ID        : ' + request.number.to_s
       puts 'Label     : ' + request.head.label
-      puts 'Updated   : ' + format_time(request.updated_at)
+      puts 'Updated   : ' + request.updated_at.review_time
       puts 'Comments  : ' + comments_count.to_s
       puts
       puts request.title
@@ -380,4 +377,3 @@ module GitReview
   end
 
 end
-

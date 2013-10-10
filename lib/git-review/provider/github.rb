@@ -11,7 +11,7 @@ module GitReview
 
     class Github
 
-      include ::GitReview::Internals
+      include ::GitReview::Helpers
 
       attr_reader :github
       attr_accessor :source_repo
@@ -127,7 +127,7 @@ module GitReview
           name = commit.committer.login
           output = "\e[35m#{name}\e[m "
           output << "committed \e[36m#{commit.sha[0..6]}\e[m "
-          output << "on #{format_time(commit.commit.committer.date)}"
+          output << "on #{commit.commit.committer.date.review_time}"
           output << ":\n#{''.rjust(output.length + 1, "-")}\n"
           output << "#{commit.commit.message}"
           output << "\n\n"
@@ -139,9 +139,9 @@ module GitReview
             name = comment.user.login
             output = "\e[35m#{name}\e[m "
             output << "added a comment to \e[36m#{commit.sha[0..6]}\e[m"
-            output << " on #{format_time(comment.created_at)}"
+            output << " on #{comment.created_at.review_time}"
             unless comment.created_at == comment.updated_at
-              output << " (updated on #{format_time(comment.updated_at)})"
+              output << " (updated on #{comment.updated_at.review_time})"
             end
             output << ":\n#{''.rjust(output.length + 1, "-")}\n"
             output << comment.body
@@ -159,9 +159,9 @@ module GitReview
           name = comment.user.login
           output = "\e[35m#{name}\e[m "
           output << "added a comment to \e[36m#{comment.id}\e[m"
-          output << " on #{format_time(comment.created_at)}"
+          output << " on #{comment.created_at.review_time}"
           unless comment.created_at == comment.updated_at
-            output << " (updated on #{format_time(comment.updated_at)})"
+            output << " (updated on #{comment.updated_at.review_time})"
           end
           output << ":\n#{''.rjust(output.length + 1, "-")}\n"
           output << comment.body
