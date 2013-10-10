@@ -56,7 +56,11 @@ module GitReview
       branch_name = request.head.ref
       if branch
         if local.branch_exists?(:local, branch_name)
-          git_call "checkout #{branch_name}"
+          if local.source_branch == branch_name
+            puts "On branch #{branch_name}."
+          else
+            git_call "checkout #{branch_name}"
+          end
         else
           git_call "checkout --track -b #{branch_name} #{remote}/#{branch_name}"
         end
@@ -165,6 +169,12 @@ module GitReview
       else
         local.clean_single(number, force)
       end
+      # FIXME: cleanup remotes.
+      # unless remote == 'origin'
+      #   git_call "checkout #{local.target_branch}"
+      #   git_call "branch -D #{branch_name}"
+      #   git_call "remote remove #{remote}" if remote_exist.call
+      # end
     end
 
     # Start a console session (used for debugging)
@@ -172,57 +182,33 @@ module GitReview
       puts 'Entering debug console.'
       request = server.get_request_by_number(number) if number
 
-      # Playground (BEFORE)...
-
-      # check requests for remotes
-      repo_name = request.head.repo.full_name
-      if repo_name == server.source_repo
-        remote = 'origin'
-      else
-        remote = "review_#{request.head.repo.owner.login}"
-      end
-      remote_exist = lambda { git_call('remote').split("\n").include?(remote) }
-
-      # add new remote
-      git_call "remote add #{remote} git@github.com:#{repo_name}.git" unless remote_exist.call
-      git_call "fetch #{remote}"
-
-      # track remote branch
-      branch = true
-      branch_name = request.head.ref
-      if branch
-        if local.branch_exists?(:local, branch_name)
-          git_call "checkout #{branch_name}"
-        else
-          git_call "checkout --track -b #{branch_name} #{remote}/#{branch_name}"
+      # FIXME: Rescue and output a warning if a required gem is missing.
+      if RUBY_VERSION.to_f >= 2
+        begin
+          require 'byebug'
+          byebug
+        rescue LoadError => e
+          puts
+          puts 'Missing debugger, please install byebug:'
+          puts '  gem install byebug'
+          puts
         end
       else
-        git_call "checkout #{remote}/#{branch_name}"
-      end
-
-
-      # FIXME: Rescue and output a warning if a required gem is missing.
-      if RUBY_VERSION == '2.0.0'
-        require 'byebug'
-        byebug
-      else
-        require 'ruby-debug'
-        Debugger.start
-        debugger
-      end
-
-      # Playground (AFTER)...
-
-      # cleanup remotes.
-      unless remote == 'origin'
-        git_call "checkout #{local.target_branch}"
-        git_call "branch -D #{branch_name}"
-        git_call "remote remove #{remote}" if remote_exist.call
+        begin
+          require 'ruby-debug'
+          Debugger.start
+          debugger
+        rescue LoadError => e
+          puts
+          puts 'Missing debugger, please install ruby-debug:'
+          puts '  gem install ruby-debug'
+          puts
+        end
       end
       puts 'Leaving debug console.'
     end
 
-  private
+    private
 
     def request_summary_line(request)
       date_string = format_time(request.updated_at)

@@ -166,6 +166,13 @@ describe 'Commands' do
       subject.checkout(request_number, false)
     end
 
+    it 'prints an info text if the user is already on the right branch' do
+      local.stub(:branch_exists?).with(:local, branch_name).and_return(true)
+      local.should_receive(:source_branch).and_return(branch_name)
+      subject.should_receive(:puts).with("On branch #{branch_name}.")
+      subject.checkout(request_number)
+    end
+
   end
 
   describe 'approve ID'.pink do
