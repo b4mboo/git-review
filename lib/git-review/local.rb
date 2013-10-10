@@ -93,7 +93,7 @@ module GitReview
     def review_branches
       all_branches.collect { |branch|
         # only use uniq branch names (no matter if local or remote)
-        branch.split('/').last if branch.include?('review_')
+        branch.split('/').last if branch.index('review_') == 0
       }.compact.uniq
     end
 
