@@ -10,7 +10,7 @@ describe 'Commands' do
   let(:local) { ::GitReview::Local.any_instance }
 
   before :each do
-    server.stub(:configure_access).and_return('username')
+    provider.stub(:configure_access).and_return('username')
     subject.stub :puts
   end
 

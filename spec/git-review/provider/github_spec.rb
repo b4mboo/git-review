@@ -2,16 +2,25 @@ require_relative '../../spec_helper'
 
 describe 'Provider Github' do
 
-  subject { ::GitReview::Provider::Github.new }
+  subject { ::GitReview::Provider::Github }
 
-  context '#configure_access' do
+  let(:settings) { ::GitReview::Settings.any_instance }
 
-    subject { ::GitReview::Provider::Github }
-    let(:settings) { ::GitReview::Settings.any_instance }
+  before(:each) do
+    settings.stub(:oauth_token).and_return('token')
+    settings.stub(:username).and_return('username')
+  end
+
+  it 'constructs the remote url from a given repo name' do
+    user = 'user'
+    repo = 'repo'
+    subject.any_instance.should_receive(:repo_info_from_config).and_return([user, repo])
+    subject.new.remote_url_for(user).should == "git@github.com:#{user}/#{repo}.git"
+  end
+
+  context 'when access is not configured' do
 
     it 'only authenticates once' do
-      settings.stub(:oauth_token).and_return('token')
-      settings.stub(:username).and_return('username')
       subject.any_instance.should_not_receive(:configure_oauth)
       subject.new.configure_access
     end
@@ -20,14 +29,9 @@ describe 'Provider Github' do
 
   context 'when access is configured' do
 
-    let(:settings) { ::GitReview::Settings.any_instance }
-
-    before(:each) do
-      ::GitReview::Provider::Github.any_instance.stub(:configure_access).and_return('username')
-    end
+    subject { ::GitReview::Provider::Github.new }
 
     it 'should return a login' do
-      settings.stub(:username).and_return('username')
       subject.login.should eq 'username'
     end
 
@@ -50,8 +54,7 @@ describe 'Provider Github' do
       it 'from insteadof url' do
         url = 'git@github.com:foo/bar.git'
         config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
-        subject.send(:insteadof_matching, config, url).
-          should eq %w(git@github.com:foo/bar.git git@github.com:a/b.git)
+        subject.send(:insteadof_matching, config, url).should eq %w(git@github.com:foo/bar.git git@github.com:a/b.git)
       end
 
     end
@@ -60,10 +63,7 @@ describe 'Provider Github' do
 
   describe '#current_requests' do
 
-    before(:each) do
-      ::GitReview::Settings.any_instance.stub(:oauth_token).and_return('token')
-      ::GitReview::Settings.any_instance.stub(:username).and_return('login')
-    end
+    subject { ::GitReview::Provider::Github.new }
 
     context 'when inquiring upstream repo' do
 
@@ -89,13 +89,6 @@ describe 'Provider Github' do
 
     end
 
-  end
-
-  it 'constructs the remote url from a given repo name' do
-    user = 'user'
-    repo = 'repo'
-    subject.should_receive(:repo_info_from_config).and_return([user, repo])
-    subject.remote_url_for(user).should == "git@github.com:#{user}/#{repo}.git"
   end
 
 end
