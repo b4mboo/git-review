@@ -100,7 +100,7 @@ module GitReview
         puts
         puts git_call(command)
       else
-        print_repo_deleted(request)
+        print_repo_deleted request
       end
     end
 

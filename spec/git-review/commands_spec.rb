@@ -189,23 +189,24 @@ describe 'Commands' do
 
   describe 'merge ID'.pink do
 
-    before(:each) do
-      server.stub(:get_request_by_number).and_return(request)
+    before :each do
+      provider.stub(:request_exists?).and_return(request)
       server.stub(:source_repo)
     end
 
-    it 'does not proceed if source repo no longer exists' do
-      request.head.stub(:repo).and_return(nil)
-      subject.should_receive(:print_repo_deleted)
-      subject.should_not_receive(:git_call)
-      subject.merge(1)
+    it 'merges the request with your current branch' do
+      local.stub(:target).and_return(target_branch)
+      msg = "Accept request ##{request_number} " +
+        "and merge changes into \"#{target_branch}\""
+      subject.should_receive(:git_call).with("merge -m '#{msg}' #{head_sha}")
+      subject.merge request_number
     end
 
-    it 'merges the request with your current branch' do
-      msg = "Accept request ##{request_number} " +
-        "and merge changes into \"/master\""
-      subject.should_receive(:git_call).with("merge -m '#{msg}' #{head_sha}")
-      subject.merge(1)
+    it 'does not proceed if the source repo no longer exists' do
+      request.head.stub(:repo).and_return(nil)
+      subject.should_receive :print_repo_deleted
+      subject.should_not_receive :git_call
+      subject.merge request_number
     end
 
   end
