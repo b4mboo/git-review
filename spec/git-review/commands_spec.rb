@@ -156,9 +156,11 @@ describe 'Commands' do
 
   describe 'approve ID'.pink do
 
+    let(:comment) { 'Reviewed and approved.' }
+
     before :each do
       provider.stub(:request_exists?).and_return(request)
-      server.stub(:source_repo).and_return('some_source')
+      server.stub(:source_repo).and_return(head_repo)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
@@ -167,22 +169,20 @@ describe 'Commands' do
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'posts an approving comment in your name to the requests page' do
-      comment = 'Reviewed and approved.'
+    it 'posts an approving comment in your name to the request\'s page' do
       server.should_receive(:add_comment).
-        with('some_source', request_number, 'Reviewed and approved.').
-        and_return(body: comment)
+        with(head_repo, request_number, comment).and_return(body: comment)
       subject.should_receive(:puts).with(/Successfully approved request./)
-      subject.approve(1)
+      subject.approve request_number
     end
 
     it 'outputs any errors that might occur when trying to post a comment' do
       message = 'fail'
       server.should_receive(:add_comment).
-        with('some_source', request_number, 'Reviewed and approved.').
+        with(head_repo, request_number, comment).
         and_return(body: nil, message: message)
       subject.should_receive(:puts).with(message)
-      subject.approve(1)
+      subject.approve request_number
     end
 
   end
