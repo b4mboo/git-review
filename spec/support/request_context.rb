@@ -19,6 +19,7 @@ shared_context 'request_context' do
   let(:user_login) { 'user' }
   let(:remote) { "review_#{user_login}" }
   let(:remote_url) { "git@provider.tld/#{user_login}/#{repo_name}" }
+  let(:target_branch) { 'master' }
 
   let(:request) {
     Hashie::Mash.new(

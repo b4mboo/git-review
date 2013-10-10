@@ -427,7 +427,15 @@ describe 'Commands' do
   describe 'clean ID (--force) / --all'.pink do
 
     before :each do
-      subject.stub(:git_call).with('remote prune origin')
+      subject.stub(:git_call).with(include 'checkout')
+      local.stub :clean_remotes
+      local.stub(:target_branch).and_return(target_branch)
+    end
+
+    it 'switches back to the target branch (mostly master)' do
+      subject.should_receive(:git_call).with("checkout #{target_branch}")
+      local.should_receive :clean_all
+      subject.clean(nil, false, true)
     end
 
     it 'removes a single obsolete branch with review prefix' do
@@ -445,9 +453,11 @@ describe 'Commands' do
       subject.clean(request_number, true)
     end
 
-    it 'prunes all configured remotes'
-
-    it 'removes all remotes with review prefix'
+    it 'cleans up remotes' do
+      local.should_receive :clean_remotes
+      local.should_receive :clean_all
+      subject.clean(nil, false, true)
+    end
 
   end
 
