@@ -11,7 +11,7 @@ describe 'Accessible module' do
     include Accessible
     attr_accessor :berk
   end
-  
+
   subject { Foo.new }
   let(:test_string) { 'foo' }
 

@@ -28,7 +28,3 @@ module Colorizable
   end
 
 end
-
-class String
-  include Colorizable
-end

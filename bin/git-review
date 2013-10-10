@@ -7,23 +7,23 @@ require 'git-review'
 require 'gli'
 
 include GLI::App
-
 program_desc 'Manage review workflow for Github projects (using pull requests).'
 
 # Pre-hook before a command is executed
 pre do |global, cmd, opts, args|
-  github = ::GitReview::Github.instance
-  if github.configure_access && github.source_repo
-    github.update unless cmd == 'clean'
+  server = ::GitReview::Server.instance
+  if server.configure_access && server.source_repo
+    server.update unless cmd == 'clean'
   end
-  true  # return true to explicitly pass precondition
+
+  true # return true to explicitly pass precondition
 end
 
 desc 'List all pending requests'
 command :list do |c|
   c.switch [:r, :reverse]
   c.action do |global, opts, args|
-  ::GitReview::Commands.list(opts[:reverse])
+    ::GitReview::Commands.list(opts[:reverse])
   end
 end
 
@@ -100,7 +100,7 @@ command :clean do |c|
   c.action do |global, opts, args|
     help_now!('Request number is required.') if args.empty? && !opts[:all]
     number = args.empty? ? nil : args.shift
-    ::GitReview::Commands.clean(number, opts[:force], opts[:all])
+    ::GitReview::Commands.clean(args.shift, opts[:force], opts[:all])
   end
 end
 
@@ -108,8 +108,7 @@ if ::GitReview::Settings.instance.review_mode == 'debug' || ENV['DEBUG']
   desc 'Console session for debugging'
   command :console do |c|
     c.action do |global, opts, args|
-      number = args.empty? ? nil : args.shift
-      ::GitReview::Commands.console number
+      ::GitReview::Commands.console(args.shift)
     end
   end
 end

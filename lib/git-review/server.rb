@@ -2,12 +2,39 @@ module GitReview
 
   class Server
 
-    include ::GitReview::Internals
+    extend Forwardable
+    include ::GitReview::Helpers
 
     attr_reader :provider
 
+    def_delegators(
+      :provider,
+      :configure_access,
+      :get_request_by_number,
+      :request_exists?,
+      :request_exists_for_branch?,
+      :current_requests,
+      :current_requests_full,
+      :update,
+      :repo_info_from_config,
+      :source_repo,
+      :commit_discussion,
+      :issue_discussion,
+      :comments_count,
+      :discussion,
+      :latest_request_number,
+      :request_number_by_title,
+      :login,
+      :request_url_for,
+      :remote_url_for,
+      :create_pull_request,
+      :add_comment,
+      :close_issue,
+      :repository
+    )
+
     def self.instance
-      @instance ||= new.provider
+      @instance ||= new
     end
 
     def initialize
@@ -19,9 +46,9 @@ module GitReview
     def init_provider
       @provider = case
       when bitbucket_provider?
-        GitReview::Bitbucket.new
+        GitReview::Provider::Bitbucket.new
       when github_provider?
-        GitReview::Github.new
+        GitReview::Provider::Github.new
       else
         raise InvalidGitProviderError.new
       end
@@ -36,10 +63,10 @@ module GitReview
     end
 
     def fetch_origin_url
-      git_call(remote_origin_command)
+      git_call(call_origin_params)
     end
 
-    def remote_origin_command
+    def call_origin_params
       "config --get remote.origin.url"
     end
 
