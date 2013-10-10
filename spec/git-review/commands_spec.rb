@@ -16,63 +16,42 @@ describe 'Commands' do
 
   describe 'list (--reverse)'.pink do
 
+    let(:req1) { request.clone }
+    let(:req2) { request.clone }
+
     before :each do
       local.stub(:source).and_return('some_source')
     end
 
-    context 'with open pull requests' do
-
-      let(:req1) { request.clone }
-      let(:req2) { request.clone }
-
-      before :each do
-        req1.title = 'first'
-        req2.title = 'second'
-        server.stub(:current_requests_full).and_return([req1, req2])
-        local.stub(:merged?).and_return(false)
-      end
-
-      it 'prints a list of all open requests' do
-        subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
-        subject.should_not_receive(:puts).with(/No pending requests/)
-        subject.should_receive(:print_requests).with([req1, req2], false)
-        subject.list
-      end
-
-      it 'allows to sort the list by adding ' + '--reverse'.pink do
-        subject.should_receive(:print_requests).with([req1, req2], true)
-        subject.list true
-      end
-
+    it 'prints a list of all open requests' do
+      server.stub(:current_requests_full).and_return([req1, req2])
+      local.stub(:merged?).and_return(false)
+      subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
+      subject.should_not_receive(:puts).with(/No pending requests/)
+      subject.should_receive(:print_requests).with([req1, req2], false)
+      subject.list
     end
 
-    context 'with closed pull requests' do
-
-      before :each do
-        server.stub(:current_requests_full).and_return([request])
-        local.stub(:merged?).and_return(true)
-      end
-
-      it 'ignores closed requests and does not list them' do
-        subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
-        subject.should_not_receive :print_request
-        subject.list
-      end
-
+    it 'allows to sort the list by adding ' + '--reverse'.pink do
+      server.stub(:current_requests_full).and_return([req1, req2])
+      local.stub(:merged?).and_return(false)
+      subject.should_receive(:print_requests).with([req1, req2], true)
+      subject.list true
     end
 
-    context 'without pull requests' do
+    it 'ignores closed requests and does not list them' do
+      server.stub(:current_requests_full).and_return([request])
+      local.stub(:merged?).and_return(true)
+      subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
+      subject.should_not_receive :print_request
+      subject.list
+    end
 
-      before :each do
-        server.stub(:current_requests_full).and_return([])
-      end
-
-      it 'does not print a list when there are no requests' do
-        subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
-        subject.should_not_receive :print_request
-        subject.list
-      end
-
+    it 'does not print a list when there are no requests' do
+      server.stub(:current_requests_full).and_return([])
+      subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
+      subject.should_not_receive :print_request
+      subject.list
     end
 
   end
@@ -154,6 +133,13 @@ describe 'Commands' do
       subject.checkout request_number
     end
 
+    it 'prints an info text if the user is already on the right branch' do
+      local.stub(:branch_exists?).with(:local, branch_name).and_return(true)
+      local.should_receive(:source_branch).and_return(branch_name)
+      subject.should_receive(:puts).with("On branch #{branch_name}.")
+      subject.checkout request_number
+    end
+
     it 'optionally creates a headless state by adding ' + '--no-branch'.pink do
       subject.should_receive(:git_call).with("checkout #{remote}/#{branch_name}")
       subject.checkout(request_number, false)
@@ -166,20 +152,19 @@ describe 'Commands' do
       subject.checkout(request_number, false)
     end
 
-    it 'prints an info text if the user is already on the right branch' do
-      local.stub(:branch_exists?).with(:local, branch_name).and_return(true)
-      local.should_receive(:source_branch).and_return(branch_name)
-      subject.should_receive(:puts).with("On branch #{branch_name}.")
-      subject.checkout(request_number)
-    end
-
   end
 
   describe 'approve ID'.pink do
 
-    before(:each) do
-      server.stub(:get_request_by_number).and_return(request)
+    before :each do
+      provider.stub(:request_exists?).and_return(request)
       server.stub(:source_repo).and_return('some_source')
+    end
+
+    it 'requires a valid request number as ' + 'ID'.pink do
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.approve invalid_number }.
+        to raise_error(::GitReview::InvalidRequestIDError)
     end
 
     it 'posts an approving comment in your name to the requests page' do
