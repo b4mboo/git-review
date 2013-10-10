@@ -62,10 +62,10 @@ module GitReview
     end
 
     def fetch_origin_url
-      git_call(remote_origin_command)
+      git_call(call_origin_params)
     end
 
-    def remote_origin_command
+    def call_origin_params
       "config --get remote.origin.url"
     end
 
