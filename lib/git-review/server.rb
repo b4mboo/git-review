@@ -9,8 +9,8 @@ module GitReview
 
     def_delegators(
       :provider,
-
       :configure_access,
+      :get_request_by_number,
       :request_exists?,
       :request_exists_for_branch?,
       :current_requests,
@@ -26,6 +26,7 @@ module GitReview
       :request_number_by_title,
       :login,
       :request_url_for,
+      :remote_url_for,
       :create_pull_request,
       :add_comment,
       :close_issue,

@@ -6,9 +6,8 @@ describe 'Commands' do
 
   subject { ::GitReview::Commands }
   let(:server) { ::GitReview::Server.any_instance }
+  let(:provider) { ::GitReview::Provider::Github.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
-  let(:invalid_id) { 0 }
-  let(:valid_id) { 42 }
 
   before :each do
     server.stub(:configure_access).and_return('username')
@@ -81,12 +80,12 @@ describe 'Commands' do
   describe 'show ID (--full)'.pink do
 
     before :each do
-      server.stub(:request_exists?).and_return(request)
+      provider.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      server.stub(:request_exists?).and_return(false)
-      expect { subject.show invalid_id }.
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.show invalid_number }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -95,7 +94,7 @@ describe 'Commands' do
         with("diff --color=always --stat HEAD...#{head_sha}")
       subject.stub :print_request_details
       subject.stub :print_request_discussions
-      subject.show valid_id
+      subject.show request_number
     end
 
     it 'shows the request\'s full diff when adding ' + '--full'.pink do
@@ -103,7 +102,7 @@ describe 'Commands' do
         with("diff --color=always HEAD...#{head_sha}")
       subject.stub :print_request_details
       subject.stub :print_request_discussions
-      subject.show(valid_id, true)
+      subject.show(request_number, true)
     end
 
   end
@@ -111,52 +110,60 @@ describe 'Commands' do
   describe 'browse ID'.pink do
 
     before :each do
-      server.stub(:request_exists?).and_return(request)
+      provider.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      server.stub(:request_exists?).and_return(false)
-      expect { subject.browse invalid_id }.
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.browse invalid_number }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'opens the pull request\'s page on provider in a browser' do
+    it 'opens a browser at the provider\'s page for the pull request' do
+      request.stub_chain(:_links, :html, :href).and_return(html_url)
       Launchy.should_receive(:open).with(html_url)
-      subject.browse valid_id
+      subject.browse request_number
     end
 
   end
 
   describe 'checkout ID (--no-branch)'.pink do
 
-    let(:branch_name) { request.head.ref }
-
     before :each do
-      server.stub(:request_exists?).and_return(request)
+      local.stub(:remote_for_request).with(request).and_return(remote)
+      subject.stub(:git_call).with("fetch #{remote}")
+      provider.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
-      server.stub(:request_exists?).and_return(false)
-      expect { subject.checkout invalid_id }.
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.checkout invalid_number }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
     it 'creates a branch on the local repo with the request\'s code' do
       local.stub(:branch_exists?).with(:local, branch_name).and_return(true)
       subject.should_receive(:git_call).with("checkout #{branch_name}")
-      subject.checkout 1
+      subject.checkout request_number
     end
 
     it 'switches branches if the branch already exists locally' do
       local.stub(:branch_exists?).with(:local, branch_name).and_return(false)
       subject.should_receive(:git_call).
-        with("checkout --track -b #{branch_name} origin/#{branch_name}")
-      subject.checkout 1
+        with("checkout --track -b #{branch_name} #{remote}/#{branch_name}")
+      subject.checkout request_number
     end
 
     it 'optionally creates a headless state by adding ' + '--no-branch'.pink do
-      subject.should_receive(:git_call).with("checkout origin/#{branch_name}")
-      subject.checkout(1, false)
+      subject.should_receive(:git_call).with("checkout #{remote}/#{branch_name}")
+      subject.checkout(request_number, false)
+    end
+
+    it 'adds a new remote if the request originates from a fork' do
+      local.should_receive(:remote_for_request).with(request).and_return(remote)
+      subject.should_receive(:git_call).with("fetch #{remote}")
+      subject.should_receive(:git_call).with("checkout #{remote}/#{branch_name}")
+      subject.checkout(request_number, false)
     end
 
   end
@@ -164,7 +171,7 @@ describe 'Commands' do
   describe 'approve ID'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      server.stub(:get_request_by_number).and_return(request)
       server.stub(:source_repo).and_return('some_source')
     end
 
@@ -191,7 +198,7 @@ describe 'Commands' do
   describe 'merge ID'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      server.stub(:get_request_by_number).and_return(request)
       server.stub(:source_repo)
     end
 
@@ -214,7 +221,7 @@ describe 'Commands' do
   describe 'close ID'.pink do
 
     before(:each) do
-      subject.stub(:get_request_by_number).and_return(request)
+      server.stub(:get_request_by_number).and_return(request)
       server.stub(:source_repo).and_return('some_source')
     end
 

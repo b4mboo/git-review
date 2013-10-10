@@ -20,9 +20,55 @@ module GitReview
       if git_call('rev-parse --show-toplevel').strip.empty?
         raise ::GitReview::InvalidGitRepositoryError
       else
-        add_pull_refspec
         load_config
       end
+    end
+
+    # List all available remotes.
+    def remotes
+      git_call('remote').split("\n")
+    end
+
+    # Determine whether a remote with a given name exists?
+    def remote_exists?(name)
+      remotes.include? name
+    end
+
+    # Create a Hash with all remotes as keys and their urls as values.
+    def remotes_with_urls
+      result = {}
+      git_call('remote -vv').split("\n").each do |line|
+        entries = line.split("\t")
+        remote = entries.first
+        target_entry = entries.last.split(' ')
+        direction = target_entry.last[1..-2].to_sym
+        target_url = target_entry.first
+        result[remote] ||= {}
+        result[remote][direction] = target_url
+      end
+      result
+    end
+
+    # Collect all remotes for a given url.
+    def remotes_for_url(remote_url)
+      result = remotes_with_urls.collect do |remote, urls|
+        remote if urls.values.all? { |url| url == remote_url }
+      end
+      result.compact
+    end
+
+    # Find or create the correct remote for a fork with a given owner name.
+    def remote_for_request(request)
+      repo_owner = request.head.repo.owner.login
+      remote_url = server.remote_url_for(repo_owner)
+      remotes = remotes_for_url(remote_url)
+      if remotes.empty?
+        remote = "review_#{repo_owner}"
+        git_call("remote add #{remote} #{remote_url}", debug_mode, true)
+      else
+        remote = remotes.first
+      end
+      remote
     end
 
     # @return [Array<String>] all existing branches
@@ -199,14 +245,6 @@ module GitReview
       # If they are different, but we are on master, we should still to switch
       # to a separate branch (since master makes for a poor feature branch).
       source_branch != target_branch && source_branch != 'master'
-    end
-
-    # add remote.origin.fetch to check out pull request locally
-    # see {https://help.github.com/articles/checking-out-pull-requests-locally}
-    def add_pull_refspec
-      refspec = '+refs/pull/*/head:refs/remotes/origin/pr/*'
-      fetch_config = "config --local --add remote.origin.fetch #{refspec}"
-      git_call(fetch_config, false) unless config_list.include?(refspec)
     end
 
     def load_config
