@@ -16,8 +16,6 @@ module GitReview
       attr_reader :github
       attr_accessor :source_repo
 
-      # acts like a singleton class but it's actually not
-      # use ::GitReview::Provider::Github.instance everywhere except in tests
       def self.instance
         @instance ||= new
       end
@@ -26,8 +24,7 @@ module GitReview
         configure_access
       end
 
-      # setup connection with Github via OAuth
-      # @return [String] the username logged in
+      # @return [String] Authenticated username
       def configure_access
         if settings.oauth_token && settings.username
           @github = Octokit::Client.new(
@@ -35,6 +32,7 @@ module GitReview
             access_token: settings.oauth_token,
             auto_traversal: true
           )
+
           @github.login
         else
           configure_oauth
@@ -53,7 +51,7 @@ module GitReview
       #   of pull_request can be avoided.
       def request_exists?(number, state='open')
         return false if number.nil?
-        request = @github.pull_request(source_repo, number)
+        request = github.pull_request(source_repo, number)
         request.state == state ? request : false
       rescue Octokit::NotFound
         false
@@ -61,23 +59,23 @@ module GitReview
 
       def request_exists_for_branch?(upstream=false, branch=local.source_branch)
         target_repo = local.target_repo(upstream)
-        @github.pull_requests(target_repo).any? { |r|
+        github.pull_requests(target_repo).any? { |r|
           r.head.ref == branch
         }
       end
 
       # an alias to pull_requests
       def current_requests(repo=source_repo)
-        @github.pull_requests(repo)
+        github.pull_requests(repo)
       end
 
       # a more detailed collection of requests
       def current_requests_full(repo=source_repo)
         threads = []
         requests = []
-        @github.pull_requests(repo).each do |req|
+        github.pull_requests(repo).each do |req|
           threads << Thread.new {
-            requests << @github.pull_request(repo, req.number)
+            requests << github.pull_request(repo, req.number)
           }
         end
         threads.each { |t| t.join }
@@ -119,8 +117,8 @@ module GitReview
       end
 
       def commit_discussion(number)
-        pull_commits = @github.pull_commits(source_repo, number)
-        repo = @github.pull_request(source_repo, number).head.repo.full_name
+        pull_commits = github.pull_commits(source_repo, number)
+        repo = github.pull_request(source_repo, number).head.repo.full_name
         discussion = ["Commits on pull request:\n\n"]
         discussion += pull_commits.collect { |commit|
           # commit message
@@ -134,7 +132,7 @@ module GitReview
           result = [output]
 
           # comments on commit
-          comments = @github.commit_comments(repo, commit.sha)
+          comments = github.commit_comments(repo, commit.sha)
           result + comments.collect { |comment|
             name = comment.user.login
             output = "\e[35m#{name}\e[m "
@@ -152,8 +150,8 @@ module GitReview
       end
 
       def issue_discussion(number)
-        comments = @github.issue_comments(source_repo, number) +
-            @github.review_comments(source_repo, number)
+        comments = github.issue_comments(source_repo, number) +
+            github.review_comments(source_repo, number)
         discussion = ["\nComments on pull request:\n\n"]
         discussion += comments.collect { |comment|
           name = comment.user.login
@@ -173,7 +171,7 @@ module GitReview
       # get the number of comments, including comments on commits
       def comments_count(request)
         issue_c = request.comments + request.review_comments
-        commits_c = @github.pull_commits(source_repo, request.number).
+        commits_c = github.pull_commits(source_repo, request.number).
             inject(0) { |sum, c| sum + c.commit.comment_count }
         issue_c + commits_c
       end
@@ -197,15 +195,15 @@ module GitReview
 
       # delegate methods that interact with Github to Octokit client
       def method_missing(method, *args)
-        if @github.respond_to?(method)
-          @github.send(method, *args)
+        if github.respond_to?(method)
+          github.send(method, *args)
         else
           super
         end
       end
 
       def respond_to?(method)
-        @github.respond_to?(method) || super
+        github.respond_to?(method) || super
       end
 
       def login

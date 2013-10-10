@@ -7,38 +7,24 @@ module GitReview
 
     attr_reader :provider
 
-    def_delegators(
-      :provider,
-      :configure_access,
-      :get_request_by_number,
-      :request_exists?,
-      :request_exists_for_branch?,
-      :current_requests,
-      :current_requests_full,
-      :update,
-      :repo_info_from_config,
-      :source_repo,
-      :commit_discussion,
-      :issue_discussion,
-      :comments_count,
-      :discussion,
-      :latest_request_number,
-      :request_number_by_title,
-      :login,
-      :request_url_for,
-      :remote_url_for,
-      :create_pull_request,
-      :add_comment,
-      :close_issue,
-      :repository
-    )
-
     def self.instance
       @instance ||= new
     end
 
     def initialize
       init_provider
+    end
+
+    def method_missing(method, *args)
+      if provider.respond_to?(method)
+        provider.send(method, *args)
+      else
+        super
+      end
+    end
+
+    def respond_to?(method)
+      provider.respond_to?(method) || super
     end
 
     private
