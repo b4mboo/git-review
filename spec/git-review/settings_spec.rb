@@ -7,20 +7,21 @@ describe 'Settings' do
 
   describe '#initialize' do
 
-    subject { ::GitReview::Settings }
+    subject { ::GitReview::Settings.new }
 
     it 'reads options from a YML file' do
-      Dir.stub(:home).and_return(home_dir)
+      subject.stub(:file).and_return(config_file)
       File.stub(:exists?).with(config_file).and_return(true)
       YAML.should_receive(:load_file).with(config_file)
-      subject.new
+      subject.foobar
     end
 
   end
 
   context 'when config file is loaded' do
 
-    subject { ::GitReview::Settings.new }
+    subject { ::GitReview::Settings }
+    let(:value) { "foobar" }
 
     before(:each) do
       Dir.stub(:home).and_return(home_dir)
@@ -29,15 +30,15 @@ describe 'Settings' do
     end
 
     it 'allows to save changes back to the file' do
-      File.should_receive(:open).with(config_file, 'w')
-      subject.save!
+      File.should_receive(:write).with(config_file, "--- {}\n")
+      subject.new.save!
     end
 
     it 'offers convenient access to config options' do
-      value = 'bar'
-      subject.foo = value
-      subject.instance_variable_get(:@config)[:foo].should == value
-      subject.foo.should == value
+      setting = subject.new
+      setting.foo = value
+      setting.instance_variable_get(:@config)[:foo].should == value
+      setting.foo.should eq value
     end
 
   end

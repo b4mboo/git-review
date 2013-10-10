@@ -1,5 +1,3 @@
-require 'hashie'
-
 shared_context 'request_context' do
 
   let(:source_repo) { '/' }
@@ -23,27 +21,27 @@ shared_context 'request_context' do
 
   let(:request) {
     Hashie::Mash.new(
-        html_url: html_url,
-        number: request_number,
-        state: 'open',
-        title: title,
-        body: body,
-        updated_at: Time.now.to_s,
-        head: {
-          sha: head_sha,
-          ref: head_ref,
-          label: head_label,
-          repo: {
-            name: repo_name,
-            full_name: head_repo,
-            owner: {
-              login: user_login
-            }
-          },
-          user: { login: user_login }
+      html_url: html_url,
+      number: request_number,
+      state: 'open',
+      title: title,
+      body: body,
+      updated_at: Time.now.to_s,
+      head: {
+        sha: head_sha,
+        ref: head_ref,
+        label: head_label,
+        repo: {
+          name: repo_name,
+          full_name: head_repo,
+          owner: {
+            login: user_login
+          }
         },
-        comments: 0,
-        review_comments: 0
+        user: { login: user_login }
+      },
+      comments: 0,
+      review_comments: 0
     )
   }
 
