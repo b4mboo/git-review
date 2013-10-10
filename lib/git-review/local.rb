@@ -91,9 +91,10 @@ module GitReview
 
     # @return [Array<String>] all review branches with 'review_' prefix
     def review_branches
-      all_branches.collect { |branch|
+      all_branches.collect { |entry|
         # only use uniq branch names (no matter if local or remote)
-        branch.split('/').last if branch.index('review_') == 0
+        branch_name = entry.split('/').last
+        branch_name if branch_name.index('review_') == 0
       }.compact.uniq
     end
 
