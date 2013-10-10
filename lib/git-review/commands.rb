@@ -208,9 +208,9 @@ module GitReview
     private
 
     def request_summary(request)
-      line = request.number.review_ljust(8)
+      line = request.number.to_s.review_ljust(8)
       line << request.updated_at.review_time.review_ljust(11)
-      line << server.comments_count(request).review_ljust(10)
+      line << server.comments_count(request).to_s.review_ljust(10)
       line << request.title.review_ljust(91)
       line
     end
