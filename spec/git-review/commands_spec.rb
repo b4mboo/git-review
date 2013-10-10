@@ -242,9 +242,9 @@ describe 'Commands' do
 
   describe 'prepare'.pink do
 
-    context 'when on master/target branch' do
+    context 'called from master / target branch' do
 
-      before(:each) do
+      before :each do
         local.stub(:source_branch).and_return('master')
         local.stub(:target_branch).and_return('master')
         subject.stub(:git_call)
@@ -275,7 +275,7 @@ describe 'Commands' do
 
     end
 
-    context 'when on feature branch' do
+    context 'called from a feature branch' do
 
       before(:each) do
         local.stub(:source_branch).and_return(branch_name)
@@ -324,7 +324,7 @@ describe 'Commands' do
 
       context 'when there are no uncommitted changes' do
 
-        before(:each) do
+        before :each do
           local.stub(:uncommitted_changes?).and_return(false)
           subject.stub(:git_call)
         end
@@ -334,13 +334,13 @@ describe 'Commands' do
           subject.should_receive(:git_call).with(
               "push --set-upstream origin #{branch_name}", false, true
           )
-          subject.should_receive(:create_pull_request)
+          server.should_receive :send_pull_request
           subject.create
         end
 
         it 'does not create pull request if it already exists for the branch' do
           server.stub(:request_exists_for_branch?).with(false).and_return(true)
-          subject.should_not_receive(:create_pull_request)
+          server.should_not_receive :send_pull_request
           subject.should_receive(:puts).with(/already exists/)
           subject.should_receive(:puts).with(/`git push`/)
           subject.create(false)
@@ -348,7 +348,7 @@ describe 'Commands' do
 
         it 'lets the user return to the branch she was working on before' do
           server.stub(:request_exists_for_branch?).and_return(false)
-          subject.stub(:create_pull_request)
+          server.stub :send_pull_request
           subject.should_receive(:git_call).with('checkout master')
           subject.create
         end
@@ -374,7 +374,7 @@ describe 'Commands' do
       it 'does not create pull request if one already exists for the branch' do
         local.stub(:new_commits?).and_return(true)
         server.stub(:request_exists_for_branch?).with(true).and_return(true)
-        subject.should_not_receive(:create_pull_request)
+        server.should_not_receive :send_pull_request
         subject.should_receive(:puts).with(/already exists/)
         subject.should_receive(:puts).with(/`git push`/)
         subject.create(true)
@@ -382,40 +382,10 @@ describe 'Commands' do
 
       it 'checks if current branch differ from upstream master' do
         local.should_receive(:new_commits?).with(true).and_return(false)
-        subject.should_not_receive(:create_pull_request)
+        server.should_not_receive :send_pull_request
         subject.create(true)
       end
 
-    end
-
-  end
-
-  describe '#create_pull_request' do
-
-    before(:each) do
-      server.stub(:latest_request_number).and_return(1)
-      subject.stub(:create_title_and_body).and_return(['title', 'body'])
-      local.stub(:target_repo).and_return('parent:repo')
-      local.stub(:head).and_return('local:repo')
-      local.stub(:target_branch).and_return('master')
-      subject.stub(:git_call)
-    end
-
-    it 'sends pull request to upstream repo' do
-      server.should_receive(:create_pull_request).
-          with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      server.stub(:request_number_by_title).and_return(2)
-      subject.should_receive(:puts).with(/Successfully/)
-      subject.should_receive(:puts).with(/pull\/2/)
-      subject.send(:create_pull_request, true)
-    end
-
-    it 'checks if pull request is indeed created' do
-      server.should_receive(:create_pull_request).
-          with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      server.stub(:request_number_by_title).and_return(nil)
-      subject.should_receive(:puts).with(/not created for parent:repo/)
-      subject.send(:create_pull_request, true)
     end
 
   end

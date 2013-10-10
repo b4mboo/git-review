@@ -119,7 +119,7 @@ module GitReview
     #   changes, more often than not, they don't. Therefore we create a branch
     #   for them, to be able to use code review the way it is intended.
     # @return [Array(String, String)] the original branch and the local branch
-    def prepare(new=false, name=nil)
+    def prepare(new = false, name = nil)
       # remember original branch the user was currently working on
       original_branch = local.source_branch
       if new || !local.on_feature_branch?
@@ -133,7 +133,7 @@ module GitReview
     # Create a new request.
     # TODO: Support creating requests to other repositories and branches (like
     #   the original repo, this has been forked from).
-    def create(upstream=false)
+    def create(upstream = false)
       # prepare original_branch and local_branch
       original_branch, local_branch = prepare
       # don't create request with uncommitted changes in current branch
@@ -151,7 +151,7 @@ module GitReview
         end
         # push latest commits to the remote branch (create if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
-        create_pull_request(upstream)
+        server.send_pull_request(upstream)
         # return to the user's original branch
         # FIXME: keep track of original branch etc
         git_call("checkout #{original_branch}")
@@ -296,32 +296,6 @@ module GitReview
         local_branch
       end
     end
-
-    # FIXME: move create pull request into provider
-    def create_pull_request(to_upstream=false)
-      target_repo = local.target_repo(to_upstream)
-      head = local.head
-      base = local.target_branch
-      title, body = create_title_and_body(base)
-
-      # gather information before creating pull request
-      lastest_number = server.latest_request_number(target_repo)
-
-      # create the actual pull request
-      server.create_pull_request(target_repo, base, head, title, body)
-      # switch back to target_branch and check for success
-      git_call("checkout #{base}")
-
-      # make sure the new pull request is indeed created
-      new_number = server.request_number_by_title(title, target_repo)
-      if new_number && new_number > lastest_number
-        puts "Successfully created new request ##{new_number}"
-        puts server.request_url_for target_repo, new_number
-      else
-        puts "Pull request was not created for #{target_repo}."
-      end
-    end
-
 
     # @return [Array(String, String)] the title and the body of pull request
     def create_title_and_body(target_branch)
