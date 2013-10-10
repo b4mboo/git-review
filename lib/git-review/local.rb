@@ -73,7 +73,7 @@ module GitReview
 
     # @return [Array<String>] all existing branches
     def all_branches
-      git_call('branch -a').split("\n").collect { |s| s.strip }
+      git_call('branch -a').gsub(' * ', '').split("\n").collect { |s| s.strip }
     end
 
     # @return [Array<String>] all open requests' branches shouldn't be deleted

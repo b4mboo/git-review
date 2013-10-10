@@ -118,6 +118,12 @@ describe 'Local' do
       subject.branch_exists?(:local, 'foo').should be_true
     end
 
+    it 'removes the asterisk from the current branch' do
+      subject.should_receive(:git_call).with('branch -a').
+        and_return("  master\n  * other\n")
+      subject.all_branches.should == ['master', 'other']
+    end
+
   end
 
   describe 'deleting a branch' do
