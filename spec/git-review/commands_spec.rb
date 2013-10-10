@@ -429,6 +429,12 @@ describe 'Commands' do
       local.stub(:target_branch).and_return(target_branch)
     end
 
+    it 'allows only valid request numbers as ' + 'ID'.pink do
+      provider.stub(:request_exists?).and_return(false)
+      expect { subject.close invalid_number }.
+        to raise_error(::GitReview::InvalidRequestIDError)
+    end
+
     it 'switches back to the target branch (mostly master)' do
       subject.should_receive(:git_call).with("checkout #{target_branch}")
       local.should_receive :clean_all
@@ -446,12 +452,12 @@ describe 'Commands' do
       subject.clean request_number
     end
 
-    it 'removes all obsolete branches with review prefix' do
+    it 'removes all obsolete branches with review prefix when using ' + '--all'.pink do
       local.should_receive :clean_all
       subject.clean(nil, false, true)
     end
 
-    it 'deletes a branch with unmerged changes with --force option' do
+    it 'deletes a branch with unmerged changes when using ' + '--force'.pink do
       local.should_receive(:clean_single).with(request_number, true)
       subject.clean(request_number, true)
     end
