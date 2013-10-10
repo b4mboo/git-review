@@ -71,12 +71,14 @@ module GitReview
       remote
     end
 
-    # Remove obsolete remotes with review prefix and prune remaining remotes.
+    # Remove obsolete remotes with review prefix.
     def clean_remotes
-      remotes.each do |remote|
-        task = remote.index('review_') == 0 ? 'remove' : 'prune'
-        git_call "remote #{task} #{remote}"
-      end
+      remotes.each { |remote| git_call "remote remove #{remote}" }
+    end
+
+    # Prune all configured remotes.
+    def prune_remotes
+      remotes.each { |remote| git_call "remote prune #{remote}" }
     end
 
     # @return [Array<String>] all existing branches

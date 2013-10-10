@@ -73,11 +73,10 @@ describe 'Local' do
       subject.clean_remotes
     end
 
-    it 'prunes remaining remotes (without review prefix) after cleaning up' do
-      remote = 'origin'
+    it 'prunes all configured remotes' do
       subject.should_receive(:remotes).and_return([remote])
       subject.should_receive(:git_call).with("remote prune #{remote}")
-      subject.clean_remotes
+      subject.prune_remotes
     end
 
   end

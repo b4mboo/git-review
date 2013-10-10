@@ -164,14 +164,15 @@ module GitReview
     # already closed requests).
     def clean(number = nil, force = false, all = false)
       git_call "checkout #{local.target_branch}"
-      # Remove review remotes and prune the rest.
-      local.clean_remotes
+      local.prune_remotes
       # Determine strategy to clean.
       if all
         local.clean_all
       else
         local.clean_single(number, force)
       end
+      # Remove al review remotes without existing local branches.
+      local.clean_remotes
     end
 
     # Start a console session (used for debugging)

@@ -429,11 +429,18 @@ describe 'Commands' do
     before :each do
       subject.stub(:git_call).with(include 'checkout')
       local.stub :clean_remotes
+      local.stub :prune_remotes
       local.stub(:target_branch).and_return(target_branch)
     end
 
     it 'switches back to the target branch (mostly master)' do
       subject.should_receive(:git_call).with("checkout #{target_branch}")
+      local.should_receive :clean_all
+      subject.clean(nil, false, true)
+    end
+
+    it 'prunes all existing remotes' do
+      local.should_receive(:prune_remotes)
       local.should_receive :clean_all
       subject.clean(nil, false, true)
     end
