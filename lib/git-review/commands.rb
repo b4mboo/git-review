@@ -56,7 +56,11 @@ module GitReview
       branch_name = request.head.ref
       if branch
         if local.branch_exists?(:local, branch_name)
-          git_call "checkout #{branch_name}"
+          if local.source_branch == branch_name
+            puts "On branch #{branch_name}."
+          else
+            git_call "checkout #{branch_name}"
+          end
         else
           git_call "checkout --track -b #{branch_name} #{remote}/#{branch_name}"
         end
