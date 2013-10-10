@@ -432,11 +432,11 @@ describe 'Commands' do
 
     it 'removes a single obsolete branch with review prefix' do
       local.should_receive(:clean_single).with(request_number, false)
-      subject.clean(request_number)
+      subject.clean request_number
     end
 
     it 'removes all obsolete branches with review prefix' do
-      local.should_receive(:clean_all)
+      local.should_receive :clean_all
       subject.clean(nil, false, true)
     end
 
@@ -444,6 +444,10 @@ describe 'Commands' do
       local.should_receive(:clean_single).with(request_number, true)
       subject.clean(request_number, true)
     end
+
+    it 'prunes all configured remotes'
+
+    it 'removes all remotes with review prefix'
 
   end
 

@@ -159,22 +159,24 @@ module GitReview
       end
     end
 
-    # delete obsolete branches (left over from already closed requests)
-    def clean(number=nil, force=false, all=false)
-      # pruning is needed to remove deleted branches from your local track
-      git_call('remote prune origin')
-      # determine strategy to clean.
-      if all
-        local.clean_all
-      else
-        local.clean_single(number, force)
-      end
+    # Remove remotes with 'review' prefix (left over from previous reviews).
+    # Prune all existing remotes and delete obsolete branches (left over from
+    # already closed requests).
+    def clean(number = nil, force = false, all = false)
       # FIXME: cleanup remotes.
       # unless remote == 'origin'
       #   git_call "checkout #{local.target_branch}"
       #   git_call "branch -D #{branch_name}"
       #   git_call "remote remove #{remote}" if remote_exist.call
       # end
+      # pruning is needed to remove deleted branches from your local track
+      git_call 'remote prune origin'
+      # determine strategy to clean.
+      if all
+        local.clean_all
+      else
+        local.clean_single(number, force)
+      end
     end
 
     # Start a console session (used for debugging)
