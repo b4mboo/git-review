@@ -36,7 +36,7 @@ module GitReview
       when github_provider?
         GitReview::Provider::Github.new
       else
-        raise InvalidGitProviderError.new
+        raise ::GitReview::InvalidGitProviderError
       end
     end
 

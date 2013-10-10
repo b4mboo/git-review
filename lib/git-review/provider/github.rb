@@ -13,37 +13,20 @@ module GitReview
 
       include ::GitReview::Helpers
 
-      attr_reader :github
-      attr_accessor :source_repo
-
-      def self.instance
-        @instance ||= new
-      end
-
-      def initialize
-        configure_access
-      end
-
       # @return [String] Authenticated username
       def configure_access
         if settings.oauth_token && settings.username
-          @github = Octokit::Client.new(
+          @client = Octokit::Client.new(
             login: settings.username,
             access_token: settings.oauth_token,
             auto_traversal: true
           )
 
-          @github.login
+          @client.login
         else
           configure_oauth
           configure_access
         end
-      end
-
-      # Ensure we find the right request.
-      def get_request_by_number(request_number)
-        request = request_exists?(request_number)
-        request || (raise ::GitReview::InvalidRequestIDError)
       end
 
       # @return [Boolean, Hash] the specified request if exists, otherwise false.
@@ -51,7 +34,7 @@ module GitReview
       #   of pull_request can be avoided.
       def request_exists?(number, state='open')
         return false if number.nil?
-        request = github.pull_request(source_repo, number)
+        request = client.pull_request(source_repo, number)
         request.state == state ? request : false
       rescue Octokit::NotFound
         false
@@ -59,66 +42,32 @@ module GitReview
 
       def request_exists_for_branch?(upstream=false, branch=local.source_branch)
         target_repo = local.target_repo(upstream)
-        github.pull_requests(target_repo).any? { |r|
+        client.pull_requests(target_repo).any? { |r|
           r.head.ref == branch
         }
       end
 
       # an alias to pull_requests
       def current_requests(repo=source_repo)
-        github.pull_requests(repo)
+        client.pull_requests(repo)
       end
 
       # a more detailed collection of requests
       def current_requests_full(repo=source_repo)
         threads = []
         requests = []
-        github.pull_requests(repo).each do |req|
+        client.pull_requests(repo).each do |req|
           threads << Thread.new {
-            requests << github.pull_request(repo, req.number)
+            requests << client.pull_request(repo, req.number)
           }
         end
         threads.each { |t| t.join }
         requests
       end
 
-      def update
-        git_call('fetch origin')
-      end
-
-      # @return [Array(String, String)] user and repo name from local git config
-      def repo_info_from_config
-        git_config = local.config
-        url = git_config['remote.origin.url']
-        raise ::GitReview::InvalidGitRepositoryError if url.nil?
-
-        user, project = url_matching(url)
-        # if there are no results yet, look for 'insteadof' substitutions
-        #   in URL and try again
-        unless user && project
-          insteadof_url, true_url = insteadof_matching(git_config, url)
-          if insteadof_url and true_url
-            url = url.sub(insteadof_url, true_url)
-            user, project = url_matching(url)
-          end
-        end
-        [user, project]
-      end
-
-      # @return [String] the source repo
-      def source_repo
-        # cache source_repo
-        if @source_repo
-          @source_repo
-        else
-          user, repo = repo_info_from_config
-          @source_repo = "#{user}/#{repo}" if user && repo
-        end
-      end
-
       def commit_discussion(number)
-        pull_commits = github.pull_commits(source_repo, number)
-        repo = github.pull_request(source_repo, number).head.repo.full_name
+        pull_commits = client.pull_commits(source_repo, number)
+        repo = client.pull_request(source_repo, number).head.repo.full_name
         discussion = ["Commits on pull request:\n\n"]
         discussion += pull_commits.collect { |commit|
           # commit message
@@ -132,7 +81,7 @@ module GitReview
           result = [output]
 
           # comments on commit
-          comments = github.commit_comments(repo, commit.sha)
+          comments = client.commit_comments(repo, commit.sha)
           result + comments.collect { |comment|
             name = comment.user.login
             output = "\e[35m#{name}\e[m "
@@ -150,8 +99,8 @@ module GitReview
       end
 
       def issue_discussion(number)
-        comments = github.issue_comments(source_repo, number) +
-            github.review_comments(source_repo, number)
+        comments = client.issue_comments(source_repo, number) +
+            client.review_comments(source_repo, number)
         discussion = ["\nComments on pull request:\n\n"]
         discussion += comments.collect { |comment|
           name = comment.user.login
@@ -171,7 +120,7 @@ module GitReview
       # get the number of comments, including comments on commits
       def comments_count(request)
         issue_c = request.comments + request.review_comments
-        commits_c = github.pull_commits(source_repo, request.number).
+        commits_c = client.pull_commits(source_repo, request.number).
             inject(0) { |sum, c| sum + c.commit.comment_count }
         issue_c + commits_c
       end
@@ -193,23 +142,6 @@ module GitReview
         request.number if request
       end
 
-      # delegate methods that interact with Github to Octokit client
-      def method_missing(method, *args)
-        if github.respond_to?(method)
-          github.send(method, *args)
-        else
-          super
-        end
-      end
-
-      def respond_to?(method)
-        github.respond_to?(method) || super
-      end
-
-      def login
-        settings.username
-      end
-
       # FIXME: Remove this method after merging create_pull_request from commands.rb, currently no specs
       def request_url_for(target_repo, request_number)
         "https://github.com/#{target_repo}/pull/#{request_number}"
@@ -220,7 +152,6 @@ module GitReview
       def remote_url_for(user_name)
         "git@github.com:#{user_name}/#{repo_info_from_config.last}.git"
       end
-
 
       private
 
@@ -309,14 +240,6 @@ module GitReview
           url.index(insteadof_url) and true_url != nil
         }
         first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
-      end
-
-      def local
-        @local ||= ::GitReview::Local.instance
-      end
-
-      def settings
-        @settings ||= ::GitReview::Settings.instance
       end
 
     end
