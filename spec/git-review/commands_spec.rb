@@ -240,46 +240,58 @@ describe 'Commands' do
 
   end
 
-  describe 'prepare'.pink do
+  describe 'prepare (--new) (feature name)'.pink do
 
     before :each do
-      local.stub(:source_branch).and_return('master')
-      local.stub(:target_branch).and_return('master')
-      subject.stub(:git_call)
+      local.stub(:source_branch).and_return(target_branch)
+      local.stub(:on_feature_branch?).and_return(false)
+      # TODO: Maybe we should stub git_call in general for all tests.
+      # That way we'd be sure that no unintended changes are made to the repo
+      # whenever we have a faulty test run.
+      subject.stub :git_call
       subject.stub(:create_feature_name).and_return(branch_name)
     end
 
     it 'creates a local branch with review prefix' do
-      subject.should_receive(:git_call).with("checkout -b #{branch_name}")
+      local.stub(:source_branch).and_return(target_branch)
+      local.stub(:on_feature_branch?).and_return(false)
+      subject.should_receive(:move_uncommitted_changes).
+        with(target_branch, feature_name)
+      subject.prepare(false, feature_name)
+    end
+
+    it 'creates a new branch off an existing feature branch by adding ' + '--new'.pink do
+      local.stub(:source_branch).and_return(branch_name)
+      local.stub(:on_feature_branch?).and_return(true)
+      subject.should_receive(:move_uncommitted_changes).
+        with(branch_name, feature_name)
       subject.prepare(true, feature_name)
-    end
-
-    it 'lets the user choose a name for the branch' do
-      subject.should_receive(:gets).and_return(feature_name)
-      subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-      subject.prepare
-    end
-
-    it 'creates a local branch when TARGET_BRANCH is defined' do
-      ENV.stub(:[]).with('TARGET_BRANCH').and_return(custom_target_name)
-      subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-      subject.prepare(true, feature_name)
-    end
-
-    it 'sanitizes provided branch names' do
-      subject.stub(:gets).and_return('wild stuff')
-      subject.send(:get_branch_name).should == 'wild_stuff'
     end
 
     it 'moves uncommitted changes to the new branch' do
+      local.stub(:source_branch).and_return(target_branch)
+      local.stub(:on_feature_branch?).and_return(false)
+      subject.stub(:get_branch_name).and_return(branch_name)
+      subject.should_receive(:move_uncommitted_changes).
+        with(target_branch, branch_name).and_return(branch_name)
+      subject.prepare(false, nil).should == [target_branch, branch_name]
+    end
+
+    it 'lets the user choose a name for the branch interactively' do
+      local.stub(:source_branch).and_return(target_branch)
+      local.stub(:on_feature_branch?).and_return(false)
+      subject.should_receive(:get_branch_name).and_return(branch_name)
+      subject.should_receive(:move_uncommitted_changes).
+        with(target_branch, branch_name).and_return(branch_name)
+      subject.prepare(true, nil).should == [target_branch, branch_name]
+    end
+
+    it 'allows to provide an additional parameter as a ' + 'feature name'.pink do
       local.stub(:source_branch).and_return(branch_name)
-      local.stub(:target_branch).and_return('master')
-      subject.stub(:git_call)
-      subject.stub(:create_feature_name).and_return(branch_name)
-      local.stub(:uncommitted_changes?).and_return(true)
-      subject.should_receive(:git_call).with('stash')
-      subject.should_receive(:git_call).with('reset --hard origin/master')
-      subject.send(:move_uncommitted_changes, 'master', feature_name)
+      local.stub(:on_feature_branch?).and_return(true)
+      subject.should_receive(:move_uncommitted_changes).
+        with(branch_name, 'wild_stuff')
+      subject.prepare(true, 'wild stuff')
     end
 
   end
@@ -383,7 +395,7 @@ describe 'Commands' do
       subject.clean(nil, false, true)
     end
 
-    it 'deletes a branch with unmerged changes when using ' + '--force'.pink do
+    it 'deletes a branch with unmerged changes when using ' + 'ID --force'.pink do
       local.should_receive(:clean_single).with(request_number, true)
       subject.clean(request_number, true)
     end

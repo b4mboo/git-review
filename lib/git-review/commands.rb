@@ -115,19 +115,23 @@ module GitReview
     end
 
     # Prepare local repository to create a new request.
-    # People should work on local branches, but especially for single commit
-    #   changes, more often than not, they don't. Therefore we create a branch
-    #   for them, to be able to use code review the way it is intended.
-    # @return [Array(String, String)] the original branch and the local branch
-    def prepare(new = false, name = nil)
-      # remember original branch the user was currently working on
-      original_branch = local.source_branch
-      if new || !local.on_feature_branch?
-        local_branch = move_uncommitted_changes(local.target_branch, name)
+    # NOTE:
+    #   People should work on local branches, but especially for single commit
+    #   changes, more often than not, they don't. Therefore this is called
+    #   automatically before creating a pull request, such that we create a
+    #   proper feature branch for them, to be able to use code review the way it
+    #   is intended.
+    def prepare(force_new_branch = false, feature_name = nil)
+      current_branch = local.source_branch
+      if force_new_branch || !local.on_feature_branch?
+        feature_name ||= get_branch_name
+        feature_branch = move_uncommitted_changes(
+          current_branch, local.sanitize_branch_name(feature_name)
+        )
       else
-        local_branch = original_branch
+        feature_branch = current_branch
       end
-      [original_branch, local_branch]
+      [current_branch, feature_branch]
     end
 
     # Create a new request.
@@ -268,8 +272,7 @@ module GitReview
     # @return [String] sanitized branch name
     def get_branch_name
       puts 'Please provide a name for the branch:'
-      branch_name = gets.chomp
-      branch_name.gsub(/\W+/, '_').downcase
+      local.sanitize_branch_name gets.chomp
     end
 
     # @return [String] the complete feature branch name
@@ -277,12 +280,11 @@ module GitReview
       "review_#{Time.now.strftime("%y%m%d")}_#{new_branch}"
     end
 
-    # move uncommitted changes from target branch to local branch
+    # Move uncommitted changes from target_branch to a feature_branch.
     # @return [String] the new local branch uncommitted changes are moved to
-    def move_uncommitted_changes(target_branch, new_branch)
-      new_branch ||= get_branch_name
-      local_branch = create_feature_name(new_branch)
-      git_call("checkout -b #{local_branch}")
+    def move_uncommitted_changes(target_branch, feature_name)
+      local_branch = create_feature_name(feature_name)
+      git_call "checkout -b #{local_branch}"
       # make sure we are on the feature branch
       if local.source_branch == local_branch
         # stash any uncommitted changes

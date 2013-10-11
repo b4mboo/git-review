@@ -308,4 +308,8 @@ describe 'Local' do
 
   end
 
+  it 'sanitizes branch names' do
+    subject.sanitize_branch_name('Wild Stuff !').should == 'wild_stuff_'
+  end
+
 end

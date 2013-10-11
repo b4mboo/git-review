@@ -272,6 +272,11 @@ module GitReview
       source_branch != target_branch && source_branch != 'master'
     end
 
+    # Remove all non word characters and turn them into underscores.
+    def sanitize_branch_name(name)
+      name.gsub(/\W+/, '_').downcase
+    end
+
     def load_config
       @config = {}
       config_list.split("\n").each do |line|
