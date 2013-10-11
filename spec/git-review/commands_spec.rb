@@ -295,52 +295,73 @@ describe 'Commands' do
     let(:upstream) { Hashie::Mash.new(parent: {full_name: 'upstream'}) }
 
     before :each do
+      subject.stub :git_call
       subject.stub(:prepare).and_return([target_branch, branch_name])
       local.stub(:source_branch).and_return(branch_name)
       local.stub(:target_branch).and_return(target_branch)
       local.stub(:uncommitted_changes?).and_return(false)
-      subject.stub :git_call
-      local.stub(:new_commits?).with(false).and_return(true)
     end
 
     it 'pushes the commits to a remote branch and creates a pull request' do
-      server.stub(:request_exists_for_branch?).and_return(false)
-      subject.should_receive(:git_call).with(
-        "push --set-upstream origin #{branch_name}", false, true
-      )
-      server.should_receive :send_pull_request
-      subject.create
+      upstream_switch = false
+      local.stub(:new_commits?).with(upstream_switch).and_return(true)
+      server.stub(:request_exists_for_branch?).with(upstream_switch).
+        and_return(false)
+      local.should_receive(:remote_for_branch).with(branch_name).
+        and_return('origin')
+      subject.should_receive(:git_call).
+        with("push --set-upstream origin #{branch_name}", false, true)
+      server.should_receive(:send_pull_request).with(upstream_switch)
+      subject.create upstream_switch
     end
 
     it 'creates the request against the repo it has been forked from by adding ' + '--upstream'.pink do
-      server.stub(:repository).and_return(upstream)
-      local.stub(:new_commits?).and_return(true)
-      server.stub(:request_exists_for_branch?).with(true).and_return(true)
-      server.should_not_receive :send_pull_request
-      subject.should_receive(:puts).with(/already exists/)
-      subject.should_receive(:puts).with(/`git push`/)
-      subject.create(true)
+      upstream_switch = true
+      local.stub(:new_commits?).with(upstream_switch).and_return(true)
+      server.stub(:request_exists_for_branch?).with(upstream_switch).
+        and_return(false)
+      local.should_receive(:remote_for_branch).with(branch_name).
+        and_return('origin')
+      subject.should_receive(:git_call).
+        with("push --set-upstream origin #{branch_name}", false, true)
+      server.should_receive(:send_pull_request).with(upstream_switch)
+      subject.create upstream_switch
     end
 
     it 'does not create a pull request if one already exists for the branch' do
-      server.stub(:request_exists_for_branch?).with(false).and_return(true)
+      upstream_switch = double('upstream')
+      local.stub(:new_commits?).with(upstream_switch).and_return(true)
+      server.stub(:request_exists_for_branch?).with(upstream_switch).and_return(true)
       server.should_not_receive :send_pull_request
       subject.should_receive(:puts).with(/already exists/)
       subject.should_receive(:puts).with(/`git push`/)
-      subject.create(false)
+      subject.create upstream_switch
+    end
+
+    it 'does not create a pull request without any new commits on the branch' do
+      upstream_switch = double('upstream')
+      local.stub(:new_commits?).with(upstream_switch).and_return(false)
+      server.should_not_receive :send_pull_request
+      subject.should_receive(:puts).with(/Commit something first/)
+      subject.create upstream_switch
     end
 
     it 'warns the user about uncommitted changes' do
-      local.stub(:uncommitted_changes?).and_return(true)
+      local.should_receive(:uncommitted_changes?).and_return(true)
+      server.should_not_receive :send_pull_request
+      local.should_not_receive :new_commits?
       subject.should_receive(:puts).with(/uncommitted changes/)
       subject.create
     end
 
     it 'lets the user return to the branch she was working on before' do
-      server.stub(:request_exists_for_branch?).and_return(false)
+      upstream_switch = double('upstream')
+      local.stub(:new_commits?).with(upstream_switch).and_return(true)
+      server.stub(:request_exists_for_branch?).
+        with(upstream_switch).and_return(false)
       server.stub :send_pull_request
       subject.should_receive(:git_call).with('checkout master')
-      subject.create
+      subject.create upstream_switch
     end
 
   end

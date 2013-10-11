@@ -153,8 +153,10 @@ module GitReview
           return
         end
         # Push latest commits to the remote branch (create if necessary).
-        remote = local.remote_for_branch(local_branch)
-        git_call("push --set-upstream #{remote || 'origin'} #{local_branch}", debug_mode, true)
+        remote = local.remote_for_branch(local_branch) || 'origin'
+        git_call(
+          "push --set-upstream #{remote} #{local_branch}", debug_mode, true
+        )
         server.send_pull_request upstream
         # Return to the user's original branch.
         git_call "checkout #{original_branch}"
