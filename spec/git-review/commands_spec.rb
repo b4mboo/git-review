@@ -295,11 +295,11 @@ describe 'Commands' do
     let(:upstream) { Hashie::Mash.new(parent: {full_name: 'upstream'}) }
 
     before :each do
-      subject.stub(:prepare).and_return(['master', branch_name])
+      subject.stub(:prepare).and_return([target_branch, branch_name])
       local.stub(:source_branch).and_return(branch_name)
-      local.stub(:target_branch).and_return('master')
+      local.stub(:target_branch).and_return(target_branch)
       local.stub(:uncommitted_changes?).and_return(false)
-      subject.stub(:git_call)
+      subject.stub :git_call
       local.stub(:new_commits?).with(false).and_return(true)
     end
 

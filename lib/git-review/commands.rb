@@ -136,27 +136,28 @@ module GitReview
 
     # Create a new request.
     def create(upstream = false)
-      # prepare original_branch and local_branch
+      # Prepare original_branch and local_branch.
+      # TODO: Allow to use the same switches and parameters that prepare takes.
       original_branch, local_branch = prepare
-      # don't create request with uncommitted changes in current branch
+      # Don't create request with uncommitted changes in current branch.
       if local.uncommitted_changes?
         puts 'You have uncommitted changes.'
         puts 'Please stash or commit before creating the request.'
         return
       end
       if local.new_commits?(upstream)
-        # feature branch differs from local or upstream master
+        # Feature branch differs from local or upstream master.
         if server.request_exists_for_branch?(upstream)
           puts 'A pull request already exists for this branch.'
           puts 'Please update the request directly using `git push`.'
           return
         end
-        # push latest commits to the remote branch (create if necessary)
-        git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
-        server.send_pull_request(upstream)
-        # return to the user's original branch
-        # FIXME: keep track of original branch etc
-        git_call("checkout #{original_branch}")
+        # Push latest commits to the remote branch (create if necessary).
+        remote = local.remote_for_branch(local_branch)
+        git_call("push --set-upstream #{remote || 'origin'} #{local_branch}", debug_mode, true)
+        server.send_pull_request upstream
+        # Return to the user's original branch.
+        git_call "checkout #{original_branch}"
       else
         puts 'Nothing to push to remote yet. Commit something first.'
       end
