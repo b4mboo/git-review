@@ -68,10 +68,22 @@ describe 'Local' do
         with(user_login).and_return(remote_url)
       subject.should_receive(:remotes_for_url).
         with(remote_url).and_return([])
-      subject.should_receive(:git_call).with(
-        "remote add review_#{user_login} #{remote_url}", false, true
-      )
+      subject.should_receive(:git_call).
+        with("remote add review_#{user_login} #{remote_url}", false, true)
       subject.remote_for_request(request).should == remote
+    end
+
+    it 'finds an existing remote for a branch' do
+      subject.should_receive(:git_call).with('branch -lvv').and_return(
+        "#{branch_name}     00aa0a0 [#{remote}/#{branch_name}] Foo Bar\n"
+      )
+      subject.remote_for_branch(branch_name).should == remote
+    end
+
+    it 'returns nil for a local branch without a remote' do
+      subject.should_receive(:git_call).with('branch -lvv').
+        and_return("* #{branch_name}     00aa0a0 Foo Bar\n")
+      subject.remote_for_branch(branch_name).should == nil
     end
 
     it 'removes obsolete remotes with review prefix when cleaning up' do

@@ -89,10 +89,22 @@ module GitReview
 
     # Find all remotes which are currently referenced by local branches.
     def remotes_for_branches
-      remotes = git_call("branch -lvv").gsub('* ', '').split("\n").map do |line|
-        line.split(" ")[2][1..-2].split('/').first
+      remotes = git_call('branch -lvv').gsub('* ', '').split("\n").map do |line|
+        line.split(' ')[2][1..-2].split('/').first
       end
       remotes.uniq
+    end
+
+    # Finds the correct remote for a given branch name.
+    def remote_for_branch(branch_name)
+      git_call('branch -lvv').gsub('* ', '').split("\n").each do |line|
+        entries = line.split(' ')
+        next unless entries.first == branch_name
+        # Return the remote name or nil for local branches.
+        match = entries[2].match(%r(\[(.*)\]))
+        return match[1].split('/').first if match
+      end
+      nil
     end
 
     # @return [Array<String>] all existing branches
