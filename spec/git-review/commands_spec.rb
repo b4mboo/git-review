@@ -253,8 +253,6 @@ describe 'Commands' do
     end
 
     it 'creates a local branch with review prefix' do
-      local.stub(:source_branch).and_return(target_branch)
-      local.stub(:on_feature_branch?).and_return(false)
       subject.should_receive(:move_local_changes).
         with(target_branch, feature_name)
       subject.prepare(false, feature_name)
@@ -269,8 +267,6 @@ describe 'Commands' do
     end
 
     it 'moves uncommitted changes to the new branch' do
-      local.stub(:source_branch).and_return(target_branch)
-      local.stub(:on_feature_branch?).and_return(false)
       subject.stub(:get_branch_name).and_return(branch_name)
       subject.should_receive(:move_local_changes).
         with(target_branch, branch_name).and_return(branch_name)
@@ -278,8 +274,6 @@ describe 'Commands' do
     end
 
     it 'lets the user choose a name for the branch interactively' do
-      local.stub(:source_branch).and_return(target_branch)
-      local.stub(:on_feature_branch?).and_return(false)
       subject.should_receive(:get_branch_name).and_return(branch_name)
       subject.should_receive(:move_local_changes).
         with(target_branch, branch_name).and_return(branch_name)
