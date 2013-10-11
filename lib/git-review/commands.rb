@@ -294,8 +294,9 @@ module GitReview
         git_call('stash') if save_uncommitted_changes
         # Go back to original branch and get rid of pending (local) commits.
         git_call("checkout #{original_branch}")
-        # FIXME: Determine correct remote (if any).
-        git_call("reset --hard origin/#{original_branch}")
+        remote = local.remote_for_branch(original_branch)
+        remote += '/' if remote
+        git_call("reset --hard #{remote}#{original_branch}")
         git_call("checkout #{feature_branch}")
         git_call('stash pop') if save_uncommitted_changes
         feature_branch
