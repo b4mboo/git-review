@@ -1,10 +1,3 @@
-require 'net/http'
-require 'net/https'
-require 'yajl'
-require 'io/console'
-require 'stringio'
-require 'socket'
-
 module GitReview
 
   module Provider
@@ -15,10 +8,10 @@ module GitReview
 
       # @return [String] Authenticated username
       def configure_access
-        if settings.oauth_token && settings.username
+        if settings.github_oauth_token && settings.github_username
           @client = Octokit::Client.new(
-            login: settings.username,
-            access_token: settings.oauth_token,
+            login: settings.github_username,
+            access_token: settings.github_oauth_token,
             auto_traversal: true
           )
 
@@ -28,6 +21,15 @@ module GitReview
           configure_access
         end
       end
+
+
+
+
+
+
+
+
+
 
       # @return [Boolean, Hash] the specified request if exists, otherwise false.
       #   Instead of true, the request itself is returned, so another round-trip
@@ -147,67 +149,43 @@ module GitReview
         "https://github.com/#{target_repo}/pull/#{request_number}"
       end
 
-      # FIXME: Needs to be moved into Server class, as its result is dependent of
-      # the actual provider (i.e. GitHub or BitBucket).
+
+
+
+
+
+
+
+
+
+      # @return [String] SSH url for github
       def remote_url_for(user_name)
         "git@github.com:#{user_name}/#{repo_info_from_config.last}.git"
       end
 
+      # @return [String] Current username
+      def login
+        settings.github_username
+      end
+
       private
-
-      def configure_oauth
-        begin
-          prepare_username_and_password
-          prepare_description
-          authorize
-        rescue ::GitReview::AuthenticationError => e
-          warn e.message
-        rescue ::GitReview::UnprocessableState => e
-          warn e.message
-          exit 1
-        end
-      end
-
-      def prepare_username_and_password
-        puts "Requesting a OAuth token for git-review."
-        puts "This procedure will grant access to your public and private "\
-        "repositories."
-        puts "You can revoke this authorization by visiting the following page: "\
-        "https://github.com/settings/applications"
-        print "Please enter your GitHub's username: "
-        @username = STDIN.gets.chomp
-        print "Please enter your GitHub's password (it won't be stored anywhere): "
-        @password = STDIN.noecho(&:gets).chomp
-        print "\n"
-      end
-
-      def prepare_description(chosen_description=nil)
-        if chosen_description
-          @description = chosen_description
-        else
-          @description = "git-review - #{Socket.gethostname}"
-          puts "Please enter a description to associate to this token, it will "\
-          "make easier to find it inside of GitHub's application page."
-          puts "Press enter to accept the proposed description"
-          print "Description [#{@description}]:"
-          user_description = STDIN.gets.chomp
-          @description = user_description.empty? ? @description : user_description
-        end
-      end
 
       def authorize
         uri = URI('https://api.github.com/authorizations')
+
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
+
         req = Net::HTTP::Post.new(uri.request_uri)
         req.basic_auth(@username, @password)
-        req.body = Yajl::Encoder.encode(
-          {
-            scopes: %w(repo),
-            note: @description
-          }
-        )
+
+        req.body = Yajl::Encoder.encode({
+          scopes: %w(repo),
+          note: @description
+        })
+
         response = http.request(req)
+
         if response.code == '201'
           parser_response = Yajl::Parser.parse(response.body)
           save_oauth_token(parser_response['token'])
@@ -218,27 +196,41 @@ module GitReview
         end
       end
 
+      def prepare_username_and_password
+        puts "Requesting a OAuth token, this procedure will grant access to your public and private repositories."
+        puts "You can revoke this authorization by visiting the following page: https://github.com/settings/applications"
+
+        print "Please enter your GitHub username: "
+        @username = STDIN.gets.chomp
+
+        print "Please enter your GitHub password: "
+        @password = STDIN.noecho(&:gets).chomp
+
+        print "\n"
+      end
+
       def save_oauth_token(token)
         settings = ::GitReview::Settings.instance
-        settings.oauth_token = token
-        settings.username = @username
+
+        settings.github_oauth_token = token
+        settings.github_username = @username
         settings.save!
+
         puts "OAuth token successfully created.\n"
       end
 
-      # extract user and project name from GitHub URL.
       def url_matching(url)
         matches = /github\.com.(.*?)\/(.*)/.match(url)
         matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
       end
 
-      # look for 'insteadof' substitutions in URL.
       def insteadof_matching(config, url)
         first_match = config.keys.collect { |key|
           [config[key], /url\.(.*github\.com.*)\.insteadof/.match(key)]
         }.find { |insteadof_url, true_url|
           url.index(insteadof_url) and true_url != nil
         }
+
         first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
       end
 
