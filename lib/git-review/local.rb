@@ -101,7 +101,7 @@ module GitReview
         entries = line.split(' ')
         next unless entries.first == branch_name
         # Return the remote name or nil for local branches.
-        match = entries[2].match(%r(\[(.*)\]))
+        match = entries[2].match(%r(\[(.*)(\]|:)))
         return match[1].split('/').first if match
       end
       nil

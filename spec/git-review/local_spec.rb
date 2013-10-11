@@ -75,7 +75,7 @@ describe 'Local' do
 
     it 'finds an existing remote for a branch' do
       subject.should_receive(:git_call).with('branch -lvv').and_return(
-        "#{branch_name}     00aa0a0 [#{remote}/#{branch_name}] Foo Bar\n"
+        "#{branch_name}     00aa0a0 [#{remote}/#{branch_name}: ahead 1] Foo Bar\n"
       )
       subject.remote_for_branch(branch_name).should == remote
     end
