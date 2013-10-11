@@ -69,7 +69,7 @@ module GitReview
         target_repo = local.target_repo(to_upstream)
         head = local.head
         base = local.target_branch
-        title, body = create_title_and_body(base)
+        title, body = local.create_title_and_body(base)
 
         # gather information before creating pull request
         latest_number = latest_request_number(target_repo)

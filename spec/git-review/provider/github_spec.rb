@@ -98,7 +98,7 @@ describe 'Provider: Github' do
 
     before(:each) do
       subject.stub(:latest_request_number).and_return(1)
-      subject.stub(:create_title_and_body).and_return(['title', 'body'])
+      local.stub(:create_title_and_body).and_return(['title', 'body'])
       local.stub(:target_repo).and_return('parent:repo')
       local.stub(:head).and_return('local:repo')
       local.stub(:target_branch).and_return('master')
