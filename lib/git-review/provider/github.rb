@@ -40,11 +40,9 @@ module GitReview
         false
       end
 
-      def request_exists_for_branch?(upstream=false, branch=local.source_branch)
+      def request_exists_for_branch?(upstream = false, branch = local.source_branch)
         target_repo = local.target_repo(upstream)
-        client.pull_requests(target_repo).any? { |r|
-          r.head.ref == branch
-        }
+        client.pull_requests(target_repo).any? { |r| r.head.ref == branch }
       end
 
       # an alias to pull_requests
@@ -173,8 +171,8 @@ module GitReview
 
       # FIXME: Needs to be moved into Server class, as its result is dependent of
       # the actual provider (i.e. GitHub or BitBucket).
-      def remote_url_for(user_name)
-        "git@github.com:#{user_name}/#{repo_info_from_config.last}.git"
+      def remote_url_for(user_name, repo_name = repo_info_from_config.last)
+        "git@github.com:#{user_name}/#{repo_name}.git"
       end
 
       private

@@ -221,8 +221,15 @@ module GitReview
     end
 
     # @return [Boolean] whether there are commits not in target branch yet
-    def new_commits?(upstream=false)
-      target = upstream ? 'upstream/master' : target_branch
+    def new_commits?(upstream = false)
+      # Check if an upstream remote exists and create it if necessary.
+      remote_url = server.remote_url_for(*target_repo(upstream).split('/'))
+      remote = remotes_for_url(remote_url).first
+      unless remote
+        remote = 'upstream'
+        git_call("remote add #{remote} #{remote_url}")
+      end
+      target = upstream ? "#{remote}/#{target_branch}" : target_branch
       not git_call("cherry #{target}").empty?
     end
 
