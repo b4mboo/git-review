@@ -7,8 +7,8 @@ describe 'Provider: Github' do
   let(:settings) { ::GitReview::Settings.any_instance }
 
   before(:each) do
-    settings.stub(:oauth_token).and_return('token')
-    settings.stub(:username).and_return('username')
+    settings.stub(:github_oauth_token).and_return('token')
+    settings.stub(:github_username).and_return('username')
   end
 
   it 'constructs the remote url from a given repo name' do

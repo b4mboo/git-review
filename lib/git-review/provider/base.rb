@@ -1,3 +1,10 @@
+require 'net/http'
+require 'net/https'
+require 'yajl'
+require 'io/console'
+require 'stringio'
+require 'socket'
+
 module GitReview
 
   module Provider
@@ -25,11 +32,6 @@ module GitReview
           user, repo = repo_info_from_config
           "#{user}/#{repo}"
         end
-      end
-
-      # @return [String] Current username
-      def login
-        settings.username
       end
 
       # @return [Array(String, String)] User and repo name from git
@@ -69,6 +71,42 @@ module GitReview
       end
 
       private
+
+      def configure_oauth
+        begin
+          prepare_username_and_password
+          prepare_description
+          authorize
+        rescue ::GitReview::AuthenticationError => e
+          warn e.message
+        rescue ::GitReview::UnprocessableState => e
+          warn e.message
+          exit 1
+        end
+      end
+
+      def authorize
+      end
+
+      def prepare_username_and_password
+      end
+
+      def prepare_description(chosen_description=nil)
+        if chosen_description
+          @description = chosen_description
+        else
+          @description = "git-review - #{Socket.gethostname}"
+
+          puts "Please enter a description to associate to this token."
+          puts "It will make easier to find it inside of application page."
+          puts "Press enter to accept the proposed description."
+
+          print "Description [#{@description}]:"
+          user_description = STDIN.gets.chomp
+
+          @description = user_description.empty? ? @description : user_description
+        end
+      end
 
       def local
         @local ||= ::GitReview::Local.instance
