@@ -135,8 +135,6 @@ module GitReview
     end
 
     # Create a new request.
-    # TODO: Support creating requests to other repositories and branches (like
-    #   the original repo, this has been forked from).
     def create(upstream = false)
       # prepare original_branch and local_branch
       original_branch, local_branch = prepare

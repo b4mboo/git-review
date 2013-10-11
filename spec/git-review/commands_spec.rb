@@ -303,37 +303,16 @@ describe 'Commands' do
       local.stub(:new_commits?).with(false).and_return(true)
     end
 
-    it 'warns the user about uncommitted changes' do
-      local.stub(:uncommitted_changes?).and_return(true)
-      subject.should_receive(:puts).with(/uncommitted changes/)
-      subject.create
-    end
-
     it 'pushes the commits to a remote branch and creates a pull request' do
       server.stub(:request_exists_for_branch?).and_return(false)
       subject.should_receive(:git_call).with(
-          "push --set-upstream origin #{branch_name}", false, true
+        "push --set-upstream origin #{branch_name}", false, true
       )
       server.should_receive :send_pull_request
       subject.create
     end
 
-    it 'does not create pull request if it already exists for the branch' do
-      server.stub(:request_exists_for_branch?).with(false).and_return(true)
-      server.should_not_receive :send_pull_request
-      subject.should_receive(:puts).with(/already exists/)
-      subject.should_receive(:puts).with(/`git push`/)
-      subject.create(false)
-    end
-
-    it 'lets the user return to the branch she was working on before' do
-      server.stub(:request_exists_for_branch?).and_return(false)
-      server.stub :send_pull_request
-      subject.should_receive(:git_call).with('checkout master')
-      subject.create
-    end
-
-    it 'does not create pull request if one already exists for the branch' + '--upstream'.pink do
+    it 'creates the request against the repo it has been forked from by adding ' + '--upstream'.pink do
       server.stub(:repository).and_return(upstream)
       local.stub(:new_commits?).and_return(true)
       server.stub(:request_exists_for_branch?).with(true).and_return(true)
@@ -343,11 +322,25 @@ describe 'Commands' do
       subject.create(true)
     end
 
-    it 'checks if current branch differ from upstream master' + '--upstream'.pink do
-      server.stub(:repository).and_return(upstream)
-      local.should_receive(:new_commits?).with(true).and_return(false)
+    it 'does not create a pull request if one already exists for the branch' do
+      server.stub(:request_exists_for_branch?).with(false).and_return(true)
       server.should_not_receive :send_pull_request
-      subject.create(true)
+      subject.should_receive(:puts).with(/already exists/)
+      subject.should_receive(:puts).with(/`git push`/)
+      subject.create(false)
+    end
+
+    it 'warns the user about uncommitted changes' do
+      local.stub(:uncommitted_changes?).and_return(true)
+      subject.should_receive(:puts).with(/uncommitted changes/)
+      subject.create
+    end
+
+    it 'lets the user return to the branch she was working on before' do
+      server.stub(:request_exists_for_branch?).and_return(false)
+      server.stub :send_pull_request
+      subject.should_receive(:git_call).with('checkout master')
+      subject.create
     end
 
   end
