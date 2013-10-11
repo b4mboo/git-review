@@ -255,7 +255,7 @@ describe 'Commands' do
     it 'creates a local branch with review prefix' do
       local.stub(:source_branch).and_return(target_branch)
       local.stub(:on_feature_branch?).and_return(false)
-      subject.should_receive(:move_uncommitted_changes).
+      subject.should_receive(:move_local_changes).
         with(target_branch, feature_name)
       subject.prepare(false, feature_name)
     end
@@ -263,7 +263,7 @@ describe 'Commands' do
     it 'creates a new branch off an existing feature branch by adding ' + '--new'.pink do
       local.stub(:source_branch).and_return(branch_name)
       local.stub(:on_feature_branch?).and_return(true)
-      subject.should_receive(:move_uncommitted_changes).
+      subject.should_receive(:move_local_changes).
         with(branch_name, feature_name)
       subject.prepare(true, feature_name)
     end
@@ -272,7 +272,7 @@ describe 'Commands' do
       local.stub(:source_branch).and_return(target_branch)
       local.stub(:on_feature_branch?).and_return(false)
       subject.stub(:get_branch_name).and_return(branch_name)
-      subject.should_receive(:move_uncommitted_changes).
+      subject.should_receive(:move_local_changes).
         with(target_branch, branch_name).and_return(branch_name)
       subject.prepare(false, nil).should == [target_branch, branch_name]
     end
@@ -281,7 +281,7 @@ describe 'Commands' do
       local.stub(:source_branch).and_return(target_branch)
       local.stub(:on_feature_branch?).and_return(false)
       subject.should_receive(:get_branch_name).and_return(branch_name)
-      subject.should_receive(:move_uncommitted_changes).
+      subject.should_receive(:move_local_changes).
         with(target_branch, branch_name).and_return(branch_name)
       subject.prepare(true, nil).should == [target_branch, branch_name]
     end
@@ -289,7 +289,7 @@ describe 'Commands' do
     it 'allows to provide an additional parameter as a ' + 'feature name'.pink do
       local.stub(:source_branch).and_return(branch_name)
       local.stub(:on_feature_branch?).and_return(true)
-      subject.should_receive(:move_uncommitted_changes).
+      subject.should_receive(:move_local_changes).
         with(branch_name, 'wild_stuff')
       subject.prepare(true, 'wild stuff')
     end
