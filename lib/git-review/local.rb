@@ -227,7 +227,8 @@ module GitReview
       remote = remotes_for_url(remote_url).first
       unless remote
         remote = 'upstream'
-        git_call("remote add #{remote} #{remote_url}")
+        git_call "remote add #{remote} #{remote_url}"
+        git_call "fetch #{remote}"
       end
       target = upstream ? "#{remote}/#{target_branch}" : target_branch
       not git_call("cherry #{target}").empty?
