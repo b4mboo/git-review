@@ -47,7 +47,7 @@ $ git review show 42 --full
 
 ```
 $ git review browse 42
-> go to web page
+> open a browser and go to request #42's web page
 ```
 
 
