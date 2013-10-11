@@ -11,6 +11,8 @@ module GitReview
 
     class Base
 
+      include ::GitReview::Helpers
+
       attr_reader :client
       attr_accessor :source_repo
 

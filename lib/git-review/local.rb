@@ -64,7 +64,7 @@ module GitReview
       remotes = remotes_for_url(remote_url)
       if remotes.empty?
         remote = "review_#{repo_owner}"
-        git_call("remote add #{remote} #{remote_url}", debug_mode, true)
+        git_call("remote add #{remote} #{remote_url}", debug_mode?, true)
       else
         remote = remotes.first
       end

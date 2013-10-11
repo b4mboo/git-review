@@ -4,8 +4,6 @@ module GitReview
 
     class Github < Base
 
-      include ::GitReview::Helpers
-
       # @return [String] Authenticated username
       def configure_access
         if settings.github_oauth_token && settings.github_username
@@ -19,6 +17,51 @@ module GitReview
         else
           configure_oauth
           configure_access
+        end
+      end
+
+      # a default collection of requests
+      def current_requests(repo = source_repo)
+        client.pull_requests(repo)
+      end
+
+      # a detailed collection of requests
+      def detailed_requests(repo = source_repo)
+        threads = []
+        requests = []
+
+        client.pull_requests(repo).each do |req|
+          threads << Thread.new {
+            requests << client.pull_request(repo, req.number)
+          }
+        end
+
+        threads.each { |t| t.join }
+        requests
+      end
+
+      def send_pull_request(to_upstream = false)
+        head = local.head
+        base = local.target_branch
+
+        target_repo = local.target_repo(to_upstream)
+        title, body = local.create_title_and_body(base)
+
+        begin
+          # FIXME: initialize request model
+          response = create_pull_request(target_repo, base, head, title, body)
+        rescue => e
+          puts e.message if debug_mode?
+          response = nil
+        end
+
+        if response
+          git_call("checkout #{base}")
+
+          puts "Successfully created new request #{response.number}"
+          puts response._links.html.href # FIXME: refactor bad link access
+        else
+          puts "Pull request was not created for #{target_repo}."
         end
       end
 
@@ -47,48 +90,6 @@ module GitReview
         client.pull_requests(target_repo).any? { |r|
           r.head.ref == branch
         }
-      end
-
-      # an alias to pull_requests
-      def current_requests(repo=source_repo)
-        client.pull_requests(repo)
-      end
-
-      # a more detailed collection of requests
-      def current_requests_full(repo=source_repo)
-        threads = []
-        requests = []
-        client.pull_requests(repo).each do |req|
-          threads << Thread.new {
-            requests << client.pull_request(repo, req.number)
-          }
-        end
-        threads.each { |t| t.join }
-        requests
-      end
-
-      def send_pull_request(to_upstream = false)
-        target_repo = local.target_repo(to_upstream)
-        head = local.head
-        base = local.target_branch
-        title, body = create_title_and_body(base)
-
-        # gather information before creating pull request
-        lastest_number = latest_request_number(target_repo)
-
-        # create the actual pull request
-        create_pull_request(target_repo, base, head, title, body)
-        # switch back to target_branch and check for success
-        git_call("checkout #{base}")
-
-        # make sure the new pull request is indeed created
-        new_number = request_number_by_title(title, target_repo)
-        if new_number && new_number > lastest_number
-          puts "Successfully created new request ##{new_number}"
-          puts request_url_for target_repo, new_number
-        else
-          puts "Pull request was not created for #{target_repo}."
-        end
       end
 
       def commit_discussion(number)
@@ -155,22 +156,6 @@ module GitReview
       def discussion(number)
         commit_discussion(number) +
         issue_discussion(number)
-      end
-
-      # show latest pull request number
-      def latest_request_number(repo=source_repo)
-        current_requests(repo).collect(&:number).sort.last.to_i
-      end
-
-      # get the number of the request that matches the title
-      def request_number_by_title(title, repo=source_repo)
-        request = current_requests(repo).find { |r| r.title == title }
-        request.number if request
-      end
-
-      # FIXME: Remove this method after merging create_pull_request from commands.rb, currently no specs
-      def request_url_for(target_repo, request_number)
-        "https://github.com/#{target_repo}/pull/#{request_number}"
       end
 
 

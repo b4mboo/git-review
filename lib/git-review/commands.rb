@@ -7,7 +7,7 @@ module GitReview
 
     # List all pending requests.
     def list(reverse = false)
-      requests = server.current_requests_full.reject do |request|
+      requests = server.detailed_requests.reject do |request|
         # Find only pending (= unmerged) requests and output summary.
         # Explicitly look for local changes git does not yet know about.
         # TODO: Isn't this a bit confusing? Maybe display pending pushes?
@@ -109,7 +109,7 @@ module GitReview
       request = server.get_request_by_number(number)
       repo = server.source_repo
       server.close_issue(repo, request.number)
-      unless server.request_exists?('open', request.number)
+      unless server.request_exists?(request.number, 'open')
         puts 'Successfully closed request.'
       end
     end
@@ -154,7 +154,7 @@ module GitReview
           return
         end
         # push latest commits to the remote branch (create if necessary)
-        git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
+        git_call("push --set-upstream origin #{local_branch}", debug_mode?, true)
         server.send_pull_request(upstream)
         # return to the user's original branch
         # FIXME: keep track of original branch etc

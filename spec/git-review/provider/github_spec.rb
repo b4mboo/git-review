@@ -97,28 +97,35 @@ describe 'Provider: Github' do
     let(:local) { ::GitReview::Local.any_instance }
 
     before(:each) do
-      subject.stub(:latest_request_number).and_return(1)
-      subject.stub(:create_title_and_body).and_return(['title', 'body'])
-      local.stub(:target_repo).and_return('parent:repo')
       local.stub(:head).and_return('local:repo')
       local.stub(:target_branch).and_return('master')
+      local.stub(:target_repo).and_return('parent:repo')
+      local.stub(:create_title_and_body).and_return(['title', 'body'])
+
       subject.stub(:git_call)
     end
 
     it 'sends pull request to upstream repo' do
+      response = double(:response)
+      response.should_receive(:number).twice.and_return(2)
+      response.stub_chain(:_links, :html, :href).and_return('https://github.com/foo/bar/pull/2')
+
       subject.should_receive(:create_pull_request).
-        with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      subject.stub(:request_number_by_title).and_return(2)
+        with('parent:repo', 'master', 'local:repo', 'title', 'body').
+        and_return(response)
+
       subject.should_receive(:puts).with(/Successfully/)
       subject.should_receive(:puts).with(/pull\/2/)
+
       subject.send_pull_request true
     end
 
     it 'checks if pull request is indeed created' do
       subject.should_receive(:create_pull_request).
         with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      subject.stub(:request_number_by_title).and_return(nil)
+
       subject.should_receive(:puts).with(/not created for parent:repo/)
+
       subject.send_pull_request true
     end
 

@@ -5,7 +5,7 @@ module GitReview
     private
 
     # System call to 'git'
-    def git_call(command, verbose = debug_mode, enforce_success = false)
+    def git_call(command, verbose = debug_mode?, enforce_success = false)
       if verbose
         puts
         puts "  git #{command}"
@@ -29,7 +29,7 @@ module GitReview
     end
 
     # @return [Boolean] Whether we are running in debugging moder or not
-    def debug_mode
+    def debug_mode?
       ::GitReview::Settings.instance.review_mode == 'debug'
     end
 

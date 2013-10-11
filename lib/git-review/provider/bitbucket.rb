@@ -4,10 +4,6 @@ module GitReview
 
     class Bitbucket < Base
 
-      include ::GitReview::Helpers
-
-      attr_reader :bitbucket
-
       # @return [String] Authenticated username
       def configure_access
         if settings.bitbucket_oauth_token && settings.bitbucket_username
@@ -24,6 +20,25 @@ module GitReview
         end
       end
 
+      # a default collection of requests
+      def current_requests(repo = source_repo)
+        #client.pull_requests(repo)
+      end
+
+      # a detailed collection of requests
+      def detailed_requests(repo = source_repo)
+        #threads = []
+        #requests = []
+
+        #client.pull_requests(repo).each do |req|
+        #  threads << Thread.new {
+        #    requests << client.pull_request(repo, req.number)
+        #  }
+        #end
+
+        #threads.each { |t| t.join }
+        #requests
+      end
 
 
 
@@ -32,8 +47,7 @@ module GitReview
 
 
 
-
-      # @return [String] SSH url for github
+      # @return [String] SSH url for bitbucket
       def remote_url_for(user_name)
         "git@bitbucket.org:#{user_name}/#{repo_info_from_config.last}.git"
       end
