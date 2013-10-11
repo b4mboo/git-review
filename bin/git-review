@@ -81,7 +81,7 @@ desc 'Create a new local branch for a request'
 command :prepare do |c|
   c.switch [:n, :new]
   c.action do |global, opts, args|
-    ::GitReview::Commands.prepare(opts[:new], args.shift)
+    ::GitReview::Commands.prepare(opts[:new], args.join(' '))
   end
 end
 

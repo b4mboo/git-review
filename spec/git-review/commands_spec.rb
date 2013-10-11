@@ -240,182 +240,114 @@ describe 'Commands' do
 
   end
 
-  describe 'prepare'.pink do
+  describe 'prepare (--new) (feature name)'.pink do
 
-    context 'when on master/target branch' do
-
-      before(:each) do
-        local.stub(:source_branch).and_return('master')
-        local.stub(:target_branch).and_return('master')
-        subject.stub(:git_call)
-        subject.stub(:create_feature_name).and_return(branch_name)
-      end
-
-      it 'creates a local branch with review prefix' do
-        subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-        subject.prepare(true, feature_name)
-      end
-
-      it 'lets the user choose a name for the branch' do
-        subject.should_receive(:gets).and_return(feature_name)
-        subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-        subject.prepare
-      end
-
-      it 'creates a local branch when TARGET_BRANCH is defined' do
-        ENV.stub(:[]).with('TARGET_BRANCH').and_return(custom_target_name)
-        subject.should_receive(:git_call).with("checkout -b #{branch_name}")
-        subject.prepare(true, feature_name)
-      end
-
-      it 'sanitizes provided branch names' do
-        subject.stub(:gets).and_return('wild stuff')
-        subject.send(:get_branch_name).should == 'wild_stuff'
-      end
-
+    before :each do
+      local.stub(:source_branch).and_return(target_branch)
+      local.stub(:on_feature_branch?).and_return(false)
+      # TODO: Maybe we should stub git_call in general for all tests.
+      # That way we'd be sure that no unintended changes are made to the repo
+      # whenever we have a faulty test run.
+      subject.stub :git_call
+      subject.stub(:create_feature_name).and_return(branch_name)
     end
 
-    context 'when on feature branch' do
+    it 'creates a local branch with review prefix' do
+      subject.should_receive(:move_local_changes).
+        with(target_branch, feature_name)
+      subject.prepare(false, feature_name)
+    end
 
-      before(:each) do
-        local.stub(:source_branch).and_return(branch_name)
-        local.stub(:target_branch).and_return('master')
-        subject.stub(:git_call)
-        subject.stub(:create_feature_name).and_return(branch_name)
-      end
+    it 'creates a new branch off an existing feature branch by adding ' + '--new'.pink do
+      local.stub(:source_branch).and_return(branch_name)
+      local.stub(:on_feature_branch?).and_return(true)
+      subject.should_receive(:move_local_changes).
+        with(branch_name, feature_name)
+      subject.prepare(true, feature_name)
+    end
 
-      it 'moves uncommitted changes to the new branch' do
-        local.stub(:uncommitted_changes?).and_return(true)
-        subject.should_receive(:git_call).with('stash')
-        subject.should_receive(:git_call).with('reset --hard origin/master')
-        subject.send(:move_uncommitted_changes, 'master', feature_name)
-      end
+    it 'moves uncommitted changes to the new branch' do
+      subject.stub(:get_branch_name).and_return(branch_name)
+      subject.should_receive(:move_local_changes).
+        with(target_branch, branch_name).and_return(branch_name)
+      subject.prepare(false, nil).should == [target_branch, branch_name]
+    end
 
+    it 'lets the user choose a name for the branch interactively' do
+      subject.should_receive(:get_branch_name).and_return(branch_name)
+      subject.should_receive(:move_local_changes).
+        with(target_branch, branch_name).and_return(branch_name)
+      subject.prepare(true, nil).should == [target_branch, branch_name]
+    end
+
+    it 'allows to provide an additional parameter as a ' + 'feature name'.pink do
+      local.stub(:source_branch).and_return(branch_name)
+      local.stub(:on_feature_branch?).and_return(true)
+      subject.should_receive(:move_local_changes).
+        with(branch_name, 'wild_stuff')
+      subject.prepare(true, 'wild stuff')
     end
 
   end
 
-  describe 'create'.pink do
+  describe 'create (--upstream)'.pink do
 
-    before(:each) do
+    let(:upstream) { Hashie::Mash.new(parent: {full_name: 'upstream'}) }
+
+    before :each do
       subject.stub(:prepare).and_return(['master', branch_name])
-    end
-
-    context 'when sending pull request to current repo' do
-
-      before(:each) do
-        local.stub(:source_branch).and_return(branch_name)
-        local.stub(:target_branch).and_return('master')
-        local.stub(:new_commits?).with(false).and_return(true)
-      end
-
-      context 'when there are uncommitted changes' do
-
-        before(:each) do
-          local.stub(:uncommitted_changes?).and_return(true)
-        end
-
-        it 'warns the user about uncommitted changes' do
-          subject.should_receive(:puts).with(/uncommitted changes/)
-          subject.create
-        end
-
-      end
-
-      context 'when there are no uncommitted changes' do
-
-        before(:each) do
-          local.stub(:uncommitted_changes?).and_return(false)
-          subject.stub(:git_call)
-        end
-
-        it 'pushes the commits to a remote branch and creates a pull request' do
-          server.stub(:request_exists_for_branch?).and_return(false)
-          subject.should_receive(:git_call).with(
-              "push --set-upstream origin #{branch_name}", false, true
-          )
-          subject.should_receive(:create_pull_request)
-          subject.create
-        end
-
-        it 'does not create pull request if it already exists for the branch' do
-          server.stub(:request_exists_for_branch?).with(false).and_return(true)
-          subject.should_not_receive(:create_pull_request)
-          subject.should_receive(:puts).with(/already exists/)
-          subject.should_receive(:puts).with(/`git push`/)
-          subject.create(false)
-        end
-
-        it 'lets the user return to the branch she was working on before' do
-          server.stub(:request_exists_for_branch?).and_return(false)
-          subject.stub(:create_pull_request)
-          subject.should_receive(:git_call).with('checkout master')
-          subject.create
-        end
-
-      end
-
-    end
-
-    context 'when sending pull request to upstream repo' do
-
-      let(:upstream) {
-        Hashie::Mash.new(parent: {full_name: 'upstream'})
-      }
-
-      before(:each) do
-        local.stub(:source_branch).and_return(branch_name)
-        local.stub(:target_branch).and_return('master')
-        local.stub(:uncommitted_changes?).and_return(false)
-        server.stub(:repository).and_return(upstream)
-        subject.stub(:git_call)
-      end
-
-      it 'does not create pull request if one already exists for the branch' do
-        local.stub(:new_commits?).and_return(true)
-        server.stub(:request_exists_for_branch?).with(true).and_return(true)
-        subject.should_not_receive(:create_pull_request)
-        subject.should_receive(:puts).with(/already exists/)
-        subject.should_receive(:puts).with(/`git push`/)
-        subject.create(true)
-      end
-
-      it 'checks if current branch differ from upstream master' do
-        local.should_receive(:new_commits?).with(true).and_return(false)
-        subject.should_not_receive(:create_pull_request)
-        subject.create(true)
-      end
-
-    end
-
-  end
-
-  describe '#create_pull_request' do
-
-    before(:each) do
-      server.stub(:latest_request_number).and_return(1)
-      subject.stub(:create_title_and_body).and_return(['title', 'body'])
-      local.stub(:target_repo).and_return('parent:repo')
-      local.stub(:head).and_return('local:repo')
+      local.stub(:source_branch).and_return(branch_name)
       local.stub(:target_branch).and_return('master')
+      local.stub(:uncommitted_changes?).and_return(false)
       subject.stub(:git_call)
+      local.stub(:new_commits?).with(false).and_return(true)
     end
 
-    it 'sends pull request to upstream repo' do
-      server.should_receive(:create_pull_request).
-          with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      server.stub(:request_number_by_title).and_return(2)
-      subject.should_receive(:puts).with(/Successfully/)
-      subject.should_receive(:puts).with(/pull\/2/)
-      subject.send(:create_pull_request, true)
+    it 'warns the user about uncommitted changes' do
+      local.stub(:uncommitted_changes?).and_return(true)
+      subject.should_receive(:puts).with(/uncommitted changes/)
+      subject.create
     end
 
-    it 'checks if pull request is indeed created' do
-      server.should_receive(:create_pull_request).
-          with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      server.stub(:request_number_by_title).and_return(nil)
-      subject.should_receive(:puts).with(/not created for parent:repo/)
-      subject.send(:create_pull_request, true)
+    it 'pushes the commits to a remote branch and creates a pull request' do
+      server.stub(:request_exists_for_branch?).and_return(false)
+      subject.should_receive(:git_call).with(
+          "push --set-upstream origin #{branch_name}", false, true
+      )
+      server.should_receive :send_pull_request
+      subject.create
+    end
+
+    it 'does not create pull request if it already exists for the branch' do
+      server.stub(:request_exists_for_branch?).with(false).and_return(true)
+      server.should_not_receive :send_pull_request
+      subject.should_receive(:puts).with(/already exists/)
+      subject.should_receive(:puts).with(/`git push`/)
+      subject.create(false)
+    end
+
+    it 'lets the user return to the branch she was working on before' do
+      server.stub(:request_exists_for_branch?).and_return(false)
+      server.stub :send_pull_request
+      subject.should_receive(:git_call).with('checkout master')
+      subject.create
+    end
+
+    it 'does not create pull request if one already exists for the branch' + '--upstream'.pink do
+      server.stub(:repository).and_return(upstream)
+      local.stub(:new_commits?).and_return(true)
+      server.stub(:request_exists_for_branch?).with(true).and_return(true)
+      server.should_not_receive :send_pull_request
+      subject.should_receive(:puts).with(/already exists/)
+      subject.should_receive(:puts).with(/`git push`/)
+      subject.create(true)
+    end
+
+    it 'checks if current branch differ from upstream master' + '--upstream'.pink do
+      server.stub(:repository).and_return(upstream)
+      local.should_receive(:new_commits?).with(true).and_return(false)
+      server.should_not_receive :send_pull_request
+      subject.create(true)
     end
 
   end
@@ -457,7 +389,7 @@ describe 'Commands' do
       subject.clean(nil, false, true)
     end
 
-    it 'deletes a branch with unmerged changes when using ' + '--force'.pink do
+    it 'deletes a branch with unmerged changes when using ' + 'ID --force'.pink do
       local.should_receive(:clean_single).with(request_number, true)
       subject.clean(request_number, true)
     end

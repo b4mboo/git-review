@@ -115,25 +115,29 @@ module GitReview
     end
 
     # Prepare local repository to create a new request.
-    # People should work on local branches, but especially for single commit
-    #   changes, more often than not, they don't. Therefore we create a branch
-    #   for them, to be able to use code review the way it is intended.
-    # @return [Array(String, String)] the original branch and the local branch
-    def prepare(new=false, name=nil)
-      # remember original branch the user was currently working on
-      original_branch = local.source_branch
-      if new || !local.on_feature_branch?
-        local_branch = move_uncommitted_changes(local.target_branch, name)
+    # NOTE:
+    #   People should work on local branches, but especially for single commit
+    #   changes, more often than not, they don't. Therefore this is called
+    #   automatically before creating a pull request, such that we create a
+    #   proper feature branch for them, to be able to use code review the way it
+    #   is intended.
+    def prepare(force_new_branch = false, feature_name = nil)
+      current_branch = local.source_branch
+      if force_new_branch || !local.on_feature_branch?
+        feature_name ||= get_branch_name
+        feature_branch = move_local_changes(
+          current_branch, local.sanitize_branch_name(feature_name)
+        )
       else
-        local_branch = original_branch
+        feature_branch = current_branch
       end
-      [original_branch, local_branch]
+      [current_branch, feature_branch]
     end
 
     # Create a new request.
     # TODO: Support creating requests to other repositories and branches (like
     #   the original repo, this has been forked from).
-    def create(upstream=false)
+    def create(upstream = false)
       # prepare original_branch and local_branch
       original_branch, local_branch = prepare
       # don't create request with uncommitted changes in current branch
@@ -151,7 +155,7 @@ module GitReview
         end
         # push latest commits to the remote branch (create if necessary)
         git_call("push --set-upstream origin #{local_branch}", debug_mode, true)
-        create_pull_request(upstream)
+        server.send_pull_request(upstream)
         # return to the user's original branch
         # FIXME: keep track of original branch etc
         git_call("checkout #{original_branch}")
@@ -268,8 +272,7 @@ module GitReview
     # @return [String] sanitized branch name
     def get_branch_name
       puts 'Please provide a name for the branch:'
-      branch_name = gets.chomp
-      branch_name.gsub(/\W+/, '_').downcase
+      local.sanitize_branch_name gets.chomp
     end
 
     # @return [String] the complete feature branch name
@@ -277,51 +280,28 @@ module GitReview
       "review_#{Time.now.strftime("%y%m%d")}_#{new_branch}"
     end
 
-    # move uncommitted changes from target branch to local branch
+    # Move uncommitted changes from original_branch to a feature_branch.
     # @return [String] the new local branch uncommitted changes are moved to
-    def move_uncommitted_changes(target_branch, new_branch)
-      new_branch ||= get_branch_name
-      local_branch = create_feature_name(new_branch)
-      git_call("checkout -b #{local_branch}")
-      # make sure we are on the feature branch
-      if local.source_branch == local_branch
-        # stash any uncommitted changes
+    def move_local_changes(original_branch, feature_name)
+      feature_branch = create_feature_name(feature_name)
+      # By checking out the feature branch, the commits on the original branch
+      # are copied over. That way we only need to remove pending (local) commits
+      # from the original branch.
+      git_call "checkout -b #{feature_branch}"
+      if local.source_branch == feature_branch
+        # Save any uncommitted changes, to be able to reapply them later.
         save_uncommitted_changes = local.uncommitted_changes?
         git_call('stash') if save_uncommitted_changes
-        # go back to target and get rid of pending commits
-        git_call("checkout #{target_branch}")
-        git_call("reset --hard origin/#{target_branch}")
-        git_call("checkout #{local_branch}")
+        # Go back to original branch and get rid of pending (local) commits.
+        git_call("checkout #{original_branch}")
+        remote = local.remote_for_branch(original_branch)
+        remote += '/' if remote
+        git_call("reset --hard #{remote}#{original_branch}")
+        git_call("checkout #{feature_branch}")
         git_call('stash pop') if save_uncommitted_changes
-        local_branch
+        feature_branch
       end
     end
-
-    # FIXME: move create pull request into provider
-    def create_pull_request(to_upstream=false)
-      target_repo = local.target_repo(to_upstream)
-      head = local.head
-      base = local.target_branch
-      title, body = create_title_and_body(base)
-
-      # gather information before creating pull request
-      lastest_number = server.latest_request_number(target_repo)
-
-      # create the actual pull request
-      server.create_pull_request(target_repo, base, head, title, body)
-      # switch back to target_branch and check for success
-      git_call("checkout #{base}")
-
-      # make sure the new pull request is indeed created
-      new_number = server.request_number_by_title(title, target_repo)
-      if new_number && new_number > lastest_number
-        puts "Successfully created new request ##{new_number}"
-        puts server.request_url_for target_repo, new_number
-      else
-        puts "Pull request was not created for #{target_repo}."
-      end
-    end
-
 
     # @return [Array(String, String)] the title and the body of pull request
     def create_title_and_body(target_branch)
