@@ -312,7 +312,6 @@ module GitReview
 
     # @return [Array(String, String)] the title and the body of pull request
     def create_title_and_body(target_branch)
-      source = local.source
       login = server.login
       commits = git_call("log --format='%H' HEAD...#{target_branch}").
         lines.count
