@@ -228,8 +228,8 @@ module GitReview
       unless remote
         remote = 'upstream'
         git_call "remote add #{remote} #{remote_url}"
-        git_call "fetch #{remote}"
       end
+      git_call "fetch #{remote}"
       target = upstream ? "#{remote}/#{target_branch}" : target_branch
       not git_call("cherry #{target}").empty?
     end
