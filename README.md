@@ -7,7 +7,7 @@ Manage review workflow for projects hosted on GitHub (using pull requests).
 ## Commands
 
 
-### list
+### list (--reverse)
 
 ```
 $ git review list
@@ -26,7 +26,7 @@ ID      Updated    Comments  Title
 ```
 
 
-### show
+### show ID
 
 ```
 $ git review show 42
@@ -43,7 +43,7 @@ $ git review show 42 --full
 ```
 
 
-### browse
+### browse ID
 
 ```
 $ git review browse 42
@@ -51,7 +51,7 @@ $ git review browse 42
 ```
 
 
-### checkout
+### checkout ID (--no-branch)
 
 ```
 $ git review checkout 42
@@ -64,7 +64,7 @@ $ git review checkout 42 --no-branch
 ```
 
 
-### approve
+### approve ID
 
 ```
 $ git review approve 42
@@ -72,7 +72,7 @@ $ git review approve 42
 ```
 
 
-### merge
+### merge ID
 
 ```
 $ git review merge 42
@@ -80,7 +80,7 @@ $ git review merge 42
 ```
 
 
-### close
+### close ID
 
 ```
 $ git review close 42
@@ -88,26 +88,26 @@ $ git review close 42
 ```
 
 
-### prepare
+### prepare (--new) (feature name)
 
 ```
 $ git review prepare
-> create a new local branch to base a new request upon
+> create a new local branch with review prefix to base a new request upon
 ```
 
 
-### create
+### create (--upstream)
 
 ```
 $ git review create
 > create a new request by creating all necessary local and remote branches
 
 $ git review create --upstream
-> send a new request to the upstream when working on a forked repo
+> send a new request to the upstream repository when working on a forked repo
 ```
 
 
-### clean
+### clean (ID) (--force) / (--all)
 
 ```
 $ git review clean 42
@@ -121,7 +121,7 @@ $ git review clean 42 --force
 
 ```
 $ git review clean --all
-> delete all obsolete branches
+> delete all obsolete branches (does not allow --force)
 ```
 
 Installation
@@ -133,10 +133,6 @@ To install it via Rubygems.org simply do:
 
 (Prefix with `sudo` if necessary)
 
-To be able to use all of git-review's features you have set up your git config for GitHub.
-
-    git config --global github.login your_github_login_1234567890
-    git config --global github.password your_github_password_1234567890
 
 
 Wiki
