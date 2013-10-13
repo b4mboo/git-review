@@ -1,58 +1,5 @@
-== FAQ / Motivation ==
-<dl>
-  <dt>Why code review?</dt>
-  <dd>It increases code quality as well as team collaboration and communication.</dd>
-
-  <dt>Is it possible to submit a hot fix quickly?</dt>
-  <dd>Yes, it is always possible to directly commit and push to master.</dd>
-
-  <dt>Why use GitHub for core review?</dt>
-  <dd>[[https://github.com/features/projects/codereview]]</dd>
-</dl>
-
-== Working with GitHub ==
-
-=== Without code review ===
-
-Here is an overview of git commands to work on a project without code review.
-```bash
-# checkout the project
-git clone git@github.com:user_name/repository_name.git
-
-# create your local branch to work on.
-git checkout -b new_feature
-
-# iteratively work on the feature, commit small parts
-<change code>
-git add
-git commit
-
-# pull latest changes from master
-git checkout master
-git pull
-git rebase master new_feature
-git checkout master
-
-# merge and push the feature
-git merge new_feature
-git push
-```
-
-=== With code review ===
-
-First you need to install the gem.
-```bash
-gem install git-review
-```
-
-Then you need to configure your .gitconfig:
-```bash
-[github]
-  login = your_github_login
-  password = your_github_password
-```
-
-==== Branches of the same repository ====
+== Workflow ==
+=== Branches of the same repository ===
 
 This assumes that all developers have write access to the project repository and therefore it is suitable for smaller projects/teams.
 The features, bugfixes... are implemented in separate branches, the code review is done by pull requests from branches to the master.
@@ -74,7 +21,7 @@ git checkout master
 git pull
 git rebase master new_feature
 
-# push the changes to GitHub
+# optionally push the changes to GitHub (to enable co-workers to contribute).
 git push origin new_feature
 
 # initiate code review by sending a pull request
@@ -114,7 +61,7 @@ git review show ID --full
 git review browse ID
 
 # get a local copy of the code
-git review checkout ID --branch
+git review checkout ID
 
 # add an approving comment
 git review approve ID
@@ -136,16 +83,61 @@ git review clean ID
 git review clean --all
 ```
 
-==== Different forks of a project ====
+=== Different forks of a project ===
+```bash
+# fork the project on GitHub.
 
-This is not yet implemented in git-review, but is a planned feature for future releases of the tool.
+# checkout the forked project
+git clone git@github.com:user_name/repository_name.git
 
-Until then you'll have to use the UI that GitHub provides. For more information on forking and submitting pull requests, please refer to the GitHub help:  http://help.github.com/fork-a-repo, http://help.github.com/send-pull-requests/
+# create a new feature branch
+git review prepare
+
+# iteratively work on the feature, commit small parts
+<change the code>
+git add
+git commit
+
+# integrate latest changes from the master
+# NOTE: depending on your setup, you might want to add a remote for upstream and pull from there.
+# future versions of git-review will provide a command to set this up for you automatically.
+git checkout master
+git pull
+git rebase master new_feature
+
+# optionally push the changes to GitHub (to enable co-workers to contribute).
+git push origin new_feature
+
+# initiate code review by sending a pull request to the upstream project.
+git review create --upsteam
+```
+
+Alternatively, you can also just work on master and let git-review create the necessary branches for you.
+Once you call ```git review create --upstream``` all commits that have not yet been pushed to remote will be moved to a new branch.
+The only thing you'll have to do is provide a name for that branch.
+
+```bash
+# checkout the forked project
+git clone git@github.com:user_name/repository_name.git
+
+# iteratively work on the feature, commit small parts
+<change the code>
+git add
+git commit
+
+# integrate latest changes from the master
+git pull
+
+# initiate code review by sending a pull request
+git review create --upstream
+```
+
+For the upstream repository, reviewing your pull request is the same as before.
 
 
 == Hints ==
 
-==== Overriding the default target branch (= master) ====
+=== Overriding the default target branch (= master) ===
 If you want to use a branch other than master to merge to, you can do so by setting an ENV variable.
 ```bash
 TARGET_BRANCH=develop git review merge 42
