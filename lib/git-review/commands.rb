@@ -211,6 +211,7 @@ module GitReview
       puts 'Leaving debug console.'
     end
 
+
     private
 
     def request_summary(request)
