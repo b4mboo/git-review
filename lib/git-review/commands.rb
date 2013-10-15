@@ -230,9 +230,7 @@ module GitReview
       requests.each { |req| output[req.number] = request_summary(req) }
       numbers = output.keys.sort
       numbers.reverse! if reverse
-      numbers.each do |n|
-        puts output[n]
-      end
+      numbers.each { |n| puts output[n] }
     end
 
     def print_request_details(request)
