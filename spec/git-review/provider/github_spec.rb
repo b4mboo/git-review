@@ -14,50 +14,59 @@ describe 'Provider: Github' do
     settings.stub(:username).and_return('username')
   end
 
-  it 'constructs the remote url from a given repo name' do
-    user = 'user'
-    repo = 'repo'
-    subject.should_receive(:repo_info_from_config).and_return([user, repo])
-    subject.remote_url_for(user).should == "git@github.com:#{user}/#{repo}.git"
-  end
+  context '# Authentication' do
 
-  context 'when access is not configured' do
+    it 'configures access to GitHub' do
+      ::GitReview::Provider::Github.any_instance.should_receive :configure_access
+      subject
+    end
 
-    it 'only authenticates once ' do
-      subject.should_not_receive :configure_oauth
-      subject.configure_access
+    it 'uses an oauth token for authentication' do
+      settings.stub :oauth_token
+      settings.stub :username
+      ::GitReview::Provider::Github.any_instance.should_receive :configure_oauth
+      subject
+    end
+
+    it 'uses Octokit to login to GitHub' do
+      settings.stub(:oauth_token).and_return('token')
+      settings.stub(:username).and_return(user_login)
+      client = double('client')
+      Octokit::Client.should_receive(:new).and_return(client)
+      client.should_receive :login
+      subject.login.should == user_login
     end
 
   end
 
-  context 'when access is configured' do
 
-    it 'should return a login' do
-      subject.login.should eq 'username'
+  it 'constructs the remote url for a given repo name' do
+    subject.should_receive(:repo_info_from_config).
+      and_return([user_login, repo_name])
+    subject.remote_url_for(user_login).
+      should == "git@github.com:#{user_login}/#{repo_name}.git"
+  end
+
+  describe '#url_matching' do
+
+    it 'extracts info from git url' do
+      url = 'git@github.com:foo/bar.git'
+      subject.send(:url_matching, url).should == %w(foo bar)
     end
 
-    describe '#url_matching' do
-
-      it 'extracts info from git url' do
-        url = 'git@github.com:foo/bar.git'
-        subject.send(:url_matching, url).should == %w(foo bar)
-      end
-
-      it 'extracts info from http url' do
-        url = 'https://github.com/foo/bar.git'
-        subject.send(:url_matching, url).should == %w(foo bar)
-      end
-
+    it 'extracts info from http url' do
+      url = 'https://github.com/foo/bar.git'
+      subject.send(:url_matching, url).should == %w(foo bar)
     end
 
-    describe '#insteadof_matching' do
+  end
 
-      it 'from insteadof url' do
-        url = 'git@github.com:foo/bar.git'
-        config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
-        subject.send(:insteadof_matching, config, url).should eq %w(git@github.com:foo/bar.git git@github.com:a/b.git)
-      end
+  describe '#insteadof_matching' do
 
+    it 'from insteadof url' do
+      url = 'git@github.com:foo/bar.git'
+      config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
+      subject.send(:insteadof_matching, config, url).should eq %w(git@github.com:foo/bar.git git@github.com:a/b.git)
     end
 
   end

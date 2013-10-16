@@ -13,22 +13,6 @@ module GitReview
 
       include ::GitReview::Helpers
 
-      # @return [String] Authenticated username
-      def configure_access
-        if settings.oauth_token && settings.username
-          @client = Octokit::Client.new(
-            login: settings.username,
-            access_token: settings.oauth_token,
-            auto_traversal: true
-          )
-
-          @client.login
-        else
-          configure_oauth
-          configure_access
-        end
-      end
-
       # @return [Boolean, Hash] the specified request if exists, otherwise false.
       #   Instead of true, the request itself is returned, so another round-trip
       #   of pull_request can be avoided.
@@ -176,6 +160,17 @@ module GitReview
       end
 
       private
+
+      # @return [String] Authenticated username
+      def configure_access
+        configure_oauth unless settings.oauth_token && settings.username
+        @client = Octokit::Client.new(
+          login: settings.username,
+          access_token: settings.oauth_token,
+          auto_traversal: true
+        )
+        @client.login
+      end
 
       def configure_oauth
         begin
