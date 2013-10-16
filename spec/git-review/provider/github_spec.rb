@@ -2,6 +2,8 @@ require_relative '../../spec_helper'
 
 describe 'Provider: Github' do
 
+  include_context 'request_context'
+
   subject { ::GitReview::Provider::Github.new }
 
   let(:settings) { ::GitReview::Settings.any_instance }
@@ -64,23 +66,19 @@ describe 'Provider: Github' do
 
     context 'when inquiring upstream repo' do
 
-      let(:repo) { 'foo/bar' }
-
       it 'gets pull request from provided upstream repo' do
-        Octokit::Client.any_instance.should_receive(:pull_requests).with(repo)
+        Octokit::Client.any_instance.should_receive(:pull_requests).with(head_repo)
         subject.should_not_receive :source_repo
-        subject.current_requests repo
+        subject.current_requests head_repo
       end
 
     end
 
     context 'when inquiring current repo' do
 
-      let(:repo) { 'foo/bar' }
-
       it 'gets pull request from current source repo' do
-        Octokit::Client.any_instance.should_receive(:pull_requests).with(repo)
-        subject.stub(:source_repo).and_return(repo)
+        Octokit::Client.any_instance.should_receive(:pull_requests).with(head_repo)
+        subject.stub(:source_repo).and_return(head_repo)
         subject.current_requests
       end
 
@@ -89,7 +87,6 @@ describe 'Provider: Github' do
   end
 
   describe '#create_pull_request' do
-
 
     before :each do
       subject.stub(:latest_request_number).and_return(1)
