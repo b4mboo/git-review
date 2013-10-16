@@ -8,8 +8,10 @@ describe 'Provider: Github' do
 
   let(:settings) { ::GitReview::Settings.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
+  let(:client) { Octokit::Client.any_instance }
 
   before :each do
+    ::GitReview::Provider::Github.any_instance.stub :git_call
     settings.stub(:oauth_token).and_return('token')
     settings.stub(:username).and_return(user_login)
   end
@@ -39,6 +41,47 @@ describe 'Provider: Github' do
 
   end
 
+  context '# Pull Requests' do
+
+    before :each do
+      subject.stub(:latest_request_number).and_return(request_number)
+      local.stub(:create_title_and_body).and_return([title, body])
+      local.stub(:target_repo).and_return('parent:repo')
+      local.stub(:head).and_return('local:repo')
+      local.stub(:target_branch).and_return(target_branch)
+    end
+
+    it 'gets pull request from current source repo' do
+      client.should_receive(:pull_requests).with(head_repo)
+      subject.should_receive(:source_repo).and_return(head_repo)
+      subject.current_requests
+    end
+
+    it 'gets pull request from provided upstream repo' do
+      client.should_receive(:pull_requests).with(head_repo)
+      subject.should_not_receive :source_repo
+      subject.current_requests head_repo
+    end
+
+    it 'sends a pull request to the target repo' do
+      new_number = request_number + 1
+      subject.should_receive(:create_pull_request).
+        with('parent:repo', target_branch, 'local:repo', title, body)
+      subject.stub(:request_number_by_title).and_return(new_number)
+      subject.should_receive(:puts).with(/Successfully/)
+      subject.should_receive(:puts).with(/pull\/#{new_number}/)
+      subject.send_pull_request true
+    end
+
+    it 'checks if the pull request is indeed created' do
+      subject.should_receive(:create_pull_request).
+        with('parent:repo', target_branch, 'local:repo', title, body)
+      subject.stub(:request_number_by_title).and_return(nil)
+      subject.should_receive(:puts).with(/not created for parent:repo/)
+      subject.send_pull_request true
+    end
+
+  end
 
   context '# Repository URLs' do
 
@@ -64,60 +107,6 @@ describe 'Provider: Github' do
       config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
       subject.send(:insteadof_matching, config, url).
         should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
-    end
-
-  end
-
-  describe '#current_requests' do
-
-    context 'when inquiring upstream repo' do
-
-      it 'gets pull request from provided upstream repo' do
-        Octokit::Client.any_instance.should_receive(:pull_requests).with(head_repo)
-        subject.should_not_receive :source_repo
-        subject.current_requests head_repo
-      end
-
-    end
-
-    context 'when inquiring current repo' do
-
-      it 'gets pull request from current source repo' do
-        Octokit::Client.any_instance.should_receive(:pull_requests).with(head_repo)
-        subject.stub(:source_repo).and_return(head_repo)
-        subject.current_requests
-      end
-
-    end
-
-  end
-
-  describe '#create_pull_request' do
-
-    before :each do
-      subject.stub(:latest_request_number).and_return(1)
-      local.stub(:create_title_and_body).and_return(['title', 'body'])
-      local.stub(:target_repo).and_return('parent:repo')
-      local.stub(:head).and_return('local:repo')
-      local.stub(:target_branch).and_return('master')
-      subject.stub :git_call
-    end
-
-    it 'sends pull request to upstream repo' do
-      subject.should_receive(:create_pull_request).
-        with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      subject.stub(:request_number_by_title).and_return(2)
-      subject.should_receive(:puts).with(/Successfully/)
-      subject.should_receive(:puts).with(/pull\/2/)
-      subject.send_pull_request true
-    end
-
-    it 'checks if pull request is indeed created' do
-      subject.should_receive(:create_pull_request).
-        with('parent:repo', 'master', 'local:repo', 'title', 'body')
-      subject.stub(:request_number_by_title).and_return(nil)
-      subject.should_receive(:puts).with(/not created for parent:repo/)
-      subject.send_pull_request true
     end
 
   end

@@ -264,7 +264,7 @@ module GitReview
 
     # if to send a pull request to upstream repo, get the parent as target
     # @return [String] the name of the target repo
-    def target_repo(upstream=false)
+    def target_repo(upstream = false)
       # TODO: Manually override this and set arbitrary repositories
       if upstream
         server.repository(source_repo).parent.full_name
