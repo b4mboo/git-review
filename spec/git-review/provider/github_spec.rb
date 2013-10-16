@@ -11,7 +11,7 @@ describe 'Provider: Github' do
 
   before :each do
     settings.stub(:oauth_token).and_return('token')
-    settings.stub(:username).and_return('username')
+    settings.stub(:username).and_return(user_login)
   end
 
   context '# Authentication' do
