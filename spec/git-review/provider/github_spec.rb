@@ -7,7 +7,7 @@ describe 'Provider: Github' do
   let(:settings) { ::GitReview::Settings.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
 
-  before(:each) do
+  before :each do
     settings.stub(:oauth_token).and_return('token')
     settings.stub(:username).and_return('username')
   end
@@ -22,7 +22,7 @@ describe 'Provider: Github' do
   context 'when access is not configured' do
 
     it 'only authenticates once ' do
-      subject.should_not_receive(:configure_oauth)
+      subject.should_not_receive :configure_oauth
       subject.configure_access
     end
 
@@ -68,8 +68,8 @@ describe 'Provider: Github' do
 
       it 'gets pull request from provided upstream repo' do
         Octokit::Client.any_instance.should_receive(:pull_requests).with(repo)
-        subject.should_not_receive(:source_repo)
-        subject.current_requests(repo)
+        subject.should_not_receive :source_repo
+        subject.current_requests repo
       end
 
     end
@@ -91,13 +91,13 @@ describe 'Provider: Github' do
   describe '#create_pull_request' do
 
 
-    before(:each) do
+    before :each do
       subject.stub(:latest_request_number).and_return(1)
       local.stub(:create_title_and_body).and_return(['title', 'body'])
       local.stub(:target_repo).and_return('parent:repo')
       local.stub(:head).and_return('local:repo')
       local.stub(:target_branch).and_return('master')
-      subject.stub(:git_call)
+      subject.stub :git_call
     end
 
     it 'sends pull request to upstream repo' do
