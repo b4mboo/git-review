@@ -63,6 +63,12 @@ describe 'Provider: Github' do
       subject.current_requests head_repo
     end
 
+    xit 'creates a request instance from the data it receives from GitHub' do
+      client.should_receive(:pull_requests).
+        with(source_repo, request_number).and_return(request)
+      subject.request(request_number).class.should == Request
+    end
+
     it 'sends a pull request to the target repo' do
       new_number = request_number + 1
       subject.should_receive(:create_pull_request).
