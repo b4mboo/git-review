@@ -59,14 +59,11 @@ describe 'Provider: Github' do
       subject.send(:url_matching, url).should == %w(foo bar)
     end
 
-  end
-
-  describe '#insteadof_matching' do
-
-    it 'from insteadof url' do
+    it 'supports GitHub\'s insteadof matching for URLs' do
       url = 'git@github.com:foo/bar.git'
       config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
-      subject.send(:insteadof_matching, config, url).should eq %w(git@github.com:foo/bar.git git@github.com:a/b.git)
+      subject.send(:insteadof_matching, config, url).
+        should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
     end
 
   end
