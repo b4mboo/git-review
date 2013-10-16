@@ -40,21 +40,21 @@ describe 'Provider: Github' do
   end
 
 
-  it 'constructs the remote url for a given repo name' do
-    subject.should_receive(:repo_info_from_config).
-      and_return([user_login, repo_name])
-    subject.remote_url_for(user_login).
-      should == "git@github.com:#{user_login}/#{repo_name}.git"
-  end
+  context '# Repository URLs' do
 
-  describe '#url_matching' do
+    it 'constructs the remote URL for a given user name' do
+      subject.should_receive(:repo_info_from_config).
+        and_return([user_login, repo_name])
+      subject.remote_url_for(user_login).
+        should == "git@github.com:#{user_login}/#{repo_name}.git"
+    end
 
-    it 'extracts info from git url' do
+    it 'extracts user and repo name from a given GitHub git-type URL' do
       url = 'git@github.com:foo/bar.git'
       subject.send(:url_matching, url).should == %w(foo bar)
     end
 
-    it 'extracts info from http url' do
+    it 'extracts user and repo name from a given GitHub HTTP URL' do
       url = 'https://github.com/foo/bar.git'
       subject.send(:url_matching, url).should == %w(foo bar)
     end
