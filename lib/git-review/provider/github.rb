@@ -159,8 +159,6 @@ module GitReview
         "git@github.com:#{user_name}/#{repo_name}.git"
       end
 
-      private
-
       # @return [String] Authenticated username
       def configure_access
         configure_oauth unless settings.oauth_token && settings.username
@@ -171,6 +169,8 @@ module GitReview
         )
         @client.login
       end
+
+      private
 
       def configure_oauth
         begin
