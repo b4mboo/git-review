@@ -2,7 +2,7 @@ require_relative '../../spec_helper'
 
 describe 'Provider: Github' do
 
-  subject { ::GitReview::Provider::Github }
+  subject { ::GitReview::Provider::Github.new }
 
   let(:settings) { ::GitReview::Settings.any_instance }
 
@@ -14,22 +14,20 @@ describe 'Provider: Github' do
   it 'constructs the remote url from a given repo name' do
     user = 'user'
     repo = 'repo'
-    subject.any_instance.should_receive(:repo_info_from_config).and_return([user, repo])
-    subject.new.remote_url_for(user).should == "git@github.com:#{user}/#{repo}.git"
+    subject.should_receive(:repo_info_from_config).and_return([user, repo])
+    subject.remote_url_for(user).should == "git@github.com:#{user}/#{repo}.git"
   end
 
   context 'when access is not configured' do
 
-    it 'only authenticates once' do
-      subject.any_instance.should_not_receive(:configure_oauth)
-      subject.new.configure_access
+    it 'only authenticates once ' do
+      subject.should_not_receive(:configure_oauth)
+      subject.configure_access
     end
 
   end
 
   context 'when access is configured' do
-
-    subject { ::GitReview::Provider::Github.new }
 
     it 'should return a login' do
       subject.login.should eq 'username'
@@ -63,8 +61,6 @@ describe 'Provider: Github' do
 
   describe '#current_requests' do
 
-    subject { ::GitReview::Provider::Github.new }
-
     context 'when inquiring upstream repo' do
 
       let(:repo) { 'foo/bar' }
@@ -93,7 +89,6 @@ describe 'Provider: Github' do
 
   describe '#create_pull_request' do
 
-    subject { ::GitReview::Provider::Github.new }
     let(:local) { ::GitReview::Local.any_instance }
 
     before(:each) do
