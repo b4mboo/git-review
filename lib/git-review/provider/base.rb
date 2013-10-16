@@ -5,7 +5,7 @@ module GitReview
     class Base
 
       attr_reader :client
-      attr_accessor :source_repo
+      attr_writer :source_repo
 
       def self.instance
         @instance ||= new
