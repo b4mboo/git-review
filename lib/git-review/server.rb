@@ -27,6 +27,7 @@ module GitReview
       provider.respond_to?(method) || super
     end
 
+
     private
 
     def init_provider
@@ -49,11 +50,11 @@ module GitReview
     end
 
     def fetch_origin_url
-      git_call(call_origin_params)
+      git_call call_origin_params
     end
 
     def call_origin_params
-      "config --get remote.origin.url"
+      'config --get remote.origin.url'
     end
 
   end
