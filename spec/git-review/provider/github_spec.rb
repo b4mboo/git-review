@@ -5,6 +5,7 @@ describe 'Provider: Github' do
   subject { ::GitReview::Provider::Github.new }
 
   let(:settings) { ::GitReview::Settings.any_instance }
+  let(:local) { ::GitReview::Local.any_instance }
 
   before(:each) do
     settings.stub(:oauth_token).and_return('token')
@@ -89,7 +90,6 @@ describe 'Provider: Github' do
 
   describe '#create_pull_request' do
 
-    let(:local) { ::GitReview::Local.any_instance }
 
     before(:each) do
       subject.stub(:latest_request_number).and_return(1)
