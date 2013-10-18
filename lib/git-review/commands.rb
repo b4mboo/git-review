@@ -25,7 +25,7 @@ module GitReview
 
     # Show details for a single request.
     def show(number, full = false)
-      request = server.get_request_by_number(number)
+      request = server.request(number)
       # Determine whether to show full diff or stats only.
       option = full ? '' : '--stat '
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
@@ -37,14 +37,14 @@ module GitReview
 
     # Open a browser window and review a specified request.
     def browse(number)
-      request = server.get_request_by_number(number)
+      request = server.request(number)
       # FIXME: Use request.html_url as soon as we are using our Request model.
       Launchy.open request._links.html.href
     end
 
     # Checkout a specified request's changes to your local repository.
     def checkout(number, branch = true)
-      request = server.get_request_by_number(number)
+      request = server.request(number)
       puts 'Checking out changes to your local repository.'
       puts 'To get back to your original state, just run:'
       puts
@@ -72,7 +72,7 @@ module GitReview
 
     # Add an approving comment to the request.
     def approve(number)
-      request = server.get_request_by_number(number)
+      request = server.request(number)
       repo = server.source_repo
       # TODO: Make this configurable.
       comment = 'Reviewed and approved.'
@@ -86,7 +86,7 @@ module GitReview
 
     # Accept a specified request by merging it into master.
     def merge(number)
-      request = server.get_request_by_number(number)
+      request = server.request(number)
       if request.head.repo
         message = "Accept request ##{request.number} " +
             "and merge changes into \"#{local.target}\""
@@ -106,7 +106,7 @@ module GitReview
 
     # Close a specified request.
     def close(number)
-      request = server.get_request_by_number(number)
+      request = server.request(number)
       repo = server.source_repo
       server.close_issue(repo, request.number)
       unless server.request_exists?('open', request.number)
@@ -184,7 +184,7 @@ module GitReview
     # Start a console session (used for debugging)
     def console(number = nil)
       puts 'Entering debug console.'
-      request = server.get_request_by_number(number) if number
+      request = server.request(number) if number
 
       if RUBY_VERSION.to_f >= 2
         begin

@@ -63,10 +63,32 @@ describe 'Provider: Github' do
       subject.current_requests head_repo
     end
 
-    xit 'creates a request instance from the data it receives from GitHub' do
-      client.should_receive(:pull_requests).
-        with(source_repo, request_number).and_return(request)
-      subject.request(request_number).class.should == Request
+    it 'creates a request instance from the data it receives from GitHub' do
+      client.should_receive(:pull_request).
+        with(head_repo, request_number).and_return(request)
+      subject.should_receive(:source_repo).and_return(head_repo)
+      subject.request(request_number).should == request
+    end
+
+    it 'will only create a request instance if a request number is specified' do
+      expect { subject.request(nil) }.
+        to raise_error(GitReview::InvalidRequestIDError)
+    end
+
+    it 'determines if a certain request exists' do
+      subject.should_receive(:request).with(request_number).and_return(request)
+      subject.request_exists?(request_number).should be_true
+    end
+
+    it 'determines if a certain request does not exist' do
+      subject.should_receive(:request).with(invalid_number).and_return(nil)
+      subject.request_exists?(invalid_number).should be_false
+    end
+
+    it 'knows about a request\'s state' do
+      subject.should_receive(:request).with(request_number).and_return(request)
+      request.should_receive(:state).and_return('other state')
+      subject.request_exists?(request_number, state).should be_false
     end
 
     it 'sends a pull request to the target repo' do

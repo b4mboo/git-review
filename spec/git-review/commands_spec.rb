@@ -11,6 +11,7 @@ describe 'Commands' do
 
   before :each do
     provider.stub(:configure_access).and_return(user_login)
+    provider.stub_chain(:client, :pull_request).and_return(request)
     subject.stub :puts
   end
 
@@ -64,7 +65,7 @@ describe 'Commands' do
 
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.show invalid_number }.
+      expect { subject.show nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -94,7 +95,7 @@ describe 'Commands' do
 
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.browse invalid_number }.
+      expect { subject.browse nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -116,7 +117,7 @@ describe 'Commands' do
 
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.checkout invalid_number }.
+      expect { subject.checkout nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -165,7 +166,7 @@ describe 'Commands' do
 
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.approve invalid_number }.
+      expect { subject.approve nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -196,7 +197,7 @@ describe 'Commands' do
 
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.merge invalid_number }.
+      expect { subject.merge nil}.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -226,7 +227,7 @@ describe 'Commands' do
 
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.close invalid_number }.
+      expect { subject.close nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
@@ -377,7 +378,7 @@ describe 'Commands' do
 
     it 'allows only valid request numbers as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
-      expect { subject.close invalid_number }.
+      expect { subject.close nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 

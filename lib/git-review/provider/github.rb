@@ -13,15 +13,18 @@ module GitReview
 
       include ::GitReview::Helpers
 
-      # @return [Boolean, Hash] the specified request if exists, otherwise false.
-      #   Instead of true, the request itself is returned, so another round-trip
-      #   of pull_request can be avoided.
-      def request_exists?(number, state='open')
-        return false if number.nil?
-        request = client.pull_request(source_repo, number)
-        request.state == state ? request : false
+      # Find a request by a specified number and return it (or nil otherwise).
+      def request(number)
+        raise ::GitReview::InvalidRequestIDError unless number
+        client.pull_request(source_repo, number)
       rescue Octokit::NotFound
-        false
+        raise ::GitReview::InvalidRequestIDError
+      end
+
+      # Determine whether a request for a specified number and state exists.
+      def request_exists?(number, state = 'open')
+        request = request(number)
+        request && request.state == state
       end
 
       def request_exists_for_branch?(upstream = false, branch = local.source_branch)

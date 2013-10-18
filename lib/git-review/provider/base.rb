@@ -51,11 +51,6 @@ module GitReview
         [user, project]
       end
 
-      # Ensure we find the right request
-      def get_request_by_number(request_number)
-        request_exists?(request_number) || (raise ::GitReview::InvalidRequestIDError)
-      end
-
       def method_missing(method, *args)
         if client.respond_to?(method)
           client.send(method, *args)
