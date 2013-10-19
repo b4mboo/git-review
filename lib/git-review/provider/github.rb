@@ -16,7 +16,8 @@ module GitReview
       # Find a request by a specified number and return it (or nil otherwise).
       def request(number)
         raise ::GitReview::InvalidRequestIDError unless number
-        client.pull_request(source_repo, number)
+        attributes = client.pull_request(source_repo, number)
+        Request.from_github(attributes)
       rescue Octokit::NotFound
         raise ::GitReview::InvalidRequestIDError
       end
@@ -264,6 +265,19 @@ module GitReview
 
     end
 
+  end
+
+end
+
+
+# GitHub specific constructor for git-review's request model.
+class Request
+
+  # Create a new request instance from a GitHub-structured attributes hash.
+  def self.from_github(attributes)
+    instance = new(attributes)
+    instance.html_url = attributes._links.html.href
+    instance
   end
 
 end

@@ -65,9 +65,9 @@ describe 'Provider: Github' do
 
     it 'creates a request instance from the data it receives from GitHub' do
       client.should_receive(:pull_request).
-        with(head_repo, request_number).and_return(request)
+        with(head_repo, request_number).and_return(request_hash)
       subject.should_receive(:source_repo).and_return(head_repo)
-      subject.request(request_number).should == request
+      subject.request(request_number).html_url.should == request_hash._links.html.href
     end
 
     it 'will only create a request instance if a request number is specified' do

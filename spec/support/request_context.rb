@@ -20,7 +20,7 @@ shared_context 'request_context' do
   let(:target_branch) { 'master' }
   let(:state) { 'open' }
 
-  let(:request) {
+  let(:request_hash) {
     Hashie::Mash.new(
       html_url: html_url,
       number: request_number,
@@ -42,8 +42,15 @@ shared_context 'request_context' do
         user: { login: user_login }
       },
       comments: 0,
-      review_comments: 0
+      review_comments: 0,
+      _links: {
+        html: {
+          href: html_url
+        }
+      }
     )
   }
+
+  let(:request) { Request.from_github(request_hash) }
 
 end

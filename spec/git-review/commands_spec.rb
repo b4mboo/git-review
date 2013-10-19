@@ -11,7 +11,9 @@ describe 'Commands' do
 
   before :each do
     provider.stub(:configure_access).and_return(user_login)
-    provider.stub_chain(:client, :pull_request).and_return(request)
+    request.inspect
+    provider.stub_chain(:client, :pull_request).and_return(request_hash)
+    Request.stub(:from_github).and_return(request)
     subject.stub :puts
   end
 
@@ -59,10 +61,6 @@ describe 'Commands' do
 
   describe 'show ID (--full)'.pink do
 
-    before :each do
-      provider.stub(:request_exists?).and_return(request)
-    end
-
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
       expect { subject.show nil }.
@@ -89,10 +87,6 @@ describe 'Commands' do
 
   describe 'browse ID'.pink do
 
-    before :each do
-      provider.stub(:request_exists?).and_return(request)
-    end
-
     it 'requires a valid request number as ' + 'ID'.pink do
       provider.stub(:request_exists?).and_return(false)
       expect { subject.browse nil }.
@@ -112,7 +106,6 @@ describe 'Commands' do
     before :each do
       local.stub(:remote_for_request).with(request).and_return(remote)
       subject.stub(:git_call).with("fetch #{remote}")
-      provider.stub(:request_exists?).and_return(request)
     end
 
     it 'requires a valid request number as ' + 'ID'.pink do
@@ -160,7 +153,6 @@ describe 'Commands' do
     let(:comment) { 'Reviewed and approved.' }
 
     before :each do
-      provider.stub(:request_exists?).and_return(request)
       server.stub(:source_repo).and_return(head_repo)
     end
 
@@ -191,7 +183,6 @@ describe 'Commands' do
   describe 'merge ID'.pink do
 
     before :each do
-      provider.stub(:request_exists?).and_return(request)
       server.stub :source_repo
     end
 
@@ -221,7 +212,6 @@ describe 'Commands' do
   describe 'close ID'.pink do
 
     before :each do
-      provider.stub(:request_exists?).and_return(request)
       server.stub(:source_repo).and_return(head_repo)
     end
 
@@ -377,7 +367,6 @@ describe 'Commands' do
     end
 
     it 'allows only valid request numbers as ' + 'ID'.pink do
-      provider.stub(:request_exists?).and_return(false)
       expect { subject.close nil }.
         to raise_error(::GitReview::InvalidRequestIDError)
     end
