@@ -33,9 +33,9 @@ module GitReview
     def init_provider
       @provider = case
       when bitbucket_provider?
-        GitReview::Provider::Bitbucket.new
+        GitReview::Provider::Bitbucket.new self
       when github_provider?
-        GitReview::Provider::Github.new
+        GitReview::Provider::Github.new self
       else
         raise ::GitReview::InvalidGitProviderError
       end

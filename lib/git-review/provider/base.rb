@@ -4,14 +4,15 @@ module GitReview
 
     class Base
 
-      attr_reader :client
+      attr_reader :client, :server
       attr_writer :source_repo
 
       def self.instance
         @instance ||= new
       end
 
-      def initialize
+      def initialize(server)
+        @server = server
         configure_access
       end
 

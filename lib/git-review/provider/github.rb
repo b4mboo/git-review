@@ -17,7 +17,7 @@ module GitReview
       def request(number)
         raise ::GitReview::InvalidRequestIDError unless number
         attributes = client.pull_request(source_repo, number)
-        Request.from_github(attributes)
+        Request.from_github(server, attributes)
       rescue Octokit::NotFound
         raise ::GitReview::InvalidRequestIDError
       end
@@ -274,8 +274,9 @@ end
 class Request
 
   # Create a new request instance from a GitHub-structured attributes hash.
-  def self.from_github(attributes)
+  def self.from_github(server, attributes)
     instance = new(attributes)
+    instance.server = server
     instance.html_url = attributes._links.html.href
     instance
   end

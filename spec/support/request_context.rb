@@ -51,6 +51,6 @@ shared_context 'request_context' do
     )
   }
 
-  let(:request) { Request.from_github(request_hash) }
+  let(:request) { Request.from_github(server, request_hash) }
 
 end

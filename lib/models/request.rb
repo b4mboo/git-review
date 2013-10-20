@@ -5,7 +5,8 @@ class Request
 
   nests head: Commit
 
-  attr_accessor :number,
+  attr_accessor :server,
+                :number,
                 :title,
                 :body,
                 :state,

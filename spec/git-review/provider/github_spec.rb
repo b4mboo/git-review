@@ -4,8 +4,9 @@ describe 'Provider: Github' do
 
   include_context 'request_context'
 
-  subject { ::GitReview::Provider::Github.new }
+  subject { ::GitReview::Provider::Github.new(server) }
 
+  let(:server) { ::GitReview::Server.any_instance }
   let(:settings) { ::GitReview::Settings.any_instance }
   let(:local) { ::GitReview::Local.any_instance }
   let(:client) { Octokit::Client.any_instance }
