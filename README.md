@@ -131,9 +131,6 @@ To install it via RubyGems.org simply do:
 
     gem install git-review
 
-(Prefix with `sudo` if necessary)
-
-
 
 Wiki
 ----
