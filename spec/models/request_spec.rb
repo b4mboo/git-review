@@ -2,7 +2,9 @@ require 'spec_helper'
 
 describe Request do
 
-  subject { Request.new }
+  include_context 'request_context'
+
+  subject { request }
 
   it 'has accessible attributes' do
     subject.should be_accessible
@@ -10,6 +12,11 @@ describe Request do
 
   it 'has a nested attribute :head' do
     subject.head.class.should == Commit
+  end
+
+  it 'builds a summary' do
+    subject.server.stub(:comments_count).and_return(0)
+    subject.summary.should include(request_number.to_s)
   end
 
 end

@@ -16,4 +16,14 @@ class Request
                 :comments,
                 :review_comments
 
+
+  # Build a request's summary ready to output.
+  def summary
+    line = number.to_s.review_ljust(8)
+    line << updated_at.review_time.review_ljust(11)
+    line << server.comments_count(self).to_s.review_ljust(10)
+    line << title.review_ljust(91)
+    line
+  end
+
 end
