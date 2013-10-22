@@ -26,4 +26,15 @@ class Request
     line
   end
 
+  # Collect all details in a String (ready to output).
+  def details
+    text = "ID        : #{number}\n"
+    text << "Label     : #{head.label}\n"
+    text << "Updated   : #{updated_at.review_time}\n"
+    text << "Comments  : #{server.comments_count(self)}\n"
+    text << "\n#{title}\n\n"
+    text << "#{body}\n\n" unless body.empty?
+    text
+  end
+
 end

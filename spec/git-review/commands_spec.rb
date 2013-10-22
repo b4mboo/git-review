@@ -70,7 +70,7 @@ describe 'Commands' do
     it 'shows the request\'s stats' do
       subject.should_receive(:git_call).
         with("diff --color=always --stat HEAD...#{head_sha}")
-      subject.stub :print_request_details
+      request.stub :details
       subject.stub :print_request_discussions
       subject.show request_number
     end
@@ -78,7 +78,7 @@ describe 'Commands' do
     it 'shows the request\'s full diff when adding ' + '--full'.pink do
       subject.should_receive(:git_call).
         with("diff --color=always HEAD...#{head_sha}")
-      subject.stub :print_request_details
+      request.stub :details
       subject.stub :print_request_discussions
       subject.show(request_number, true)
     end
