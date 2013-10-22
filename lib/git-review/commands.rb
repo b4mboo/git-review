@@ -222,21 +222,6 @@ module GitReview
       numbers.each { |n| puts output[n] }
     end
 
-    def print_request_details(request)
-      comments_count = server.comments_count(request)
-      puts 'ID        : ' + request.number.to_s
-      puts 'Label     : ' + request.head.label
-      puts 'Updated   : ' + request.updated_at.review_time
-      puts 'Comments  : ' + comments_count.to_s
-      puts
-      puts request.title
-      puts
-      unless request.body.empty?
-        puts request.body
-        puts
-      end
-    end
-
     def print_request_discussions(request)
       puts 'Progress  :'
       puts
