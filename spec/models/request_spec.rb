@@ -24,4 +24,9 @@ describe Request do
     subject.details.should include(body)
   end
 
+  it 'collects the its discussions' do
+    subject.server.stub(:discussion).with(request_number).and_return('')
+    subject.discussion.should include('Progress')
+  end
+
 end

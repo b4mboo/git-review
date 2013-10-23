@@ -31,7 +31,7 @@ module GitReview
       diff = "diff --color=always #{option}HEAD...#{request.head.sha}"
       puts request.details
       puts git_call(diff)
-      print_request_discussions request
+      puts request.discussion
     end
 
     # Open a browser window and review a specified request.

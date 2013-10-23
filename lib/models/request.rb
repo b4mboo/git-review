@@ -37,4 +37,11 @@ class Request
     text
   end
 
+  # Collect the discussion details (ready to output).
+  def discussion
+    text = "Progress  :\n\n"
+    text << "#{server.discussion(number)}\n"
+    text
+  end
+
 end
