@@ -222,12 +222,6 @@ module GitReview
       numbers.each { |n| puts output[n] }
     end
 
-    def print_request_discussions(request)
-      puts 'Progress  :'
-      puts
-      puts server.discussion(request.number)
-    end
-
     # someone deleted the source repo
     def print_repo_deleted(request)
       user = request.head.user.login
