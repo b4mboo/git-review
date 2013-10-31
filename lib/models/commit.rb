@@ -4,11 +4,10 @@ class Commit
   extend Nestable
 
   nests user: User,
-        repository: Repository
+        repo: Repository
 
   attr_accessor :sha,
                 :ref,
-                :label,
-                :repo
+                :label
 
 end
