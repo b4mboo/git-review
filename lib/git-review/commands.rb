@@ -211,7 +211,7 @@ module GitReview
 
     private
 
-    def print_requests(requests, reverse=false)
+    def print_requests(requests, reverse = false)
       # put all output lines in a hash first, keyed by request number
       # this is to make sure the order is still correct even if we use
       #   multi-threading to retrieve the requests
