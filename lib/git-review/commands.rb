@@ -19,7 +19,9 @@ module GitReview
       else
         puts "Pending requests for '#{source}':"
         puts "ID      Updated    Comments  Title".pink
-        print_requests(requests, reverse)
+        requests.sort_by!(&:number)
+        requests.reverse! if reverse
+        requests.collect(&:summary).each(&method(:puts))
       end
     end
 
@@ -210,17 +212,6 @@ module GitReview
 
 
     private
-
-    def print_requests(requests, reverse = false)
-      # put all output lines in a hash first, keyed by request number
-      # this is to make sure the order is still correct even if we use
-      #   multi-threading to retrieve the requests
-      output = {}
-      requests.each { |req| output[req.number] = req.summary }
-      numbers = output.keys.sort
-      numbers.reverse! if reverse
-      numbers.each { |n| puts output[n] }
-    end
 
     # someone deleted the source repo
     def print_repo_deleted(request)

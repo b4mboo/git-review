@@ -31,14 +31,17 @@ describe 'Commands' do
       local.stub(:merged?).and_return(false)
       subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
       subject.should_not_receive(:puts).with(/No pending requests/)
-      subject.should_receive(:print_requests).with([req1, req2], false)
+      req1.should_receive :summary
+      req2.should_receive :summary
       subject.list
     end
 
     it 'allows to sort the list by adding ' + '--reverse'.pink do
-      server.stub(:current_requests_full).and_return([req1, req2])
-      local.stub(:merged?).and_return(false)
-      subject.should_receive(:print_requests).with([req1, req2], true)
+      requests = [req1, req2]
+      server.stub_chain(:current_requests_full, :reject).and_return(requests)
+      Request.any_instance.stub :summary
+      requests.stub(:sort_by!).and_return(requests)
+      requests.should_receive :reverse!
       subject.list true
     end
 
