@@ -15,18 +15,23 @@ describe Request do
   end
 
   it 'builds a one-line summary' do
-    subject.server.stub(:comments_count).and_return(0)
+    subject.server.should_receive(:comments_count).and_return(0)
     subject.summary.should include(request_number.to_s)
   end
 
   it 'collects all relevant details ' do
-    subject.server.stub(:comments_count).and_return(0)
+    subject.server.should_receive(:comments_count).and_return(0)
     subject.details.should include(body)
   end
 
-  it 'collects the its discussions' do
-    subject.server.stub(:discussion).with(request_number).and_return('')
+  it 'collects its discussions' do
+    subject.server.should_receive(:discussion).
+      with(request_number).and_return('')
     subject.discussion.should include('Progress')
+  end
+
+  it 'constructs a warning about a missing source repo' do
+    subject.missing_repo_warning.should include("curl #{subject.patch_url}")
   end
 
 end

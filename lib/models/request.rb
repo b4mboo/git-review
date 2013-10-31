@@ -17,7 +17,7 @@ class Request
                 :review_comments
 
 
-  # Build a request's summary ready to output.
+  # Build a request's summary.
   def summary
     line = number.to_s.review_ljust(8)
     line << updated_at.review_time.review_ljust(11)
@@ -26,7 +26,7 @@ class Request
     line
   end
 
-  # Collect all details in a String (ready to output).
+  # Collect all details in a String.
   def details
     text = "ID        : #{number}\n"
     text << "Label     : #{head.label}\n"
@@ -37,11 +37,22 @@ class Request
     text
   end
 
-  # Collect the discussion details (ready to output).
+  # Collect the discussion details.
   def discussion
     text = "Progress  :\n\n"
     text << "#{server.discussion(number)}\n"
     text
   end
+
+  # Construct a warning if someone deleted the source repo.
+  def missing_repo_warning
+    text = "Sorry, #{self.head.user.login} deleted the source repository.\n"
+    text << "git-review doesn't support this.\n"
+    text << "Tell the contributor not to do this.\n\n"
+    text << "You can still manually patch your repo by running:\n\n"
+    text << "  curl #{self.patch_url} | git am\n\n"
+    text
+  end
+
 
 end

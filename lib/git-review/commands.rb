@@ -99,7 +99,7 @@ module GitReview
         puts
         puts git_call(command)
       else
-        print_repo_deleted request
+        puts request.missing_repo_warning
       end
     end
 
@@ -212,20 +212,6 @@ module GitReview
 
 
     private
-
-    # someone deleted the source repo
-    def print_repo_deleted(request)
-      user = request.head.user.login
-      url = request.patch_url
-      puts "Sorry, #{user} deleted the source repository."
-      puts "git-review doesn't support this."
-      puts "Tell the contributor not to do this."
-      puts
-      puts "You can still manually patch your repo by running:"
-      puts
-      puts "  curl #{url} | git am"
-      puts
-    end
 
     # ask for branch name if not provided
     # @return [String] sanitized branch name

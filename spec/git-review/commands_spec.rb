@@ -205,7 +205,7 @@ describe 'Commands' do
 
     it 'does not proceed if the source repo no longer exists' do
       request.head.stub(:repo).and_return(nil)
-      subject.should_receive :print_repo_deleted
+      request.should_receive :missing_repo_warning
       subject.should_not_receive :git_call
       subject.merge request_number
     end
