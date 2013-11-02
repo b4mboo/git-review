@@ -2,19 +2,19 @@ module GitReview
 
   class AuthenticationError < StandardError
     def message
-      'You provided the wrong username/password, please try again.'
+      'Authentication failed. Check username/password.'
     end
   end
 
   class InvalidGitProviderError < StandardError
     def message
-      "It is not a valid git provider."
+      'Invalid git provider.'
     end
   end
 
   class InvalidGitRepositoryError < StandardError
     def message
-      "It is not a valid git repository or doesn't have a valid remote url."
+      'Invalid git repository or remote url.'
     end
   end
 
@@ -27,13 +27,13 @@ module GitReview
 
   class InvalidArgumentError < StandardError
     def message
-      'Please specify valid arguments. See --help for more information.'
+      'Invalid arguments. See --help for more information.'
     end
   end
 
   class InvalidRequestIDError < StandardError
     def message
-      'Please specify a valid request ID.'
+      'Invalid request ID.'
     end
   end
 
