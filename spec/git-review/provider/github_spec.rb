@@ -19,6 +19,15 @@ describe 'Provider: Github' do
 
   context '# Authentication' do
 
+    it 'validates accounts with 2-factor authentication' do
+      stub_request(:post, /https:\/\/.*:.*@api.github.com\/authorizations/).to_return(:status => 401,headers: {'X-GitHub-OTP' => "required;sms"})
+      stub_request(:post, /https:\/\/.*:.*@api.github.com\/authorizations/).with(headers: {'X-GitHub-OTP' => /.*/ }).to_return(:status => 201,body:"{\"token\": 123456789}")
+      settings.stub :oauth_token
+      settings.stub :username
+      ::GitReview::Provider::Github.any_instance.should_receive :save_oauth_token
+      subject
+    end
+
     it 'configures access to GitHub' do
       ::GitReview::Provider::Github.any_instance.should_receive :configure_access
       subject

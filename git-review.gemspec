@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'gli', '~> 2.8.0'
   s.add_runtime_dependency 'octokit', '~> 2.0.0'
   s.add_development_dependency 'rspec', '>= 2.13.0'
+  s.add_development_dependency 'webmock'
   s.add_development_dependency 'guard', '>= 2.0.3'
   s.add_development_dependency 'guard-rspec', '>= 3.1.0'
 end

@@ -230,7 +230,7 @@ module GitReview
         )
         req.content_type = 'application/json'
         response = http.request(req)
-      #First check if the user has two-factor authentication required.If he does, ask for the OTP.
+      # First check if the user has two-factor authentication required.If he does, ask for the OTP.
       if response.code == '401' && response['X-GitHub-OTP']
         puts "Two-factor authentication enabled for this account"
         puts "OTP required - please enter the OTP to continue:"
