@@ -11,6 +11,8 @@ module GitReview
 
     class Github < Base
 
+      attr_accessor :username,:password,:description,:otp
+
       include ::GitReview::Helpers
 
       # Find a request by a specified number and return it (or nil otherwise).
@@ -196,9 +198,14 @@ module GitReview
         puts "You can revoke this authorization by visiting the following page: "\
         "https://github.com/settings/applications"
         print "Please enter your GitHub's username: "
-        @username = STDIN.gets.chomp
+        @username = $stdin.gets.chomp
         print "Please enter your GitHub's password (it won't be stored anywhere): "
-        @password = STDIN.noecho(&:gets).chomp
+        begin
+          `stty -echo` rescue nil
+          @password = $stdin.gets.chomp
+        ensure
+          `stty echo` rescue nil
+        end
         print "\n"
       end
 
@@ -211,7 +218,7 @@ module GitReview
           "make easier to find it inside of GitHub's application page."
           puts "Press enter to accept the proposed description"
           print "Description [#{@description}]:"
-          user_description = STDIN.gets.chomp
+          user_description = $stdin.gets.chomp
           @description = user_description.empty? ? @description : user_description
         end
       end
@@ -234,8 +241,8 @@ module GitReview
       if response.code == '401' && response['X-GitHub-OTP']
         puts "Two-factor authentication enabled for this account"
         puts "OTP required - please enter the OTP to continue:"
-        otp = STDIN.gets.chomp
-        req['X-GitHub-OTP'] = otp
+        @otp = $stdin.gets.chomp
+        req['X-GitHub-OTP'] = @otp
         response = http.request(req)
       end
       if response.code == '201'
