@@ -11,8 +11,6 @@ module GitReview
 
     class Github < Base
 
-      attr_accessor :username,:password,:description,:otp
-
       include ::GitReview::Helpers
 
       # Find a request by a specified number and return it (or nil otherwise).
@@ -112,7 +110,7 @@ module GitReview
 
       def issue_discussion(number)
         comments = client.issue_comments(source_repo, number) +
-        client.review_comments(source_repo, number)
+                            client.review_comments(source_repo, number)
         discussion = ["\nComments on pull request:\n\n"]
         discussion += comments.collect { |comment|
           name = comment.user.login
@@ -133,7 +131,7 @@ module GitReview
       def comments_count(request)
         issue_c = request.comments + request.review_comments
         commits_c = client.pull_commits(source_repo, request.number).
-        inject(0) { |sum, c| sum + c.commit.comment_count }
+                            inject(0) { |sum, c| sum + c.commit.comment_count }
         issue_c + commits_c
       end
 
@@ -172,7 +170,7 @@ module GitReview
           login: settings.username,
           access_token: settings.oauth_token,
           auto_traversal: true
-          )
+       )
         @client.login
       end
 
@@ -230,10 +228,10 @@ module GitReview
         req = Net::HTTP::Post.new(uri.request_uri)
         req.basic_auth(@username, @password)
         req.body = Yajl::Encoder.encode(
-        {
-          scopes: %w(repo),
-          note: @description
-        }
+          {
+            scopes: %w(repo),
+            note: @description
+          }
         )
         req.content_type = 'application/json'
         response = http.request(req)
@@ -308,14 +306,14 @@ class Request
         ref: response.head.ref,
         label: response.head.label,
         user: {
-          login: response.head.user.login
+            login: response.head.user.login
           },
           repo: {
           # NOTE: This can become nil, if the repo has been deleted ever since.
-          owner: (response.head.repo ? response.head.repo.owner : nil),
-          name: (response.head.repo ? response.head.repo.name : nil)
+            owner: (response.head.repo ? response.head.repo.owner : nil),
+            name: (response.head.repo ? response.head.repo.name : nil)
+          }
         }
-      }
       )
   end
 
