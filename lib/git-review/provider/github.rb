@@ -110,7 +110,7 @@ module GitReview
 
       def issue_discussion(number)
         comments = client.issue_comments(source_repo, number) +
-            client.review_comments(source_repo, number)
+                            client.review_comments(source_repo, number)
         discussion = ["\nComments on pull request:\n\n"]
         discussion += comments.collect { |comment|
           name = comment.user.login
@@ -131,7 +131,7 @@ module GitReview
       def comments_count(request)
         issue_c = request.comments + request.review_comments
         commits_c = client.pull_commits(source_repo, request.number).
-            inject(0) { |sum, c| sum + c.commit.comment_count }
+                            inject(0) { |sum, c| sum + c.commit.comment_count }
         issue_c + commits_c
       end
 
@@ -170,7 +170,7 @@ module GitReview
           login: settings.username,
           access_token: settings.oauth_token,
           auto_traversal: true
-        )
+       )
         @client.login
       end
 
@@ -196,9 +196,14 @@ module GitReview
         puts "You can revoke this authorization by visiting the following page: "\
         "https://github.com/settings/applications"
         print "Please enter your GitHub's username: "
-        @username = STDIN.gets.chomp
+        @username = $stdin.gets.chomp
         print "Please enter your GitHub's password (it won't be stored anywhere): "
-        @password = STDIN.noecho(&:gets).chomp
+        begin
+          `stty -echo` rescue nil
+          @password = $stdin.gets.chomp
+        ensure
+          `stty echo` rescue nil
+        end
         print "\n"
       end
 
@@ -211,7 +216,7 @@ module GitReview
           "make easier to find it inside of GitHub's application page."
           puts "Press enter to accept the proposed description"
           print "Description [#{@description}]:"
-          user_description = STDIN.gets.chomp
+          user_description = $stdin.gets.chomp
           @description = user_description.empty? ? @description : user_description
         end
       end
@@ -228,24 +233,33 @@ module GitReview
             note: @description
           }
         )
+        req.content_type = 'application/json'
         response = http.request(req)
-        if response.code == '201'
-          parser_response = Yajl::Parser.parse(response.body)
-          save_oauth_token(parser_response['token'])
-        elsif response.code == '401'
-          raise ::GitReview::AuthenticationError
-        else
-          raise ::GitReview::UnprocessableState, response.body
-        end
+      # First check if the user has two-factor authentication required.If he does, ask for the OTP.
+      if response.code == '401' && response['X-GitHub-OTP']
+        puts "Two-factor authentication enabled for this account"
+        puts "OTP required - please enter the OTP to continue:"
+        @otp = $stdin.gets.chomp
+        req['X-GitHub-OTP'] = @otp
+        response = http.request(req)
       end
+      if response.code == '201'
+        parser_response = Yajl::Parser.parse(response.body)
+        save_oauth_token(parser_response['token'])
+      elsif response.code == '401'
+        raise ::GitReview::AuthenticationError
+      else
+        raise ::GitReview::UnprocessableState, response.body
+      end
+    end
 
-      def save_oauth_token(token)
-        settings = ::GitReview::Settings.instance
-        settings.oauth_token = token
-        settings.username = @username
-        settings.save!
-        puts "OAuth token successfully created.\n"
-      end
+    def save_oauth_token(token)
+      settings = ::GitReview::Settings.instance
+      settings.oauth_token = token
+      settings.username = @username
+      settings.save!
+      puts "OAuth token successfully created.\n"
+    end
 
       # extract user and project name from GitHub URL.
       def url_matching(url)
@@ -257,17 +271,17 @@ module GitReview
       def insteadof_matching(config, url)
         first_match = config.keys.collect { |key|
           [config[key], /url\.(.*github\.com.*)\.insteadof/.match(key)]
-        }.find { |insteadof_url, true_url|
-          url.index(insteadof_url) and true_url != nil
-        }
-        first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
+          }.find { |insteadof_url, true_url|
+            url.index(insteadof_url) and true_url != nil
+          }
+          first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
+        end
+
       end
 
     end
 
   end
-
-end
 
 
 # GitHub specific constructor for git-review's request model.
@@ -292,15 +306,15 @@ class Request
         ref: response.head.ref,
         label: response.head.label,
         user: {
-          login: response.head.user.login
-        },
-        repo: {
+            login: response.head.user.login
+          },
+          repo: {
           # NOTE: This can become nil, if the repo has been deleted ever since.
-          owner: (response.head.repo ? response.head.repo.owner : nil),
-          name: (response.head.repo ? response.head.repo.name : nil)
+            owner: (response.head.repo ? response.head.repo.owner : nil),
+            name: (response.head.repo ? response.head.repo.name : nil)
+          }
         }
-      }
-    )
+      )
   end
 
 end
