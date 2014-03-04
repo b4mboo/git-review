@@ -5,6 +5,10 @@ describe 'Local' do
 
   subject { ::GitReview::Local.new }
 
+  before :each do
+    ::GitReview::Provider::Github.any_instance.stub :configure_oauth
+  end
+
   describe '.instance' do
 
     it 'gives back the same instance' do
