@@ -178,10 +178,12 @@ module GitReview
 
       def configure_oauth
         begin
-          prepare_username_and_password
+          print_auth_message
+          prepare_username unless github_login
+          prepare_password
           prepare_description
           authorize
-        rescue ::GitReview::AuthenticationError => e
+        rescue Octokit::Unauthorized => e
           warn e.message
         rescue ::GitReview::UnprocessableState => e
           warn e.message
@@ -189,17 +191,33 @@ module GitReview
         end
       end
 
-      def prepare_username_and_password
+      def github_login
+        login = git_call 'config github.user'
+        @username = login.chomp if login && !login.empty?
+      end
+
+      def print_auth_message
         puts "Requesting a OAuth token for git-review."
         puts "This procedure will grant access to your public and private "\
         "repositories."
         puts "You can revoke this authorization by visiting the following page: "\
         "https://github.com/settings/applications"
+      end
+
+      def prepare_username
         print "Please enter your GitHub's username: "
         @username = STDIN.gets.chomp
-        print "Please enter your GitHub's password (it won't be stored anywhere): "
+      end
+
+      def prepare_password
+        print "Please enter your GitHub's password for #{@username} "\
+        "(it won't be stored anywhere): "
         @password = STDIN.noecho(&:gets).chomp
-        print "\n"
+      end
+
+      def prepare_otp
+        print "PLease enter your One-Time-Password for GitHub's 2 Factor Authorization:"
+        @otp = STDIN.gets.chomp
       end
 
       def prepare_description(chosen_description=nil)
@@ -217,31 +235,21 @@ module GitReview
       end
 
       def authorize
-        uri = URI('https://api.github.com/authorizations')
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        req = Net::HTTP::Post.new(uri.request_uri)
-        req.basic_auth(@username, @password)
-        req.body = Yajl::Encoder.encode(
-          {
-            scopes: %w(repo),
-            note: @description
-          }
-        )
-        response = http.request(req)
-        if response.code == '201'
-          parser_response = Yajl::Parser.parse(response.body)
-          save_oauth_token(parser_response['token'])
-        elsif response.code == '401'
-          raise ::GitReview::AuthenticationError
-        else
-          raise ::GitReview::UnprocessableState, response.body
+        client = Octokit::Client.new :login => @username, :password => @password
+        begin
+          auth = client.create_authorization(:scopes => %w(repo),
+                                             :note => @description)
+        rescue Octokit::OneTimePasswordRequired
+          prepare_otp
+          auth = client.create_authorization(:scopes => %w(repo),
+                                             :note => @description,
+                                             :headers => {'X-GitHub-OTP' => @otp})
         end
+        save_oauth_token(auth)
       end
 
-      def save_oauth_token(token)
-        settings = ::GitReview::Settings.instance
-        settings.oauth_token = token
+      def save_oauth_token(auth)
+        settings.oauth_token = auth.token
         settings.username = @username
         settings.save!
         puts "OAuth token successfully created.\n"

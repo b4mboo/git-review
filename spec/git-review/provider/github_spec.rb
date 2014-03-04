@@ -19,6 +19,19 @@ describe 'Provider: Github' do
 
   context '# Authentication' do
 
+    it 'identifies github user name if present' do
+      github = ::GitReview::Provider::Github.any_instance
+      settings.stub :oauth_token
+      settings.stub :username
+      github.stub :print_auth_message
+      github.stub :prepare_password
+      github.stub :prepare_description
+      github.stub :authorize
+      github.should_receive(:github_login).and_return('existing_user')
+      github.should_not_receive(:prepare_username)
+      subject
+    end
+
     it 'configures access to GitHub' do
       ::GitReview::Provider::Github.any_instance.should_receive :configure_access
       subject
@@ -38,6 +51,21 @@ describe 'Provider: Github' do
       Octokit::Client.should_receive(:new).and_return(client)
       client.should_receive :login
       subject.login.should == user_login
+    end
+
+    it 'asks for OTP if 2FA is enabled' do
+      github = ::GitReview::Provider::Github.any_instance
+      github.stub :save_oauth_token
+      github.stub :configure_oauth
+      github.should_receive :prepare_otp
+      a_count = 0
+      Octokit::Client.any_instance.should_receive(:create_authorization).twice {
+        # 1st attempt is OAuth without 2FA
+        # if 2FA is enabled, OneTimePasswordRequired will be raised and
+        # start second attempt with OTP in header.
+        raise Octokit::OneTimePasswordRequired if (a_count += 1) == 1
+      }
+      subject.send(:authorize)
     end
 
   end
