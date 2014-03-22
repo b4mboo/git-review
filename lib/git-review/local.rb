@@ -97,14 +97,12 @@ module GitReview
 
     # Finds the correct remote for a given branch name.
     def remote_for_branch(branch_name)
-      git_call('branch -lvv').gsub('* ', '').split("\n").each do |line|
-        entries = line.split(' ')
-        next unless entries.first == branch_name
-        # Return the remote name or nil for local branches.
-        match = entries[2].match(%r(\[(.*)(\]|:)))
-        return match[1].split('/').first if match
+      remote = git_call("for-each-ref --format='%(upstream:short)' $(git symbolic-ref -q HEAD)")
+      return nil if remote.strip.empty? # no remote tracking branch
+      remote.split("\n").each do |line|
+        match = line.match(%r((.*)\/(.*)))
+        return line.split('/').first if match
       end
-      nil
     end
 
     # @return [Array<String>] all existing branches
