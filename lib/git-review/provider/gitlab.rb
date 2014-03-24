@@ -242,12 +242,18 @@ module GitReview
       def project_id(full_name)
         settings_key = "gitlab_project_#{gitlab_host}_#{full_name.gsub('/','_')}"
         return settings[settings_key] if settings[settings_key]
-        matching_projects = client.projects "search/#{full_name.split('/')[1]}"
-        project = matching_projects.select do |project|
-          project.path_with_namespace == full_name
-        end.first
-        settings[settings_key] = project.id
-        settings.save!
+        page = 1
+        until (projects = client.get('/projects/all', :query => { :per_page => 100, :page => page })).empty?
+          page += 1
+          project = projects.select do |project|
+            project.path_with_namespace == full_name
+          end.first
+          if project
+            settings[settings_key] = project.id
+            settings.save!
+            break
+          end
+        end
         project.id
       end
 
