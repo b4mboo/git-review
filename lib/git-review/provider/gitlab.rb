@@ -233,7 +233,7 @@ module GitReview
         settings_key = "gitlab_project_#{gitlab_host}_#{full_name.gsub('/','_')}"
         return settings[settings_key] if settings[settings_key]
         page = 1
-        until (projects = client.get('/projects/all', :query => { :per_page => 100, :page => page })).empty?
+        until (projects = client.projects(:per_page => 100, :page => page)).empty?
           page += 1
           project = projects.select do |project|
             project.path_with_namespace == full_name
@@ -274,7 +274,7 @@ module GitReview
         rescue ::Gitlab::Error::NotFound
           # messed up merge requests
           commit_info ||= {}
-          
+
         end
         Request.new(
           :number => request.id,
