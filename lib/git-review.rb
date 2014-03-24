@@ -31,6 +31,8 @@ require_relative 'git-review/provider/base'
 require_relative 'git-review/provider/github'
 # Communicate with Bitbucket via API.
 require_relative 'git-review/provider/bitbucket'
+# Communicate with Gitlab via API.
+require_relative 'git-review/provider/gitlab'
 
 # Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'
@@ -46,6 +48,7 @@ require_relative 'mixins/time'
 
 # Add some POROs to get some structure into the entities git-review deals with.
 require_relative 'models/repository'
+require_relative 'models/forked_repository'
 require_relative 'models/user'
 require_relative 'models/commit'
 require_relative 'models/request'
