@@ -100,7 +100,7 @@ command :clean do |c|
   c.action do |global, opts, args|
     help_now!('Request number is required.') if args.empty? && !opts[:all]
     number = args.empty? ? nil : args.shift
-    ::GitReview::Commands.clean(args.shift, opts[:force], opts[:all])
+    ::GitReview::Commands.clean(number, opts[:force], opts[:all])
   end
 end
 
