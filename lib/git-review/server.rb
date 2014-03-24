@@ -36,6 +36,8 @@ module GitReview
         GitReview::Provider::Bitbucket.new self
       when github_provider?
         GitReview::Provider::Github.new self
+      when gitlab_provider?
+        GitReview::Provider::Gitlab.new self
       else
         raise ::GitReview::InvalidGitProviderError
       end
@@ -47,6 +49,10 @@ module GitReview
 
     def bitbucket_provider?
       origin_url =~ %r(bitbucket)
+    end
+
+    def gitlab_provider?
+      fetch_origin_url =~ %r(gitlab)
     end
 
     def origin_url
