@@ -39,7 +39,13 @@ module GitReview
     def browse(number)
       request = server.get_request_by_number(number)
       # FIXME: Use request.html_url as soon as we are using our Request model.
-      Launchy.open request._links.html.href
+      url = case request
+            when Request
+              request.html_url
+            else
+              request._links.html.href
+            end
+      Launchy.open url
     end
 
     # Checkout a specified request's changes to your local repository.
@@ -109,7 +115,9 @@ module GitReview
       request = server.get_request_by_number(number)
       repo = server.source_repo
       server.close_issue(repo, request.number)
-      unless server.request_exists?('open', request.number)
+      if server.request_exists?(request.number)
+        puts 'Failed to close request.'
+      else
         puts 'Successfully closed request.'
       end
     end

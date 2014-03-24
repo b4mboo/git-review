@@ -3,6 +3,6 @@ class Repository
   include Accessible
 
   attr_accessor :owner,
-                :name
+                :full_name
 
 end
