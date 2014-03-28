@@ -6,6 +6,10 @@ describe Request do
 
   subject { request }
 
+  before :each do
+    ::GitReview::Provider::Github.any_instance.stub :configure_oauth
+  end
+
   it 'has accessible attributes' do
     subject.should be_accessible
   end
