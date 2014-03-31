@@ -26,21 +26,17 @@ module GitReview
       def request(number)
         raise ::GitReview::InvalidRequestIDError unless number
         attributes = client.merge_request(project_id(source_repo), number)
-        Request.from_gitlab(server, attributes)
+        build_request(attributes, repo)
       rescue ::Gitlab::Error::NotFound
         raise ::GitReview::InvalidRequestIDError
       end
-
 
       # @return [Boolean, Hash] the specified request if exists, otherwise false.
       #   Instead of true, the request itself is returned, so another round-trip
       #   of merge_request can be avoided.
       def request_exists?(number, state='open')
-        return false if number.nil?
-        request = build_request(client.merge_request(project_id(source_repo), number))
-        request.state == state ? request : false
-      rescue ::Gitlab::Error::NotFound
-        false
+        request = request(number)
+        request && request.state == state
       end
 
       def request_exists_for_branch?(upstream = false, branch = local.source_branch)
@@ -51,7 +47,7 @@ module GitReview
       # an alias to pull_requests
       def current_requests(repo=source_repo)
         client.merge_requests(project_id(repo)).map do |request|
-          build_request(request,repo)
+          build_request(request, repo)
         end.reject do |request|
           # Remove invalid and closed/merged merge requests
           request.head.sha.nil? || request.state != 'open'
@@ -60,6 +56,7 @@ module GitReview
 
       # a more detailed collection of requests
       def current_requests_full(repo=source_repo)
+        # TODO get comments
         current_requests(repo)
       end
 
@@ -79,7 +76,7 @@ module GitReview
           :source_branch => local.source_branch,
           :target_branch => base
         )
-        request = build_request(raw_request,target_repo)
+        request = Request.from_gitlab(server, raw_request)
         # switch back to target_branch and check for success
         git_call "checkout #{base}"
 
@@ -112,7 +109,7 @@ module GitReview
       end
 
       def pull_request(repo, request_number)
-        build_request(client.merge_request(project_id(repo), request_number))
+        Request.from_gitlab(server, client.merge_request(project_id(repo), request_number))
       end
 
       def commit_discussion(number)
@@ -239,6 +236,8 @@ module GitReview
         matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
       end
 
+      private
+
       def project_id(full_name)
         settings_key = "gitlab_project_#{gitlab_host}_#{full_name.gsub('/','_')}"
         return settings[settings_key] if settings[settings_key]
@@ -270,10 +269,10 @@ module GitReview
         end
       end
 
-      def build_request(request, repo=source_repo)
+      def build_request(attributes, repo)
         begin
-          branch_info = client.branch(request.source_project_id, request.source_branch)
-          project_info = client.project(request.source_project_id)
+          branch_info = client.branch(attributes.source_project_id, attributes.source_branch)
+          project_info = client.project(attributes.source_project_id)
           commit_info = {
             :sha => branch_info.commit.id,
             :ref => branch_info.name,
@@ -282,34 +281,44 @@ module GitReview
             :repo => { :full_name => project_info.path_with_namespace }
           }
         rescue ::Gitlab::Error::NotFound
-          # messed up merge requests
           commit_info ||= {}
-
         end
-        Request.new(
-          :number => request.id,
-          :title => request.title,
-          :body => '',
-          :head => commit_info,
-          :state => build_state(request.state),
-          :updated_at => Time.new(request.author.created_at),
-          :html_url => request_url_for(source_repo, request.iid)
-        )
+        url = request_url_for(repo, attributes.iid)
+        Request.from_gitlab(server, attributes, commit_info, url)
       end
-
-      def build_state(state)
-        case state
-        when 'opened'
-          'open'
-        when 'merged', 'closed'
-          'closed'
-        else
-          state
-        end
-      end
-
     end
 
+
+  end
+
+end
+
+# Gitlab specific constructor for git-review's request model.
+class Request
+
+  # Create a new request instance from a GitHub-structured attributes hash.
+  def self.from_gitlab(server, request, commit_info, url)
+    self.new(
+      server: server,
+      number: request.id,
+      title: request.title,
+      body: '',
+      head: commit_info,
+      state: self.state_from_gitlab(request.state),
+      updated_at: Time.new(request.author.created_at),
+      html_url: url
+    )
+  end
+
+  def self.state_from_gitlab(gitlab_state)
+    case gitlab_state
+    when 'opened'
+      'open'
+    when 'merged', 'closed'
+      'closed'
+    else
+      state
+    end
   end
 
 end
