@@ -57,12 +57,7 @@ module GitReview
 
     # Find or create the correct remote for a fork with a given owner name.
     def remote_for_request(request)
-      repo_owner = case request
-                   when Request
-                     request.head.user.login
-                   else
-                     request.head.repo.owner.login
-                   end
+      repo_owner = request.head.user.login
       remote_url = server.remote_url_for(repo_owner)
       remotes = remotes_for_url(remote_url)
       if remotes.empty?
