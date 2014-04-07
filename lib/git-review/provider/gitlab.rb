@@ -26,7 +26,7 @@ module GitReview
       def request(number)
         raise ::GitReview::InvalidRequestIDError unless number
         attributes = client.merge_request(project_id(source_repo), number)
-        build_request(attributes, repo)
+        build_request(attributes, source_repo)
       rescue ::Gitlab::Error::NotFound
         raise ::GitReview::InvalidRequestIDError
       end
@@ -41,12 +41,12 @@ module GitReview
 
       def request_exists_for_branch?(upstream = false, branch = local.source_branch)
         target_repo = local.target_repo(upstream)
-        client.merge_requests(project_id(target_repo)).any? { |r| r.source_branch == branch }
+        ClientItems.new(client, :merge_requests, project_id(target_repo)).any? { |r| r.source_branch == branch }
       end
 
       # an alias to pull_requests
       def current_requests(repo=source_repo)
-        client.merge_requests(project_id(repo)).map do |request|
+        ClientItems.new(client, :merge_requests, project_id(repo)).map do |request|
           build_request(request, repo)
         end.reject do |request|
           # Remove invalid and closed/merged merge requests
@@ -238,21 +238,44 @@ module GitReview
 
       private
 
+      class ClientItems
+        include Enumerable
+
+        def initialize(client, method, *args)
+          @client = client
+          @method = method
+          @args = args
+        end
+
+        def each
+          page = 1
+          until (items = @client.send(@method, *paginate_args(page))).empty?
+            page += 1
+            items.each { |item| yield item }
+          end
+        end
+
+        def paginate_args(page)
+          @args + [
+            @method == :get ? {:query => { :per_page => 100, :page => page }} : { :per_page => 100, :page => page }
+          ]
+        end
+      end
+
       def project_id(full_name)
         settings_key = "gitlab_project_#{gitlab_host}_#{full_name.gsub('/','_')}"
         return settings[settings_key] if settings[settings_key]
-        page = 1
-        until (projects = client.projects(:per_page => 100, :page => page)).empty?
-          page += 1
-          project = projects.select do |project|
-            project.path_with_namespace == full_name
-          end.first
-          if project
+        project = ClientItems.new(client, :projects).select do |p|
+          p.path_with_namespace == full_name
+        end.first
+
+        if project
             settings[settings_key] = project.id
             settings.save!
-            break
-          end
+        else
+          raise "Unknown project in Gitlab: #{full_name}"
         end
+
         project.id
       end
 
