@@ -25,7 +25,10 @@ module GitReview
       # Find a request by a specified number and return it (or nil otherwise).
       def request(number)
         raise ::GitReview::InvalidRequestIDError unless number
-        attributes = client.merge_request(project_id(source_repo), number)
+        number = number.to_i
+        attributes = ClientItems.new(client, :merge_requests, project_id(source_repo)).find do |request|
+          request.iid == number
+        end
         build_request(attributes, source_repo)
       rescue ::Gitlab::Error::NotFound
         raise ::GitReview::InvalidRequestIDError
@@ -84,7 +87,7 @@ module GitReview
         new_number = request.number
         if new_number && new_number > latest_number
           puts "Successfully created new request ##{new_number}"
-          puts request_url_for target_repo, raw_request.iid
+          puts request_url_for target_repo, new_number
         else
           puts "Pull request was not created for #{target_repo}."
         end
@@ -323,7 +326,7 @@ class Request
   def self.from_gitlab(server, request, commit_info, url)
     self.new(
       server: server,
-      number: request.id,
+      number: request.iid,
       title: request.title,
       body: '',
       head: commit_info,
