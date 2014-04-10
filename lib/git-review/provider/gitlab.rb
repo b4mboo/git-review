@@ -79,7 +79,7 @@ module GitReview
           :source_branch => local.source_branch,
           :target_branch => base
         )
-        request = Request.from_gitlab(server, raw_request)
+        request = build_request(raw_request, target_repo)
         # switch back to target_branch and check for success
         git_call "checkout #{base}"
 
