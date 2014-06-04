@@ -75,6 +75,7 @@ module GitReview
         raw_request = client.create_merge_request(
           project_id(source_repo),
           title,
+          :description => body,
           :target_project_id => project_id(target_repo),
           :source_branch => local.source_branch,
           :target_branch => base
@@ -97,7 +98,7 @@ module GitReview
         client.update_merge_request(
           project_id(repo),
           request_number,
-          :state => 'merged'
+          :state_event => 'merge'
         )
       end
 
