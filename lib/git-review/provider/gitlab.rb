@@ -339,12 +339,12 @@ class Request
 
   def self.state_from_gitlab(gitlab_state)
     case gitlab_state
-    when 'opened'
+    when 'opened', 'reopened'
       'open'
     when 'merged', 'closed'
       'closed'
     else
-      state
+      gitlab_state
     end
   end
 
