@@ -35,11 +35,13 @@ module GitReview
 
       # an alias to pull_requests
       def current_requests(repo = source_repo)
+        # FIXME: Transform requests into GitReview::Request instances.
         client.pull_requests repo
       end
 
       # a more detailed collection of requests
       def current_requests_full(repo = source_repo)
+        # FIXME: Transform requests into GitReview::Request instances.
         threads = []
         requests = []
         client.pull_requests(repo).each do |req|
@@ -282,7 +284,11 @@ end
 class Request
 
   # Create a new request instance from a GitHub-structured attributes hash.
+  # NOTE: Allows to provide an Array of GH-Hashes,
+  # in which case it will also return an Array of Requests.
   def self.from_github(server, response)
+    # Use recursion to handle Arrays of responses.
+    return response.collect{|r| from_github(server, r)} if response.is_a? Array
     self.new(
       server: server,
       number: response.number,
