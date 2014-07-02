@@ -146,7 +146,7 @@ module GitReview
       end
       if local.new_commits?(upstream)
         # Feature branch differs from local or upstream master.
-        if server.request_exists_for_branch?(upstream)
+        if server.request_exists_from_branch?(upstream)
           puts 'A pull request already exists for this branch.'
           puts 'Please update the request directly using `git push`.'
           return

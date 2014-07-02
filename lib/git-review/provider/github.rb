@@ -21,12 +21,6 @@ module GitReview
         raise ::GitReview::InvalidRequestIDError
       end
 
-      def request_exists_for_branch?(upstream = false, branch = local.source_branch)
-        target_repo = local.target_repo(upstream)
-        # FIXME: Reuse existing server method. Then move out.
-        client.pull_requests(target_repo).any? { |r| r.head.ref == branch }
-      end
-
       # an alias to pull_requests
       # FIXME: Reevaluate the need for this method. Maybe current_requests_full
       # should always be used. Otherwise, rename to current_requests_overview.

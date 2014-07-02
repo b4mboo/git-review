@@ -34,6 +34,12 @@ module GitReview
         instance && instance.state == state
       end
 
+      # Determine whether a request from a specified branch already exists.
+      def request_exists_from_branch?(upstream = false, branch = local.source_branch)
+        target_repo = local.target_repo(upstream)
+        current_requests(target_repo).any? { |r| r.head.ref == branch }
+      end
+
       # @return [String] Current username
       def login
         settings.username

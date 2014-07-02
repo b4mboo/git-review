@@ -299,7 +299,7 @@ describe 'Commands' do
     it 'pushes the commits to a remote branch and creates a pull request' do
       upstream_switch = false
       local.stub(:new_commits?).with(upstream_switch).and_return(true)
-      server.stub(:request_exists_for_branch?).with(upstream_switch).
+      server.stub(:request_exists_from_branch?).with(upstream_switch).
         and_return(false)
       local.should_receive(:remote_for_branch).with(branch_name).
         and_return('origin')
@@ -312,7 +312,7 @@ describe 'Commands' do
     it 'creates the request against the repo it has been forked from by adding ' + '--upstream'.pink do
       upstream_switch = true
       local.stub(:new_commits?).with(upstream_switch).and_return(true)
-      server.stub(:request_exists_for_branch?).with(upstream_switch).
+      server.stub(:request_exists_from_branch?).with(upstream_switch).
         and_return(false)
       local.should_receive(:remote_for_branch).with(branch_name).
         and_return('origin')
@@ -325,7 +325,7 @@ describe 'Commands' do
     it 'does not create a pull request if one already exists for the branch' do
       upstream_switch = double('upstream')
       local.stub(:new_commits?).with(upstream_switch).and_return(true)
-      server.stub(:request_exists_for_branch?).with(upstream_switch).and_return(true)
+      server.stub(:request_exists_from_branch?).with(upstream_switch).and_return(true)
       server.should_not_receive :send_pull_request
       subject.should_receive(:puts).with(/already exists/)
       subject.should_receive(:puts).with(/`git push`/)
@@ -351,7 +351,7 @@ describe 'Commands' do
     it 'lets the user return to the branch she was working on before' do
       upstream_switch = double('upstream')
       local.stub(:new_commits?).with(upstream_switch).and_return(true)
-      server.stub(:request_exists_for_branch?).
+      server.stub(:request_exists_from_branch?).
         with(upstream_switch).and_return(false)
       server.stub :send_pull_request
       subject.should_receive(:git_call).with('checkout master')
