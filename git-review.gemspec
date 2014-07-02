@@ -2,7 +2,7 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name = 'git-review'
-  s.version = '2.0.0.beta.1'
+  s.version = '2.1.0.beta.1'
   s.date = Time.now.strftime('%F')
   s.summary = 'Facilitates GitHub code reviews'
   s.homepage = 'http://github.com/b4mboo/git-review'
