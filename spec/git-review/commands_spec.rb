@@ -227,7 +227,7 @@ describe 'Commands' do
     it 'closes an open request' do
       server.should_receive(:close_issue).with(head_repo, request_number)
       server.should_receive(:request_exists?).
-          with(state, request_number).and_return(false)
+          with(request_number, state).and_return(false)
       subject.should_receive(:puts).with(/Successfully closed request./)
       subject.close request_number
     end

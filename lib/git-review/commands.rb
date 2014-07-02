@@ -108,7 +108,7 @@ module GitReview
       request = server.request(number)
       repo = server.source_repo
       server.close_issue(repo, request.number)
-      unless server.request_exists?('open', request.number)
+      unless server.request_exists?(request.number, 'open')
         puts 'Successfully closed request.'
       end
     end
