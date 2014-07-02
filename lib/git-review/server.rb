@@ -42,19 +42,15 @@ module GitReview
     end
 
     def github_provider?
-      fetch_origin_url =~ %r(github)
+      origin_url =~ %r(github)
     end
 
     def bitbucket_provider?
-      fetch_origin_url =~ %r(bitbucket)
+      origin_url =~ %r(bitbucket)
     end
 
-    def fetch_origin_url
-      git_call call_origin_params
-    end
-
-    def call_origin_params
-      'config --get remote.origin.url'
+    def origin_url
+      git_call 'config --get remote.origin.url'
     end
 
   end
