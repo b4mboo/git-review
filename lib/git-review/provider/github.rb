@@ -13,12 +13,10 @@ module GitReview
 
       include ::GitReview::Helpers
 
-      # Find a request by a specified number and return it (or nil otherwise).
-      # FIXME: Allow to provide a repo other than source_repo.
-      def request(number)
+      # Find a request by a specified number and repo.
+      def request(number, repo = source_repo)
         raise ::GitReview::InvalidRequestIDError unless number
-        attributes = client.pull_request(source_repo, number)
-        Request.from_github(server, attributes)
+        Request.from_github(server, client.pull_request(repo, number))
       rescue Octokit::NotFound
         raise ::GitReview::InvalidRequestIDError
       end

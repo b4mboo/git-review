@@ -95,13 +95,34 @@ describe 'Provider: Github' do
     it 'creates a request instance from the data it receives from GitHub' do
       client.should_receive(:pull_request).
         with(head_repo, request_number).and_return(request_hash)
+      req = subject.request(request_number, head_repo)
+      req.html_url.should == request_hash._links.html.href
+      req.should be_a(Request)
+    end
+
+    it 'will use the source repo unless another one is specified' do
+      client.should_receive(:pull_request).
+        with(head_repo, request_number).and_return(request_hash)
       subject.should_receive(:source_repo).and_return(head_repo)
-      subject.request(request_number).html_url.should == request_hash._links.html.href
+      subject.request(request_number).should be_a(Request)
     end
 
     it 'will only create a request instance if a request number is specified' do
       expect { subject.request(nil) }.
         to raise_error(GitReview::InvalidRequestIDError)
+    end
+
+    it 'allows to construct a collection of request instances from an Array' do
+      test_number = 23
+      test_number.should_not eq(request_number)
+      test_req = request_hash.merge(:number => test_number)
+      requests = Request.from_github(subject, [request_hash, test_req])
+      req1 = requests.first
+      req1.class.should eq(Request)
+      req1.number.should eq(request_number)
+      req2 = requests.last
+      req2.class.should eq(Request)
+      req2.number.should eq(test_number)
     end
 
     it 'determines if a certain request exists' do
@@ -136,24 +157,6 @@ describe 'Provider: Github' do
       subject.stub(:request_number_by_title).and_return(nil)
       subject.should_receive(:puts).with(/not created for parent:repo/)
       subject.send_pull_request true
-    end
-
-    it 'constructs an instance of Request from the server\'s response' do
-      request = Request.from_github(subject, request_hash)
-      request.class.should eq(Request)
-    end
-
-    it 'allows to construct a collection of Request instances from an Array' do
-      test_number = 23
-      test_number.should_not eq(request_number)
-      test_req = request_hash.merge(:number => test_number)
-      requests = Request.from_github(subject, [request_hash, test_req])
-      req1 = requests.first
-      req1.class.should eq(Request)
-      req1.number.should eq(request_number)
-      req2 = requests.last
-      req2.class.should eq(Request)
-      req2.number.should eq(test_number)
     end
 
   end
