@@ -21,13 +21,6 @@ module GitReview
         raise ::GitReview::InvalidRequestIDError
       end
 
-      # Determine whether a request for a specified number and state exists.
-      # FIXME: Not GH specific. Move out!
-      def request_exists?(number, state = 'open', repo = source_repo)
-        instance = request(number, repo)
-        instance && instance.state == state
-      end
-
       def request_exists_for_branch?(upstream = false, branch = local.source_branch)
         target_repo = local.target_repo(upstream)
         # FIXME: Reuse existing server method. Then move out.

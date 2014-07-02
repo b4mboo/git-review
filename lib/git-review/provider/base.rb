@@ -28,6 +28,12 @@ module GitReview
         end
       end
 
+      # Determine whether a request for a specified number and state exists.
+      def request_exists?(number, state = 'open', repo = source_repo)
+        instance = request(number, repo)
+        instance && instance.state == state
+      end
+
       # @return [String] Current username
       def login
         settings.username

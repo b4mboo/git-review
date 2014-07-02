@@ -125,24 +125,6 @@ describe 'Provider: Github' do
       req2.number.should eq(test_number)
     end
 
-    it 'determines if a certain request exists' do
-      subject.should_receive(:request).with(request_number, head_repo).and_return(request)
-      subject.request_exists?(request_number, 'open', head_repo).should be_true
-    end
-
-    it 'determines if a certain request does not exist' do
-      subject.should_receive(:request).with(invalid_number, head_repo).and_return(nil)
-      subject.should_receive(:source_repo).and_return(head_repo)
-      subject.request_exists?(invalid_number).should be_false
-    end
-
-    it 'knows about a request\'s state' do
-      subject.should_receive(:request).with(request_number, head_repo).and_return(request)
-      subject.should_receive(:source_repo).and_return(head_repo)
-      request.should_receive(:state).and_return('other state')
-      subject.request_exists?(request_number, state).should be_false
-    end
-
     it 'sends a pull request to the target repo' do
       new_number = request_number + 1
       subject.should_receive(:create_pull_request).
