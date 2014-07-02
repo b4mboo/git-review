@@ -7,7 +7,7 @@ module GitReview
 
     # List all pending requests.
     def list(reverse = false)
-      requests = server.current_requests_full.reject do |request|
+      requests = server.requests.reject do |request|
         # Find only pending (= unmerged) requests and output summary.
         # Explicitly look for local changes git does not yet know about.
         # TODO: Isn't this a bit confusing? Maybe display pending pushes?

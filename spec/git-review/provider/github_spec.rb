@@ -81,15 +81,15 @@ describe 'Provider: Github' do
     end
 
     it 'gets pull request from current source repo' do
-      client.should_receive(:pull_requests).with(head_repo)
+      client.should_receive(:pull_requests).with(head_repo).and_return([])
       subject.should_receive(:source_repo).and_return(head_repo)
-      subject.current_requests
+      subject.requests
     end
 
     it 'gets pull request from provided upstream repo' do
-      client.should_receive(:pull_requests).with(head_repo)
+      client.should_receive(:pull_requests).with(head_repo).and_return([])
       subject.should_not_receive :source_repo
-      subject.current_requests head_repo
+      subject.requests head_repo
     end
 
     it 'creates a request instance from the data it receives from GitHub' do

@@ -37,7 +37,7 @@ describe 'Provider base' do
 
   it 'determines if a request for a certain branch exists' do
     local.should_receive(:target_repo).with(true).and_return(head_repo)
-    subject.should_receive(:current_requests).with(head_repo).and_return([request])
+    subject.should_receive(:requests).with(head_repo).and_return([request])
     subject.request_exists_from_branch?(true, target_branch)
   end
 

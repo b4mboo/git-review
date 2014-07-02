@@ -21,28 +21,14 @@ module GitReview
         raise ::GitReview::InvalidRequestIDError
       end
 
-      # an alias to pull_requests
-      # FIXME: Reevaluate the need for this method. Maybe current_requests_full
-      # should always be used. Otherwise, rename to current_requests_overview.
-      def current_requests(repo = source_repo)
-        # FIXME: Transform requests into GitReview::Request instances.
-        client.pull_requests repo
-      end
-
-      # a more detailed collection of requests
-      def current_requests_full(repo = source_repo)
-        # FIXME: Transform requests into GitReview::Request instances.
-        threads = []
-        requests = []
-        # FIXME: If we keep self.current_requests, use it.
-        client.pull_requests(repo).each do |req|
-          threads << Thread.new {
-            # FIXME: Reuse self.request.
-            requests << client.pull_request(repo, req.number)
-          }
+      # Finds all current pull request for a specified repo.
+      def requests(repo = source_repo)
+        instances = []
+        threads = client.pull_requests(repo).collect do |req|
+          Thread.new { instances << request(req.number, repo) }
         end
         threads.each(&:join)
-        requests
+        instances
       end
 
       # FIXME: Can probably be moved out of the GH specific part.
@@ -148,13 +134,13 @@ module GitReview
       # FIXME: Move out of GH class.
       # show latest pull request number
       def latest_request_number(repo = source_repo)
-        current_requests(repo).collect(&:number).sort.last.to_i
+        requests(repo).collect(&:number).sort.last.to_i
       end
 
       # FIXME: Move out of GH class.
       # get the number of the request that matches the title
       def request_number_by_title(title, repo = source_repo)
-        request = current_requests(repo).find { |r| r.title == title }
+        request = requests(repo).find { |r| r.title == title }
         request.number if request
       end
 

@@ -112,7 +112,7 @@ module GitReview
 
     # @return [Array<String>] all open requests' branches shouldn't be deleted
     def protected_branches
-      server.current_requests.collect { |r| r.head.ref }
+      server.requests.collect { |r| r.head.ref }
     end
 
     # @return [Array<String>] all review branches with 'review_' prefix
