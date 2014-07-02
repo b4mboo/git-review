@@ -14,6 +14,7 @@ module GitReview
       include ::GitReview::Helpers
 
       # Find a request by a specified number and return it (or nil otherwise).
+      # FIXME: Allow to provide a repo other than source_repo.
       def request(number)
         raise ::GitReview::InvalidRequestIDError unless number
         attributes = client.pull_request(source_repo, number)
@@ -23,6 +24,7 @@ module GitReview
       end
 
       # Determine whether a request for a specified number and state exists.
+      # FIXME: Not GH specific. Move out!
       def request_exists?(number, state = 'open')
         request = request(number)
         request && request.state == state
@@ -30,10 +32,13 @@ module GitReview
 
       def request_exists_for_branch?(upstream = false, branch = local.source_branch)
         target_repo = local.target_repo(upstream)
+        # FIXME: Reuse existing server method. Then move out.
         client.pull_requests(target_repo).any? { |r| r.head.ref == branch }
       end
 
       # an alias to pull_requests
+      # FIXME: Reevaluate the need for this method. Maybe current_requests_full
+      # should always be used. Otherwise, rename to current_requests_overview.
       def current_requests(repo = source_repo)
         # FIXME: Transform requests into GitReview::Request instances.
         client.pull_requests repo
@@ -44,8 +49,10 @@ module GitReview
         # FIXME: Transform requests into GitReview::Request instances.
         threads = []
         requests = []
+        # FIXME: If we keep self.current_requests, use it.
         client.pull_requests(repo).each do |req|
           threads << Thread.new {
+            # FIXME: Reuse self.request.
             requests << client.pull_request(repo, req.number)
           }
         end
@@ -53,6 +60,7 @@ module GitReview
         requests
       end
 
+      # FIXME: Can probably be moved out of the GH specific part.
       def send_pull_request(to_upstream = false)
         target_repo = local.target_repo(to_upstream)
         head = local.head
@@ -77,8 +85,10 @@ module GitReview
         end
       end
 
+      # FIXME: Can probably be moved out of the GH specific part.
       def commit_discussion(number)
         pull_commits = client.pull_commits(source_repo, number)
+        # FIXME: Reuse self.request.
         repo = client.pull_request(source_repo, number).head.repo.full_name
         discussion = ["Commits on pull request:\n\n"]
         discussion += pull_commits.collect { |commit|
@@ -93,6 +103,8 @@ module GitReview
           result = [output]
 
           # comments on commit
+          # FIXME: Wrap commit_comments into a separate method, such that
+          # commit_discussion can be moved out of the GH-specific area.
           comments = client.commit_comments(repo, commit.sha)
           result + comments.collect { |comment|
             name = comment.user.login
@@ -110,7 +122,10 @@ module GitReview
         discussion.compact.flatten unless discussion.empty?
       end
 
+      # FIXME: Can probably be moved out of the GH specific part.
+      # FIXME: Refactor and DRY up. Maybe use a Comment model.
       def issue_discussion(number)
+        # FIXME: Collect comments in a dedicated method in side GH class.
         comments = client.issue_comments(source_repo, number) +
             client.review_comments(source_repo, number)
         discussion = ["\nComments on pull request:\n\n"]
@@ -129,6 +144,7 @@ module GitReview
         discussion.compact.flatten unless discussion.empty?
       end
 
+      # FIXME: Move into request model.
       # get the number of comments, including comments on commits
       def comments_count(request)
         issue_c = request.comments + request.review_comments
@@ -137,17 +153,20 @@ module GitReview
         issue_c + commits_c
       end
 
+      # FIXME: Move into request model.
       # show discussion for a request
       def discussion(number)
         commit_discussion(number) +
         issue_discussion(number)
       end
 
+      # FIXME: Move out of GH class.
       # show latest pull request number
       def latest_request_number(repo = source_repo)
         current_requests(repo).collect(&:number).sort.last.to_i
       end
 
+      # FIXME: Move out of GH class.
       # get the number of the request that matches the title
       def request_number_by_title(title, repo = source_repo)
         request = current_requests(repo).find { |r| r.title == title }
@@ -158,7 +177,6 @@ module GitReview
       def request_url_for(target_repo, request_number)
         "https://github.com/#{target_repo}/pull/#{request_number}"
       end
-
       # FIXME: Needs to be moved into Server class, as its result is dependent of
       # the actual provider (i.e. GitHub or BitBucket).
       def remote_url_for(user_name, repo_name = repo_info_from_config.last)
