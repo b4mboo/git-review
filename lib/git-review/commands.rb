@@ -106,8 +106,8 @@ module GitReview
     # Close a specified request.
     def close(number)
       request = server.request(number)
-      repo = server.source_repo
-      server.close_issue(repo, request.number)
+      # FIXME: Move into request model.
+      server.close_issue(server.source_repo, request.number)
       unless server.request_exists?(request.number, 'open')
         puts 'Successfully closed request.'
       end
