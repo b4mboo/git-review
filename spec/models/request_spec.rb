@@ -19,7 +19,6 @@ describe Request do
   end
 
   it 'builds a one-line summary' do
-    subject.server.should_receive(:comments_count).and_return(0)
     subject.summary.should include(request_number.to_s)
   end
 

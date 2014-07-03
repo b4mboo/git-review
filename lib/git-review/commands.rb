@@ -18,7 +18,7 @@ module GitReview
         puts "No pending requests for '#{source}'."
       else
         puts "Pending requests for '#{source}':"
-        puts "ID      Updated    Comments  Title".pink
+        puts "ID      Updated    Title".pink
         requests.sort_by!(&:number)
         requests.reverse! if reverse
         requests.collect(&:summary).each(&method(:puts))

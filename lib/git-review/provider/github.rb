@@ -23,12 +23,7 @@ module GitReview
 
       # Finds all current pull request for a specified repo.
       def requests(repo = source_repo)
-        instances = []
-        threads = client.pull_requests(repo).collect do |req|
-          Thread.new { instances << request(req.number, repo) }
-        end
-        threads.each(&:join)
-        instances
+        Request.from_github(server, client.pull_requests(repo))
       end
 
       # FIXME: Can probably be moved out of the GH specific part.
