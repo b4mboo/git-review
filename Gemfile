@@ -9,4 +9,6 @@ end
 group :test do
   gem 'rake'
   gem 'rspec', '= 2.14.1'
+  gem 'guard', '>= 2.0.3'
+  gem 'guard-rspec', '>= 3.1.0'
 end
