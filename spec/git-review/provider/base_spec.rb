@@ -4,8 +4,8 @@ describe 'Provider base' do
 
   include_context 'request_context'
 
-  let(:server) { mock 'server' }
-  let(:local) { mock 'local' }
+  let(:server) { double 'server' }
+  let(:local) { double 'local' }
 
   before(:each) do
     subject.stub(:local).and_return(local)
