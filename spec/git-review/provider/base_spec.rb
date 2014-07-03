@@ -12,6 +12,7 @@ describe 'Provider base' do
   end
 
   subject do
+    ::GitReview::Server.stub(:new).and_return(server)
     ::GitReview::Provider::Base.any_instance.stub :configure_access
     ::GitReview::Provider::Base.new server
   end
