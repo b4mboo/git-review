@@ -39,7 +39,7 @@ class Request
   # Collect the discussion details.
   def discussion
     text = "Progress  :\n\n"
-    text << "#{server.discussion(number)}\n"
+    text << "#{server.discussion(number).join}\n"
     text
   end
 

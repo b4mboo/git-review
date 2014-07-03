@@ -29,7 +29,7 @@ describe Request do
 
   it 'collects its discussions' do
     subject.server.should_receive(:discussion).
-      with(request_number).and_return('')
+      with(request_number).and_return([''])
     subject.discussion.should include('Progress')
   end
 
