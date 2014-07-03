@@ -2,19 +2,22 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name = 'git-review'
-  s.version = '2.1.0.beta.1'
+  s.version = open('VERSION').read().strip
   s.date = Time.now.strftime('%F')
+
   s.summary = 'Facilitates GitHub code reviews'
+  s.description = 'Manage review workflow for projects hosted on GitHub.'
+
   s.homepage = 'http://github.com/b4mboo/git-review'
   s.email = 'bamberger.dominik@gmail.com'
   s.authors = ['Dominik Bamberger']
 
+  s.license = 'MIT'
   s.files = %w( LICENSE )
+
   s.files += Dir.glob('lib/**/*')
   s.files += Dir.glob('bin/**/*')
-
   s.executables = %w( git-review )
-  s.description = 'Manage review workflow for projects hosted on GitHub (using pull requests).'
 
   s.add_runtime_dependency 'launchy'
   s.add_runtime_dependency 'yajl-ruby'
