@@ -42,7 +42,6 @@ module GitReview
         requests(target_repo).any? { |r| r.head.ref == branch }
       end
 
-      # FIXME: Can probably be moved out of the GH specific part.
       def send_pull_request(to_upstream = false)
         target_repo = local.target_repo(to_upstream)
         head = local.head

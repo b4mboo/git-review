@@ -26,18 +26,23 @@ module GitReview
 
       # Find all commits for a specified request.
       def commits(number, repo = source_repo)
-        # FIXME: Use Commit model.
+        # FIXME: Return Commit instance.
         client.pull_commits(repo, number)
       end
 
       def issue_comments(number, repo = source_repo)
-        # FIXME: Use Comment model.
+        # FIXME: Return Comment instance.
         client.issue_comments(repo, number)
       end
 
       def review_comments(number, repo = source_repo)
-        # FIXME: Use Comment model.
+        # FIXME: Return Comment instance.
         client.review_comments(repo, number)
+      end
+
+      def commit_comments(sha, repo = source_repo)
+        # FIXME: Return Comment instance.
+        client.commit_comments(repo, sha)
       end
 
       # FIXME: Move into request model.

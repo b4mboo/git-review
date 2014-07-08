@@ -44,7 +44,7 @@ class Request
   def commit_discussion
     discussion = ["Commits on pull request:\n\n"]
     discussion += server.commits(number).collect { |commit|
-      # TODO: Move into commit model.
+      # FIXME: Move into commit model.
       # commit message
       name = commit.committer.login
       output = "\e[35m#{name}\e[m "
@@ -56,10 +56,7 @@ class Request
       result = [output]
 
       # comments on commit
-      # FIXME: Wrap commit_comments into a separate method, such that
-      # commit_discussion can be moved out of the GH-specific area.
-      # FIXME: Fall back to the request's repo, instead of source_repo.
-      comments = client.commit_comments(source_repo, commit.sha)
+      comments = server.commit_comments(commit.sha, commit.repo.name)
       result + comments.collect { |comment|
         # TODO: Move into commit model.
         name = comment.user.login
