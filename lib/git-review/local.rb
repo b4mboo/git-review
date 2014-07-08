@@ -1,8 +1,6 @@
 module GitReview
 
-  # The local repository is where the git-review command is being called
-  # by default. It is (supposedly) able to handle systems other than Github.
-  # TODO: remove Github-dependency
+  # The Local class represents a git repo on the system where git-review runs.
   class Local
 
     include ::GitReview::Helpers
