@@ -25,12 +25,6 @@ require_relative 'git-review/local'
 require_relative 'git-review/errors'
 # Factory to get git API client..
 require_relative 'git-review/server'
-# Generic base class for shared provider methods.
-require_relative 'git-review/provider/base'
-# Communicate with Github via API.
-require_relative 'git-review/provider/github'
-# Communicate with Bitbucket via API.
-require_relative 'git-review/provider/bitbucket'
 
 # Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'
@@ -49,3 +43,14 @@ require_relative 'models/repository'
 require_relative 'models/user'
 require_relative 'models/commit'
 require_relative 'models/request'
+
+# Generic base class for shared provider methods.
+require_relative 'git-review/provider/base'
+
+# Communicate with Github via API.
+require_relative 'git-review/provider/github/github'
+# Require GH specific model extensions.
+require_relative 'git-review/provider/github/request'
+
+# Communicate with Bitbucket via API.
+require_relative 'git-review/provider/bitbucket'
