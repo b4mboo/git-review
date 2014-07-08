@@ -2,56 +2,43 @@
 
 ## External Dependencies
 
-# Provide access to GitHub's API.
-require 'octokit'
-# Open a browser in 'browse' command.
-require 'launchy'
 # Parse time strings from git back into Time objects.
 require 'time'
-# Use temporary files to allow editing a request's.
+# Use temporary files to allow editing a request's message.
 require 'tempfile'
+# Open a browser in 'browse' command.
+require 'launchy'
+# Provide access to GitHub's API.
+require 'octokit'
 
 ## Internal dependencies
 
-# Include helper functions to make it work as expected.
 require_relative 'git-review/helpers'
-# Provide available commands.
 require_relative 'git-review/commands'
-# Read and write settings from/to the filesystem.
 require_relative 'git-review/settings'
-# Deal with local git repository.
 require_relative 'git-review/local'
-# Include all kinds of custom-defined errors.
 require_relative 'git-review/errors'
-# Factory to get git API client..
 require_relative 'git-review/server'
 
-# Allow easy string colorization in the console.
 require_relative 'mixins/colorizable'
-# Allow to access a model's attributes in various ways (feels railsy).
 require_relative 'mixins/accessible'
-# Allow to nest models in other model's attributes.
 require_relative 'mixins/nestable'
 
-# Include custom string helpers.
+# FIXME: String and Time are not really mixins.
 require_relative 'mixins/string'
-# Include custom time helpers.
 require_relative 'mixins/time'
 
 # Add some POROs to get some structure into the entities git-review deals with.
+require_relative 'models/base'
 require_relative 'models/repository'
 require_relative 'models/user'
 require_relative 'models/commit'
 require_relative 'models/request'
 
-# Generic base class for shared provider methods.
-require_relative 'git-review/provider/base'
-
-# Communicate with Github via API.
-require_relative 'git-review/provider/github/github'
+# Communicate with providers and load provider specific model extensions.
 # Require GH specific model extensions.
+require_relative 'git-review/provider/base'
+require_relative 'git-review/provider/github/github'
 require_relative 'git-review/provider/github/request'
 require_relative 'git-review/provider/github/commit'
-
-# Communicate with Bitbucket via API.
 require_relative 'git-review/provider/bitbucket'

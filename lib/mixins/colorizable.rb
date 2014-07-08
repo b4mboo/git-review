@@ -1,3 +1,4 @@
+# Allow easy string colorization on the console.
 module Colorizable
 
   # Takes a color code (= an integer) and formats the Colorizable accordingly.

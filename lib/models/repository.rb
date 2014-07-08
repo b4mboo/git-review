@@ -1,6 +1,4 @@
-class Repository
-
-  include Accessible
+class Repository < Base
 
   attr_accessor :owner,
                 :name

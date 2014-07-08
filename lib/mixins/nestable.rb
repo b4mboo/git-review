@@ -1,3 +1,4 @@
+# Allow to nest models in other model's attributes.
 module Nestable
 
   def nests(mapping)

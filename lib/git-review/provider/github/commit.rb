@@ -9,6 +9,7 @@ class Commit
     return response.collect{|r| from_github(server, r)} if response.is_a? Array
     # FIXME: Get info from GitHub's API and adjust structure.
     self.new(
+      server: server,
       sha: response.sha,
       ref: response.ref,
       label: response.label,

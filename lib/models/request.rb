@@ -1,12 +1,8 @@
-class Request
-
-  include Accessible
-  extend Nestable
+class Request < Base
 
   nests head: Commit
 
-  attr_accessor :server,
-                :number,
+  attr_accessor :number,
                 :title,
                 :body,
                 :state,

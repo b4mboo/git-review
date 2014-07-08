@@ -1,3 +1,4 @@
+# Allow to access a model's attributes in various ways (feels railsy).
 module Accessible
 
   # Setup simple exit criteria for recursion.

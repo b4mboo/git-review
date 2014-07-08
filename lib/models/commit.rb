@@ -1,7 +1,4 @@
-class Commit
-
-  include Accessible
-  extend Nestable
+class Commit < Base
 
   nests user: User,
         repo: Repository

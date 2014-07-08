@@ -1,6 +1,4 @@
-class User
-
-  include Accessible
+class User < Base
 
   attr_accessor :login
 
