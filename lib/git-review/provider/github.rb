@@ -31,9 +31,8 @@ module GitReview
 
       # FIXME: Can probably be moved out of the GH specific part.
       def commit_discussion(number)
+        repo = request(number, source_repo).head.repo.name
         pull_commits = commits(number)
-        # FIXME: Reuse self.request.
-        repo = client.pull_request(source_repo, number).head.repo.full_name
         discussion = ["Commits on pull request:\n\n"]
         discussion += pull_commits.collect { |commit|
           # commit message
