@@ -24,9 +24,14 @@ module GitReview
         Request.from_github(server, client.pull_requests(repo))
       end
 
+      # Find all commits for a specified request.
+      def commits(number)
+        client.pull_commits(source_repo, number)
+      end
+
       # FIXME: Can probably be moved out of the GH specific part.
       def commit_discussion(number)
-        pull_commits = client.pull_commits(source_repo, number)
+        pull_commits = commits(number)
         # FIXME: Reuse self.request.
         repo = client.pull_request(source_repo, number).head.repo.full_name
         discussion = ["Commits on pull request:\n\n"]
