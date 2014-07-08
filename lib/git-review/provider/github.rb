@@ -25,16 +25,14 @@ module GitReview
       end
 
       # Find all commits for a specified request.
-      def commits(number)
-        client.pull_commits(source_repo, number)
+      def commits(number, repo = source_repo)
+        client.pull_commits(repo, number)
       end
 
       # FIXME: Can probably be moved out of the GH specific part.
       def commit_discussion(number)
-        repo = request(number, source_repo).head.repo.name
-        pull_commits = commits(number)
         discussion = ["Commits on pull request:\n\n"]
-        discussion += pull_commits.collect { |commit|
+        discussion += commits(number).collect { |commit|
           # commit message
           name = commit.committer.login
           output = "\e[35m#{name}\e[m "
@@ -48,7 +46,8 @@ module GitReview
           # comments on commit
           # FIXME: Wrap commit_comments into a separate method, such that
           # commit_discussion can be moved out of the GH-specific area.
-          comments = client.commit_comments(repo, commit.sha)
+          # FIXME: Fall back to the request's repo, instead of source_repo.
+          comments = client.commit_comments(source_repo, commit.sha)
           result + comments.collect { |comment|
             name = comment.user.login
             output = "\e[35m#{name}\e[m "
