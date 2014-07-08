@@ -26,8 +26,7 @@ module GitReview
 
       # Find all commits for a specified request.
       def commits(number, repo = source_repo)
-        # FIXME: Return Commit instance.
-        client.pull_commits(repo, number)
+        Commit.from_github(server, client.pull_commits(repo, number))
       end
 
       def issue_comments(number, repo = source_repo)

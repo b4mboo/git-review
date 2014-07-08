@@ -100,13 +100,6 @@ describe 'Provider: Github' do
       req.should be_a(Request)
     end
 
-    it 'will use the source repo unless another one is specified' do
-      client.should_receive(:pull_request).
-        with(head_repo, request_number).and_return(request_hash)
-      subject.should_receive(:source_repo).and_return(head_repo)
-      subject.request(request_number).should be_a(Request)
-    end
-
     it 'will only create a request instance if a request number is specified' do
       expect { subject.request(nil) }.
         to raise_error(GitReview::InvalidRequestIDError)
@@ -138,6 +131,35 @@ describe 'Provider: Github' do
       config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
       subject.send(:insteadof_matching, config, url).
         should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
+    end
+
+  end
+
+  context '# Commits' do
+
+    include_context 'commit_context'
+
+    it 'gets commits by default from current source repo' do
+      subject.should_receive(:source_repo).and_return(head_repo)
+      client.should_receive(:pull_commits)
+        .with(head_repo, request_number).and_return([])
+      subject.commits request_number
+    end
+
+    it 'gets commits from a specified repo' do
+      subject.should_not_receive :source_repo
+      client.should_receive(:pull_commits)
+        .with(head_repo, request_number).and_return([])
+      subject.commits(request_number, head_repo)
+    end
+
+    it 'creates Commit instances from the data it receives from GitHub' do
+      subject.should_receive(:source_repo).and_return(head_repo)
+      client.should_receive(:pull_commits)
+        .with(head_repo, request_number).and_return([commit_hash])
+      com = subject.commits(request_number).first
+      com.sha.should == commit_hash.sha
+      com.should be_a(Commit)
     end
 
   end
