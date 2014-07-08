@@ -24,9 +24,8 @@ require_relative 'mixins/colorizable'
 require_relative 'mixins/accessible'
 require_relative 'mixins/nestable'
 
-# FIXME: String and Time are not really mixins.
-require_relative 'mixins/string'
-require_relative 'mixins/time'
+require_relative 'override/string'
+require_relative 'override/time'
 
 # Add some POROs to get some structure into the entities git-review deals with.
 require_relative 'models/base'
