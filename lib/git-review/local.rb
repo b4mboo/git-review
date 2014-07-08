@@ -241,6 +241,7 @@ module GitReview
 
     # @return [String] the source repo
     def source_repo
+      # FIXME: This seems plain wrong and confusing. Is it local or server?
       server.source_repo
     end
 
