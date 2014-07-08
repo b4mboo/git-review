@@ -26,15 +26,23 @@ module GitReview
 
       # Find all commits for a specified request.
       def commits(number, repo = source_repo)
+        # FIXME: Use Commit model.
         client.pull_commits(repo, number)
       end
 
+      def issue_comments(number, repo = source_repo)
+        # FIXME: Use Comment model.
+        client.issue_comments(repo, number)
+      end
+
+      def review_comments(number, repo = source_repo)
+        # FIXME: Use Comment model.
+        client.review_comments(repo, number)
+      end
+
       # FIXME: Can probably be moved out of the GH specific part.
-      # FIXME: Refactor and DRY up. Maybe use a Comment model.
       def issue_discussion(number)
-        # FIXME: Collect comments in a dedicated method in side GH class.
-        comments = client.issue_comments(source_repo, number) +
-            client.review_comments(source_repo, number)
+        comments = issue_comments(number) + review_comments(number)
         discussion = ["\nComments on pull request:\n\n"]
         discussion += comments.collect { |comment|
           name = comment.user.login
