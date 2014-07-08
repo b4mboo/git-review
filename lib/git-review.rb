@@ -51,6 +51,7 @@ require_relative 'git-review/provider/base'
 require_relative 'git-review/provider/github/github'
 # Require GH specific model extensions.
 require_relative 'git-review/provider/github/request'
+require_relative 'git-review/provider/github/commit'
 
 # Communicate with Bitbucket via API.
 require_relative 'git-review/provider/bitbucket'
