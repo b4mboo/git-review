@@ -40,25 +40,6 @@ module GitReview
         client.review_comments(repo, number)
       end
 
-      # FIXME: Can probably be moved out of the GH specific part.
-      def issue_discussion(number)
-        comments = issue_comments(number) + review_comments(number)
-        discussion = ["\nComments on pull request:\n\n"]
-        discussion += comments.collect { |comment|
-          name = comment.user.login
-          output = "\e[35m#{name}\e[m "
-          output << "added a comment to \e[36m#{comment.id}\e[m"
-          output << " on #{comment.created_at.review_time}"
-          unless comment.created_at == comment.updated_at
-            output << " (updated on #{comment.updated_at.review_time})"
-          end
-          output << ":\n#{''.rjust(output.length + 1, "-")}\n"
-          output << comment.body
-          output << "\n\n"
-        }
-        discussion.compact.flatten unless discussion.empty?
-      end
-
       # FIXME: Move into request model.
       # get the number of comments, including comments on commits
       def comments_count(request)

@@ -28,8 +28,7 @@ describe Request do
   end
 
   it 'collects its discussions' do
-    subject.server.should_receive(:issue_discussion).
-      with(subject).and_return([''])
+    subject.should_receive(:issue_discussion).and_return([''])
     subject.should_receive(:commit_discussion).and_return([''])
     subject.discussion.should include('Progress')
   end

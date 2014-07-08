@@ -38,10 +38,7 @@ class Request
 
   # Collect the discussion details.
   def discussion
-    content = (commit_discussion + server.issue_discussion(self)).join
-    text = "Progress  :\n\n"
-    text << "#{content}\n"
-    text
+    "Progress  :\n\n#{(commit_discussion + issue_discussion).join}\n"
   end
 
   def commit_discussion
@@ -64,6 +61,7 @@ class Request
       # FIXME: Fall back to the request's repo, instead of source_repo.
       comments = client.commit_comments(source_repo, commit.sha)
       result + comments.collect { |comment|
+        # TODO: Move into commit model.
         name = comment.user.login
         output = "\e[35m#{name}\e[m "
         output << "added a comment to \e[36m#{commit.sha[0..6]}\e[m"
@@ -75,6 +73,25 @@ class Request
         output << comment.body
         output << "\n\n"
       }
+    }
+    discussion.compact.flatten unless discussion.empty?
+  end
+
+  def issue_discussion
+    comments = server.issue_comments(number) + server.review_comments(number)
+    discussion = ["\nComments on pull request:\n\n"]
+    discussion += comments.collect { |comment|
+      # TODO: Move into commit model.
+      name = comment.user.login
+      output = "\e[35m#{name}\e[m "
+      output << "added a comment to \e[36m#{comment.id}\e[m"
+      output << " on #{comment.created_at.review_time}"
+      unless comment.created_at == comment.updated_at
+        output << " (updated on #{comment.updated_at.review_time})"
+      end
+      output << ":\n#{''.rjust(output.length + 1, "-")}\n"
+      output << comment.body
+      output << "\n\n"
     }
     discussion.compact.flatten unless discussion.empty?
   end
