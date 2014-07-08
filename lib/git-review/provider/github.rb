@@ -11,8 +11,6 @@ module GitReview
 
     class Github < Base
 
-      include ::GitReview::Helpers
-
       # Find a request by a specified number and repo.
       def request(number, repo = source_repo)
         raise ::GitReview::InvalidRequestIDError unless number
@@ -24,31 +22,6 @@ module GitReview
       # Finds all current pull request for a specified repo.
       def requests(repo = source_repo)
         Request.from_github(server, client.pull_requests(repo))
-      end
-
-      # FIXME: Can probably be moved out of the GH specific part.
-      def send_pull_request(to_upstream = false)
-        target_repo = local.target_repo(to_upstream)
-        head = local.head
-        base = local.target_branch
-        title, body = local.create_title_and_body(base)
-
-        # gather information before creating pull request
-        latest_number = latest_request_number(target_repo)
-
-        # create the actual pull request
-        create_pull_request(target_repo, base, head, title, body)
-        # switch back to target_branch and check for success
-        git_call "checkout #{base}"
-
-        # make sure the new pull request is indeed created
-        new_number = request_number_by_title(title, target_repo)
-        if new_number && new_number > latest_number
-          puts "Successfully created new request ##{new_number}"
-          puts request_url_for target_repo, new_number
-        else
-          puts "Pull request was not created for #{target_repo}."
-        end
       end
 
       # FIXME: Can probably be moved out of the GH specific part.

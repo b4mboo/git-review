@@ -125,24 +125,6 @@ describe 'Provider: Github' do
       req2.number.should eq(test_number)
     end
 
-    it 'sends a pull request to the target repo' do
-      new_number = request_number + 1
-      subject.should_receive(:create_pull_request).
-        with('parent:repo', target_branch, 'local:repo', title, body)
-      subject.stub(:request_number_by_title).and_return(new_number)
-      subject.should_receive(:puts).with(/Successfully/)
-      subject.should_receive(:puts).with(/pull\/#{new_number}/)
-      subject.send_pull_request true
-    end
-
-    it 'checks if the pull request is indeed created' do
-      subject.should_receive(:create_pull_request).
-        with('parent:repo', target_branch, 'local:repo', title, body)
-      subject.stub(:request_number_by_title).and_return(nil)
-      subject.should_receive(:puts).with(/not created for parent:repo/)
-      subject.send_pull_request true
-    end
-
   end
 
   context '# Repository URLs' do
