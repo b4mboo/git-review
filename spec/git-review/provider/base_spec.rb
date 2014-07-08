@@ -4,18 +4,17 @@ describe 'Provider base' do
 
   include_context 'request_context'
 
-  let(:server) { double 'server' }
-  let(:local) { double 'local' }
-
   before(:each) do
+    ::GitReview::Server.stub(:new).and_return(server)
+    ::GitReview::Provider::Base.any_instance.stub :git_call
+    ::GitReview::Provider::Base.any_instance.stub :configure_access
     subject.stub(:local).and_return(local)
   end
 
-  subject do
-    ::GitReview::Server.stub(:new).and_return(server)
-    ::GitReview::Provider::Base.any_instance.stub :configure_access
-    ::GitReview::Provider::Base.new server
-  end
+  subject { ::GitReview::Provider::Base.new server }
+
+  let(:server) { double 'server' }
+  let(:local) { double 'local' }
 
 
   it 'determines if a certain request exists' do
