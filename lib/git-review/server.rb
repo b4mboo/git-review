@@ -52,7 +52,7 @@ module GitReview
     end
 
     def gitlab_provider?
-      fetch_origin_url =~ %r(gitlab)
+      origin_url =~ %r(gitlab)
     end
 
     def origin_url

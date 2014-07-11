@@ -34,6 +34,10 @@ module GitReview
         raise ::GitReview::InvalidRequestIDError
       end
 
+      def pull_request(repo, number)
+        request(number, repo)
+      end
+
       # @return [Boolean, Hash] the specified request if exists, otherwise false.
       #   Instead of true, the request itself is returned, so another round-trip
       #   of merge_request can be avoided.
@@ -47,8 +51,7 @@ module GitReview
         ClientItems.new(client, :merge_requests, project_id(target_repo)).any? { |r| r.source_branch == branch }
       end
 
-      # an alias to pull_requests
-      def current_requests(repo=source_repo)
+      def requests(repo=source_repo)
         ClientItems.new(client, :merge_requests, project_id(repo)).map do |request|
           build_request(request, repo)
         end.reject do |request|
@@ -60,7 +63,7 @@ module GitReview
       # a more detailed collection of requests
       def current_requests_full(repo=source_repo)
         # TODO get comments
-        current_requests(repo)
+        requests(repo)
       end
 
       def send_pull_request(to_upstream = false)
@@ -110,10 +113,6 @@ module GitReview
 
       def repository(repo)
         build_repository(client.project(project_id(repo)))
-      end
-
-      def pull_request(repo, request_number)
-        request(request_number, repo)
       end
 
       def commit_discussion(number)
@@ -188,7 +187,7 @@ module GitReview
 
       # show latest pull request number
       def latest_request_number(repo=source_repo)
-        current_requests(repo).collect(&:number).sort.last.to_i
+        requests(repo).collect(&:number).sort.last.to_i
       end
 
       # FIXME: Remove this method after merging create_pull_request from commands.rb, currently no specs
