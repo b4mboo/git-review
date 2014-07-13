@@ -16,6 +16,8 @@ describe 'Provider: Github' do
     settings.stub(:oauth_token).and_return('oauth_token')
     settings.stub(:username).and_return(user_login)
     client.stub :login
+    subject.stub :puts
+    subject.stub :print
   end
 
 
@@ -30,7 +32,7 @@ describe 'Provider: Github' do
     it 'uses Octokit to login to GitHub' do
       Octokit::Client.should_receive(:new).and_return(client)
       client.should_receive :login
-      subject.login.should == user_login
+      ::GitReview::Provider::Github.new(server).login.should == user_login
     end
 
     it 'uses an oauth token for authentication' do
@@ -55,13 +57,41 @@ describe 'Provider: Github' do
       subject.send :authorize!
     end
 
+    it 'tells the user where he can revoke the authorization for git-review' do
+      subject.should_receive(:puts).with(
+        include 'https://github.com/settings/applications'
+      )
+      subject.send :print_auth_message
+    end
+
+    it 'asks for credentials when accessing GitHub for the first time' do
+      subject.stub :github_login
+      subject.stub :print_auth_message
+      subject.stub :prepare_description
+      subject.stub :authorize!
+      subject.should_receive :prepare_password
+      subject.should_receive :prepare_username
+      subject.send :configure_oauth
+    end
+
     it 'doesn\'t ask for GitHub username if it is present in the config' do
       subject.stub :print_auth_message
       subject.stub :prepare_password
       subject.stub :prepare_description
       subject.stub :authorize!
+      subject.should_not_receive :prepare_username
       subject.should_receive(:github_login).and_return(user_login)
       subject.send :configure_oauth
+    end
+
+    it 'reads username from STDIN' do
+      STDIN.should_receive(:gets).and_return(user_login)
+      subject.send :prepare_username
+    end
+
+    it 'reads password from STDIN' do
+      STDIN.should_receive(:gets).and_return('some_password')
+      subject.send :prepare_password
     end
 
   end
