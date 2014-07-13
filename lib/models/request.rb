@@ -52,6 +52,10 @@ class Request < Base
       result = [output]
 
       # comments on commit
+      # TODO: See whether this can be queried all at once.
+      # TODO: See whether it makes sense to stop distinguishing between request
+      # and commit comments. Instead we could just list all comments and commits
+      # sorted by time. That would probably represent the timeline a bit better.
       comments = server.commit_comments(commit.sha, commit.repo.name)
       result + comments.collect { |comment|
         # TODO: Move into comment model.

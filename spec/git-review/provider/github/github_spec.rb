@@ -168,48 +168,31 @@ describe 'Provider: Github' do
 
     include_context 'comment_context'
 
-    it 'gets issue comments by default from current source repo' do
+    it 'gets request comments by default from current source repo' do
       subject.should_receive(:source_repo).and_return(head_repo)
       client.should_receive(:issue_comments)
         .with(head_repo, request_number).and_return([])
-      subject.issue_comments request_number
+      client.should_receive(:review_comments)
+        .with(head_repo, request_number).and_return([])
+      subject.request_comments request_number
     end
 
-    it 'allows to get issue comments from a specified repo' do
+    it 'allows to get request comments from a specified repo' do
       subject.should_not_receive :source_repo
       client.should_receive(:issue_comments)
         .with(head_repo, request_number).and_return([])
-      subject.issue_comments(request_number, head_repo)
+      client.should_receive(:review_comments)
+        .with(head_repo, request_number).and_return([])
+      subject.request_comments(request_number, head_repo)
     end
 
-    it 'creates Comment instances from the issue comment data from GitHub' do
+    it 'creates Comment instances from the request comment data from GitHub' do
       subject.should_receive(:source_repo).and_return(head_repo)
       client.should_receive(:issue_comments)
         .with(head_repo, request_number).and_return([comment_hash])
-      com = subject.issue_comments(request_number).first
-      com.body.should == comment_hash.body
-      com.should be_a(Comment)
-    end
-
-    it 'gets review comments by default from current source repo' do
-      subject.should_receive(:source_repo).and_return(head_repo)
-      client.should_receive(:review_comments)
-        .with(head_repo, request_number).and_return([])
-      subject.review_comments request_number
-    end
-
-    it 'allows to get review comments from a specified repo' do
-      subject.should_not_receive :source_repo
-      client.should_receive(:review_comments)
-        .with(head_repo, request_number).and_return([])
-      subject.review_comments(request_number, head_repo)
-    end
-
-    it 'creates Comment instances from the review comment data from GitHub' do
-      subject.should_receive(:source_repo).and_return(head_repo)
       client.should_receive(:review_comments)
         .with(head_repo, request_number).and_return([comment_hash])
-      com = subject.review_comments(request_number).first
+      com = subject.request_comments(request_number).first
       com.body.should == comment_hash.body
       com.should be_a(Comment)
     end

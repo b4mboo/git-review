@@ -22,14 +22,11 @@ module GitReview
         Request.from_github(server, client.pull_requests(repo))
       end
 
-      # FIXME: Move issue and review comments into request_comments.
-      def issue_comments(number, repo = source_repo)
-        Comment.from_github(server, client.issue_comments(repo, number))
-      end
-
-      # FIXME: Move issue and review comments into request_comments.
-      def review_comments(number, repo = source_repo)
-        Comment.from_github(server, client.review_comments(repo, number))
+      def request_comments(number, repo = source_repo)
+        (
+          Comment.from_github(server, client.issue_comments(repo, number)) +
+          Comment.from_github(server, client.review_comments(repo, number))
+        ).sort_by(&:created_at)
       end
 
       def commits(number, repo = source_repo)
