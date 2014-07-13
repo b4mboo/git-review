@@ -30,18 +30,15 @@ module GitReview
       end
 
       def issue_comments(number, repo = source_repo)
-        # FIXME: Return Comment instance.
-        client.issue_comments(repo, number)
+        Comment.from_github(server, client.issue_comments(repo, number))
       end
 
       def review_comments(number, repo = source_repo)
-        # FIXME: Return Comment instance.
-        client.review_comments(repo, number)
+        Comment.from_github(server, client.review_comments(repo, number))
       end
 
       def commit_comments(sha, repo = source_repo)
-        # FIXME: Return Comment instance.
-        client.commit_comments(repo, sha)
+        Comment.from_github(server, client.commit_comments(repo, sha))
       end
 
       # FIXME: Move into request model.
