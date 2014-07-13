@@ -104,6 +104,25 @@ module GitReview
         [user, project]
       end
 
+      # extract user and project name from repo URL.
+      def url_matching(url)
+        matches = /#{server.name}\.#{server.tld}.(.*?)\/(.*)/.match(url)
+        matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
+      end
+
+      # look for 'insteadof' substitutions in URL.
+      def insteadof_matching(config, url)
+        first_match = config.keys.collect { |key|
+          [
+            config[key],
+            /url\.(.*#{server.name}\.#{server.tld}.*)\.insteadof/.match(key)
+          ]
+        }.find { |insteadof_url, true_url|
+          url.index(insteadof_url) and true_url != nil
+        }
+        first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
+      end
+
 
       private
 

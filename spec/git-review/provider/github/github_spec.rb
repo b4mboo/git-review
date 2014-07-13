@@ -92,7 +92,7 @@ describe 'Provider: Github' do
     end
 
     it 'will only create a Request instance if a request number is specified' do
-      expect { subject.request(nil) }.
+      expect { subject.request(nil, head_repo) }.
         to raise_error(GitReview::InvalidRequestIDError)
     end
 
@@ -221,23 +221,6 @@ describe 'Provider: Github' do
     it 'constructs the request URL for a given repo' do
       subject.url_for_request(head_repo, request_number).
         should == "https://github.com/#{head_repo}/pull/#{request_number}"
-    end
-
-    it 'extracts user and repo name from a given GitHub git-type URL' do
-      url = 'git@github.com:foo/bar.git'
-      subject.send(:url_matching, url).should == %w(foo bar)
-    end
-
-    it 'extracts user and repo name from a given GitHub HTTP URL' do
-      url = 'https://github.com/foo/bar.git'
-      subject.send(:url_matching, url).should == %w(foo bar)
-    end
-
-    it 'supports GitHub\'s insteadof matching for URLs' do
-      url = 'git@github.com:foo/bar.git'
-      config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
-      subject.send(:insteadof_matching, config, url).
-        should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
     end
 
   end

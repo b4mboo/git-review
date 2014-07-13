@@ -43,33 +43,24 @@ module GitReview
       end
 
       def url_for_request(repo, number)
-        "https://github.com/#{repo}/pull/#{number}"
+        "https://#{name}.#{tld}/#{repo}/pull/#{number}"
       end
 
       def url_for_remote(repo)
-        "git@github.com:#{repo}.git"
+        "git@#{name}.#{tld}:#{repo}.git"
+      end
+
+      def name
+        'github'
+      end
+
+      def tld
+        'com'
       end
 
 
       private
 
-      # extract user and project name from GitHub URL.
-      def url_matching(url)
-        matches = /github\.com.(.*?)\/(.*)/.match(url)
-        matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
-      end
-
-      # look for 'insteadof' substitutions in URL.
-      def insteadof_matching(config, url)
-        first_match = config.keys.collect { |key|
-          [config[key], /url\.(.*github\.com.*)\.insteadof/.match(key)]
-        }.find { |insteadof_url, true_url|
-          url.index(insteadof_url) and true_url != nil
-        }
-        first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
-      end
-
-      # @return [String] Authenticated username
       def configure_access
         configure_oauth unless settings.oauth_token && settings.username
         @client = Octokit::Client.new(

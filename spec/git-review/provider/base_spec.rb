@@ -83,4 +83,30 @@ describe 'Provider base' do
     subject.request_number_by_title(title, head_repo).should eq(request.number)
   end
 
+  context '# URLs' do
+
+    before :each do
+      server.should_receive(:name).and_return('github')
+      server.should_receive(:tld).and_return('com')
+    end
+
+    it 'extracts user and repo name from a given GitHub git-type URL' do
+      url = 'git@github.com:foo/bar.git'
+      subject.url_matching(url).should == %w(foo bar)
+    end
+
+    it 'extracts user and repo name from a given GitHub HTTP URL' do
+      url = 'https://github.com/foo/bar.git'
+      subject.url_matching(url).should == %w(foo bar)
+    end
+
+    it 'supports GitHub\'s insteadof matching for URLs' do
+      url = 'git@github.com:foo/bar.git'
+      config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
+      subject.insteadof_matching(config, url).
+        should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
+    end
+
+  end
+
 end

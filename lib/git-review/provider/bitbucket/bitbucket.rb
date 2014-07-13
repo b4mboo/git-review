@@ -33,29 +33,23 @@ module GitReview
       end
 
       def url_for_request(repo, number)
-        "https://bitbucket.com/#{repo}/pull/#{number}"
+        "https://#{name}.#{tld}/#{repo}/pull/#{number}"
       end
 
       def url_for_remote(repo)
-        "git@bitbucket.com:#{repo}.git"
+        "git@#{name}.#{tld}:#{repo}.git"
+      end
+
+      def name
+        'bitbucket'
+      end
+
+      def tld
+        'com'
       end
 
 
       private
-
-      def url_matching(url)
-        matches = /bitbucket\.com.(.*?)\/(.*)/.match(url)
-        matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
-      end
-
-      def insteadof_matching(config, url)
-        first_match = config.keys.collect { |key|
-          [config[key], /url\.(.*bitbucket\.com.*)\.insteadof/.match(key)]
-        }.find { |insteadof_url, true_url|
-          url.index(insteadof_url) and true_url != nil
-        }
-        first_match ? [first_match[0], first_match[1][1]] : [nil, nil]
-      end
 
       def configure_access
         @client = Bucketkit::Client.new
