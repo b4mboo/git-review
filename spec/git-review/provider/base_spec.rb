@@ -49,7 +49,7 @@ describe 'Provider base' do
     local.stub(:target_branch).and_return(target_branch)
     local.stub(:create_title_and_body).and_return([title, body])
     subject.stub(:latest_request_number).and_return(request_number)
-    subject.stub(:request_url_for).and_return("url/to/pull/#{new_number}")
+    subject.stub(:url_for_request).and_return("url/to/pull/#{new_number}")
 
     subject.should_receive(:create_pull_request).
       with('parent:repo', target_branch, 'local:repo', title, body)

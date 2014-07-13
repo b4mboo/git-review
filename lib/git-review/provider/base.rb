@@ -62,6 +62,7 @@ module GitReview
         latest_number = latest_request_number(target_repo)
 
         # create the actual pull request
+        # FIXME: Delegate in server class.
         create_pull_request(target_repo, base, head, title, body)
         # switch back to target_branch and check for success
         git_call "checkout #{base}"
@@ -70,7 +71,7 @@ module GitReview
         new_number = request_number_by_title(title, target_repo)
         if new_number && new_number > latest_number
           puts "Successfully created new request ##{new_number}"
-          puts request_url_for target_repo, new_number
+          puts url_for_request(target_repo, new_number)
         else
           puts "Pull request was not created for #{target_repo}."
         end

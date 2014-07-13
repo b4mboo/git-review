@@ -37,14 +37,12 @@ module GitReview
         Comment.from_github(server, client.commit_comments(repo, sha))
       end
 
-      # FIXME: Remove this method after merging create_pull_request from commands.rb, currently no specs
-      def request_url_for(target_repo, request_number)
-        "https://github.com/#{target_repo}/pull/#{request_number}"
+      def url_for_request(repo, number)
+        "https://github.com/#{repo}/pull/#{number}"
       end
-      # FIXME: Needs to be moved into Server class, as its result is dependent of
-      # the actual provider (i.e. GitHub or BitBucket).
-      def remote_url_for(user_name, repo_name = repo_info_from_config.last)
-        "git@github.com:#{user_name}/#{repo_name}.git"
+
+      def url_for_remote(repo)
+        "git@github.com:#{repo}.git"
       end
 
       # @return [String] Authenticated username

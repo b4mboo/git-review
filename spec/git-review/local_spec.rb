@@ -59,8 +59,10 @@ describe 'Local' do
 
     it 'finds an existing remote for a request' do
       subject.stub(:server).and_return(server)
-      server.should_receive(:remote_url_for).
-        with(user_login).and_return(remote_url)
+      subject.should_receive(:repo_info_from_config)
+        .and_return(head_repo.split('/'))
+      server.should_receive(:url_for_remote).
+        with(head_repo).and_return(remote_url)
       subject.should_receive(:remotes_for_url).
         with(remote_url).and_return([remote])
       subject.remote_for_request(request).should == remote
@@ -68,8 +70,10 @@ describe 'Local' do
 
     it 'adds a new remote for a request if necessary' do
       subject.stub(:server).and_return(server)
-      server.should_receive(:remote_url_for).
-        with(user_login).and_return(remote_url)
+      subject.should_receive(:repo_info_from_config)
+        .and_return(head_repo.split('/'))
+      server.should_receive(:url_for_remote).
+        with(head_repo).and_return(remote_url)
       subject.should_receive(:remotes_for_url).
         with(remote_url).and_return([])
       subject.should_receive(:git_call).

@@ -58,7 +58,8 @@ module GitReview
     # Find or create the correct remote for a fork with a given owner name.
     def remote_for_request(request)
       repo_owner = request.head.repo.owner.login
-      remote_url = server.remote_url_for(repo_owner)
+      repo_name = repo_info_from_config.last
+      remote_url = server.url_for_remote("#{repo_owner}/#{repo_name}")
       remotes = remotes_for_url(remote_url)
       if remotes.empty?
         remote = "review_#{repo_owner}"
@@ -219,7 +220,7 @@ module GitReview
     # @return [Boolean] whether there are commits not in target branch yet
     def new_commits?(upstream = false)
       # Check if an upstream remote exists and create it if necessary.
-      remote_url = server.remote_url_for(*target_repo(upstream).split('/'))
+      remote_url = server.url_for_remote(target_repo(upstream))
       remote = remotes_for_url(remote_url).first
       unless remote
         remote = 'upstream'

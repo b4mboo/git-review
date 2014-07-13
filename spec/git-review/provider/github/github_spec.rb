@@ -124,9 +124,7 @@ describe 'Provider: Github' do
   context '# Repository URLs' do
 
     it 'constructs the remote URL for a given user name' do
-      subject.should_receive(:repo_info_from_config).
-        and_return([user_login, repo_name])
-      subject.remote_url_for(user_login).
+      subject.url_for_remote(head_repo).
         should == "git@github.com:#{user_login}/#{repo_name}.git"
     end
 
