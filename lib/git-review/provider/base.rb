@@ -42,6 +42,16 @@ module GitReview
         requests(target_repo).any? { |r| r.head.ref == branch }
       end
 
+      def latest_request_number(repo = source_repo)
+        server.requests(repo).collect(&:number).sort.last.to_i
+      end
+
+      # get the number of the request that matches the title
+      def request_number_by_title(title, repo = source_repo)
+        request = server.requests(repo).find { |r| r.title == title }
+        request.number if request
+      end
+
       def send_pull_request(to_upstream = false)
         target_repo = local.target_repo(to_upstream)
         head = local.head

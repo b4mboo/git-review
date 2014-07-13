@@ -70,29 +70,23 @@ describe 'Provider: Github' do
 
   end
 
-  context '# Pull Requests' do
+  context '# Requests' do
 
-    before :each do
-      subject.stub(:latest_request_number).and_return(request_number)
-      local.stub(:create_title_and_body).and_return([title, body])
-      local.stub(:target_repo).and_return('parent:repo')
-      local.stub(:head).and_return('local:repo')
-      local.stub(:target_branch).and_return(target_branch)
-    end
-
-    it 'gets pull request from current source repo' do
-      client.should_receive(:pull_requests).with(head_repo).and_return([])
+    it 'get a specified pull request from current source repo' do
       subject.should_receive(:source_repo).and_return(head_repo)
-      subject.requests
+      client.should_receive(:pull_request)
+        .with(head_repo, request_number).and_return([])
+      subject.request request_number
     end
 
-    it 'gets pull request from provided upstream repo' do
-      client.should_receive(:pull_requests).with(head_repo).and_return([])
+    it 'allows to get a specified pull request from a specified repo' do
       subject.should_not_receive :source_repo
-      subject.requests head_repo
+      client.should_receive(:pull_request)
+        .with(head_repo, request_number).and_return([])
+      subject.request(request_number, head_repo)
     end
 
-    it 'creates a request instance from the data it receives from GitHub' do
+    it 'creates Request instances from the data it receives from GitHub' do
       client.should_receive(:pull_request).
         with(head_repo, request_number).and_return(request_hash)
       req = subject.request(request_number, head_repo)
@@ -100,9 +94,29 @@ describe 'Provider: Github' do
       req.should be_a(Request)
     end
 
-    it 'will only create a request instance if a request number is specified' do
+    it 'will only create a Request instance if a request number is specified' do
       expect { subject.request(nil) }.
         to raise_error(GitReview::InvalidRequestIDError)
+    end
+
+    it 'gets pull requests from current source repo' do
+      subject.should_receive(:source_repo).and_return(head_repo)
+      client.should_receive(:pull_requests).with(head_repo).and_return([])
+      subject.requests
+    end
+
+    it 'allows to get pull requests from a specified repo' do
+      subject.should_not_receive :source_repo
+      client.should_receive(:pull_requests).with(head_repo).and_return([])
+      subject.requests head_repo
+    end
+
+    it 'creates Request instances from the data it receives from GitHub' do
+      client.should_receive(:pull_requests).
+        with(head_repo).and_return([request_hash])
+      req = subject.requests(head_repo).first
+      req.html_url.should == request_hash._links.html.href
+      req.should be_a(Request)
     end
 
   end
@@ -154,10 +168,9 @@ describe 'Provider: Github' do
     end
 
     it 'creates Commit instances from the data it receives from GitHub' do
-      subject.should_receive(:source_repo).and_return(head_repo)
       client.should_receive(:pull_commits)
         .with(head_repo, request_number).and_return([commit_hash])
-      com = subject.commits(request_number).first
+      com = subject.commits(request_number, head_repo).first
       com.sha.should == commit_hash.sha
       com.should be_a(Commit)
     end
@@ -187,12 +200,11 @@ describe 'Provider: Github' do
     end
 
     it 'creates Comment instances from the request comment data from GitHub' do
-      subject.should_receive(:source_repo).and_return(head_repo)
       client.should_receive(:issue_comments)
         .with(head_repo, request_number).and_return([comment_hash])
       client.should_receive(:review_comments)
         .with(head_repo, request_number).and_return([comment_hash])
-      com = subject.request_comments(request_number).first
+      com = subject.request_comments(request_number, head_repo).first
       com.body.should == comment_hash.body
       com.should be_a(Comment)
     end
@@ -212,10 +224,9 @@ describe 'Provider: Github' do
     end
 
     it 'creates Comment instances from the commit comment data from GitHub' do
-      subject.should_receive(:source_repo).and_return(head_repo)
       client.should_receive(:commit_comments)
         .with(head_repo, head_sha).and_return([comment_hash])
-      com = subject.commit_comments(head_sha).first
+      com = subject.commit_comments(head_sha, head_repo).first
       com.body.should == comment_hash.body
       com.should be_a(Comment)
     end

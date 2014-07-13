@@ -73,4 +73,14 @@ describe 'Provider base' do
     subject.send_pull_request true
   end
 
+  it 'determines the latest request number' do
+    server.should_receive(:requests).with(head_repo).and_return([request])
+    subject.latest_request_number(head_repo).should eq(request.number)
+  end
+
+  it 'finds a request\'s number by title' do
+    server.should_receive(:requests).with(head_repo).and_return([request])
+    subject.request_number_by_title(title, head_repo).should eq(request.number)
+  end
+
 end

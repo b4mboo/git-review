@@ -37,19 +37,6 @@ module GitReview
         Comment.from_github(server, client.commit_comments(repo, sha))
       end
 
-      # FIXME: Move out of GH class.
-      # show latest pull request number
-      def latest_request_number(repo = source_repo)
-        requests(repo).collect(&:number).sort.last.to_i
-      end
-
-      # FIXME: Move out of GH class.
-      # get the number of the request that matches the title
-      def request_number_by_title(title, repo = source_repo)
-        request = requests(repo).find { |r| r.title == title }
-        request.number if request
-      end
-
       # FIXME: Remove this method after merging create_pull_request from commands.rb, currently no specs
       def request_url_for(target_repo, request_number)
         "https://github.com/#{target_repo}/pull/#{request_number}"
