@@ -12,7 +12,7 @@ program_desc 'Manage review workflow for Github projects (using pull requests).'
 # Pre-hook before a command is executed
 pre do |global, cmd, opts, args|
   server = ::GitReview::Server.instance
-  if server.configure_access && server.source_repo
+  if server.connected? && server.source_repo
     server.update unless cmd == 'clean'
   end
 

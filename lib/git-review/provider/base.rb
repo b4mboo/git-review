@@ -18,6 +18,10 @@ module GitReview
         configure_access
       end
 
+      def connected?
+        !!@client
+      end
+
       def update
         git_call 'fetch origin'
       end
