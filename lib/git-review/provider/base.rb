@@ -66,8 +66,7 @@ module GitReview
         latest_number = latest_request_number(target_repo)
 
         # create the actual pull request
-        # FIXME: Delegate in server class.
-        create_pull_request(target_repo, base, head, title, body)
+        server.create_request(target_repo, base, head, title, body)
         # switch back to target_branch and check for success
         git_call "checkout #{base}"
 

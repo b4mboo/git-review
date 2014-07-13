@@ -116,6 +116,12 @@ describe 'Provider: Github' do
       req.should be_a(Request)
     end
 
+    it 'opens a new pull request on Gitub' do
+      client.should_receive(:create_pull_request)
+        .with(head_repo, branch_name, head_ref, title, body)
+      subject.create_request(head_repo, branch_name, head_ref, title, body)
+    end
+
   end
 
 

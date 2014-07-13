@@ -51,7 +51,7 @@ describe 'Provider base' do
     subject.stub(:latest_request_number).and_return(request_number)
     subject.stub(:url_for_request).and_return("url/to/pull/#{new_number}")
 
-    subject.should_receive(:create_pull_request).
+    server.should_receive(:create_request).
       with('parent:repo', target_branch, 'local:repo', title, body)
     subject.stub(:request_number_by_title).and_return(new_number)
     subject.should_receive(:puts).with(/Successfully/)
@@ -66,7 +66,7 @@ describe 'Provider base' do
     local.stub(:create_title_and_body).and_return([title, body])
     subject.stub(:latest_request_number).and_return(request_number)
 
-    subject.should_receive(:create_pull_request).
+    server.should_receive(:create_request).
       with('parent:repo', target_branch, 'local:repo', title, body)
     subject.stub(:request_number_by_title).and_return(nil)
     subject.should_receive(:puts).with(/not created for parent:repo/)

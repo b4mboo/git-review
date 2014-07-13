@@ -29,6 +29,11 @@ module GitReview
         ).sort_by(&:created_at)
       end
 
+      def create_request(repo, base, head, title, body)
+        # TODO: See whether we can form a Request instance from the response.
+        client.create_pull_request(repo, base, head, title, body)
+      end
+
       def commits(number, repo = source_repo)
         Commit.from_github(server, client.pull_commits(repo, number))
       end
