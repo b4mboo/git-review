@@ -14,6 +14,7 @@ class Commit
       ref: response.ref,
       label: response.label,
       message: response.message,
+      comment_count: response.commit.comment_count,
       user: {
         login: response.user.login
       },

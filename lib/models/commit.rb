@@ -5,6 +5,7 @@ class Commit < Base
 
   attr_accessor :sha,
                 :ref,
-                :label
+                :label,
+                :comment_count
 
 end

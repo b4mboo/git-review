@@ -26,7 +26,7 @@ class Request < Base
     text = "ID        : #{number}\n"
     text << "Label     : #{head.label}\n"
     text << "Updated   : #{updated_at.review_time}\n"
-    text << "Comments  : #{server.comments_count(self)}\n"
+    text << "Comments  : #{comments_count}\n"
     text << "\n#{title}\n\n"
     text << "#{body}\n\n" unless body.empty?
     text
@@ -87,6 +87,14 @@ class Request < Base
       output << "\n\n"
     }
     discussion.compact.flatten unless discussion.empty?
+  end
+
+  # get the number of comments, including comments on commits
+  def comments_count
+    commit_comments_count = server.commits(number).inject(0) do |sum, commit|
+      sum + commit.comment_count
+    end
+    comments + review_comments + commit_comments_count
   end
 
   # Construct a warning if someone deleted the source repo.

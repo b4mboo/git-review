@@ -23,7 +23,7 @@ describe Request do
   end
 
   it 'collects all relevant details ' do
-    subject.server.should_receive(:comments_count).and_return(0)
+    subject.server.should_receive(:commits).with(request_number).and_return([])
     subject.details.should include(body)
   end
 

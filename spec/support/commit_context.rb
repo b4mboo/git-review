@@ -7,6 +7,7 @@ shared_context 'commit_context' do
   let(:feature_name) { 'some_name' }
   let(:head_ref) { "review_010113_#{feature_name}"}
   let(:user_login) { 'user' }
+  let(:comment_count) { 23 }
 
   let(:commit_hash) {
     Hashie::Mash.new(
@@ -20,7 +21,10 @@ shared_context 'commit_context' do
           login: user_login
         }
       },
-      user: { login: user_login }
+      user: { login: user_login },
+      commit: {
+        commnt_count: comment_count
+      }
     )
   }
 

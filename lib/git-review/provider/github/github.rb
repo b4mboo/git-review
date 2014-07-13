@@ -11,7 +11,6 @@ module GitReview
 
     class Github < Base
 
-      # Find a request by a specified number and repo.
       def request(number, repo = source_repo)
         raise ::GitReview::InvalidRequestIDError unless number
         Request.from_github(server, client.pull_request(repo, number))
@@ -19,35 +18,26 @@ module GitReview
         raise ::GitReview::InvalidRequestIDError
       end
 
-      # Finds all current pull request for a specified repo.
       def requests(repo = source_repo)
         Request.from_github(server, client.pull_requests(repo))
       end
 
-      # Find all commits for a specified request.
-      def commits(number, repo = source_repo)
-        Commit.from_github(server, client.pull_commits(repo, number))
-      end
-
+      # FIXME: Move issue and review comments into request_comments.
       def issue_comments(number, repo = source_repo)
         Comment.from_github(server, client.issue_comments(repo, number))
       end
 
+      # FIXME: Move issue and review comments into request_comments.
       def review_comments(number, repo = source_repo)
         Comment.from_github(server, client.review_comments(repo, number))
       end
 
-      def commit_comments(sha, repo = source_repo)
-        Comment.from_github(server, client.commit_comments(repo, sha))
+      def commits(number, repo = source_repo)
+        Commit.from_github(server, client.pull_commits(repo, number))
       end
 
-      # FIXME: Move into request model.
-      # get the number of comments, including comments on commits
-      def comments_count(request)
-        issue_c = request.comments + request.review_comments
-        commits_c = client.pull_commits(source_repo, request.number).
-            inject(0) { |sum, c| sum + c.commit.comment_count }
-        issue_c + commits_c
+      def commit_comments(sha, repo = source_repo)
+        Comment.from_github(server, client.commit_comments(repo, sha))
       end
 
       # FIXME: Move out of GH class.
