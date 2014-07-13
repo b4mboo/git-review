@@ -121,32 +121,6 @@ describe 'Provider: Github' do
 
   end
 
-  context '# Repository URLs' do
-
-    it 'constructs the remote URL for a given user name' do
-      subject.url_for_remote(head_repo).
-        should == "git@github.com:#{user_login}/#{repo_name}.git"
-    end
-
-    it 'extracts user and repo name from a given GitHub git-type URL' do
-      url = 'git@github.com:foo/bar.git'
-      subject.send(:url_matching, url).should == %w(foo bar)
-    end
-
-    it 'extracts user and repo name from a given GitHub HTTP URL' do
-      url = 'https://github.com/foo/bar.git'
-      subject.send(:url_matching, url).should == %w(foo bar)
-    end
-
-    it 'supports GitHub\'s insteadof matching for URLs' do
-      url = 'git@github.com:foo/bar.git'
-      config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
-      subject.send(:insteadof_matching, config, url).
-        should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
-    end
-
-  end
-
   context '# Commits' do
 
     include_context 'commit_context'
@@ -227,6 +201,37 @@ describe 'Provider: Github' do
       com = subject.commit_comments(head_sha, head_repo).first
       com.body.should == comment_hash.body
       com.should be_a(Comment)
+    end
+
+  end
+
+  context '# URLs' do
+
+    it 'constructs the remote URL for a given repo' do
+      subject.url_for_remote(head_repo).
+        should == "git@github.com:#{head_repo}.git"
+    end
+
+    it 'constructs the request URL for a given repo' do
+      subject.url_for_request(head_repo, request_number).
+        should == "https://github.com/#{head_repo}/pull/#{request_number}"
+    end
+
+    it 'extracts user and repo name from a given GitHub git-type URL' do
+      url = 'git@github.com:foo/bar.git'
+      subject.send(:url_matching, url).should == %w(foo bar)
+    end
+
+    it 'extracts user and repo name from a given GitHub HTTP URL' do
+      url = 'https://github.com/foo/bar.git'
+      subject.send(:url_matching, url).should == %w(foo bar)
+    end
+
+    it 'supports GitHub\'s insteadof matching for URLs' do
+      url = 'git@github.com:foo/bar.git'
+      config = { 'url.git@github.com:a/b.git.insteadof' => 'git@github.com:foo/bar.git' }
+      subject.send(:insteadof_matching, config, url).
+        should == %w(git@github.com:foo/bar.git git@github.com:a/b.git)
     end
 
   end
