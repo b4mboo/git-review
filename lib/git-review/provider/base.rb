@@ -100,18 +100,6 @@ module GitReview
         [user, project]
       end
 
-      def method_missing(method, *args)
-        if client.respond_to?(method)
-          client.send(method, *args)
-        else
-          super
-        end
-      end
-
-      def respond_to?(method)
-        client.respond_to?(method) || super
-      end
-
 
       private
 
