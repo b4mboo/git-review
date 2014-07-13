@@ -6,6 +6,4 @@ require 'hashie'
 
 require_relative 'support/request_context'
 require_relative 'support/commit_context'
-
-RSpec.configure do |config|
-end
+require_relative 'support/comment_context'

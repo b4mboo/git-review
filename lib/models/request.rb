@@ -54,7 +54,7 @@ class Request < Base
       # comments on commit
       comments = server.commit_comments(commit.sha, commit.repo.name)
       result + comments.collect { |comment|
-        # TODO: Move into commit model.
+        # TODO: Move into comment model.
         name = comment.user.login
         output = "\e[35m#{name}\e[m "
         output << "added a comment to \e[36m#{commit.sha[0..6]}\e[m"
@@ -74,7 +74,7 @@ class Request < Base
     comments = server.issue_comments(number) + server.review_comments(number)
     discussion = ["\nComments on pull request:\n\n"]
     discussion += comments.collect { |comment|
-      # TODO: Move into commit model.
+      # TODO: Move into comment model.
       name = comment.user.login
       output = "\e[35m#{name}\e[m "
       output << "added a comment to \e[36m#{comment.id}\e[m"
