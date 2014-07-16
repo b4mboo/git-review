@@ -52,7 +52,12 @@ module GitReview
       end
 
       def requests(repo=source_repo)
-        ClientItems.new(client, :merge_requests, project_id(repo)).map do |request|
+        ClientItems.new(
+          client,
+          :merge_requests,
+          project_id(repo),
+          state: 'opened'
+        ).map do |request|
           build_request(request, repo)
         end.reject do |request|
           # Remove invalid and closed/merged merge requests
@@ -259,9 +264,14 @@ module GitReview
         end
 
         def paginate_args(page)
-          @args + [
-            @method == :get ? {:query => { :per_page => 100, :page => page }} : { :per_page => 100, :page => page }
-          ]
+          options = @method == :get ? {:query => { :per_page => 100, :page => page }} : { :per_page => 100, :page => page }
+          case @args.last
+          when Hash
+            options.merge!(@args.last)
+            @args[0..-2] + [options]
+          else
+            @args + [options]
+          end
         end
       end
 
