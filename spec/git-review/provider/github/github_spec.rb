@@ -115,9 +115,9 @@ describe 'Provider: Github' do
 
     it 'creates Request instances from the data it receives from GitHub' do
       client.should_receive(:pull_request).
-        with(head_repo, request_number).and_return(request_hash)
+        with(head_repo, request_number).and_return(github_request_hash)
       req = subject.request(request_number, head_repo)
-      req.html_url.should == request_hash._links.html.href
+      req.html_url.should == github_request_hash._links.html.href
       req.should be_a(Request)
     end
 
@@ -140,9 +140,9 @@ describe 'Provider: Github' do
 
     it 'creates Request instances from the data it receives from GitHub' do
       client.should_receive(:pull_requests).
-        with(head_repo).and_return([request_hash])
+        with(head_repo).and_return([github_request_hash])
       req = subject.requests(head_repo).first
-      req.html_url.should == request_hash._links.html.href
+      req.html_url.should == github_request_hash._links.html.href
       req.should be_a(Request)
     end
 
@@ -150,6 +150,58 @@ describe 'Provider: Github' do
       client.should_receive(:create_pull_request)
         .with(head_repo, branch_name, head_ref, title, body)
       subject.create_request(head_repo, branch_name, head_ref, title, body)
+    end
+
+    it 'only shows unmerged requests in pending_requests' do
+      client.should_receive(:pull_requests).with(head_repo).
+          and_return([github_request_hash])
+      ::GitReview::Local.any_instance.should_receive(:merged?).
+          with(head_sha).and_return(true)
+      requests = subject.pending_requests(head_repo)
+      requests.should be_empty
+    end
+
+    it 'closes an open request' do
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:close_pull_request).with(head_repo, request_number)
+      server.should_receive(:request_exists?).
+          with(request_number, state).and_return(false)
+      subject.close(request_number).should match /Successfully closed request./
+    end
+
+    it 'displays error if a request is not closed' do
+      message = 'fail'
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:close_pull_request).with(head_repo, request_number)
+      server.should_receive(:request_exists?).
+          with(request_number, state).and_return(message)
+      subject.close(request_number).should match /Failed to close request./
+    end
+
+    let(:comment) { 'Reviewed and approved.' }
+
+    it 'posts an approving comment in your name to the request\'s page' do
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:add_comment).
+          with(head_repo, request_number, comment).and_return(body: comment)
+      subject.approve(request_number).should match /Successfully approved request./
+    end
+
+    it 'outputs any errors that might occur when trying to post a comment' do
+      message = 'fail'
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:add_comment).
+          with(head_repo, request_number, comment).
+          and_return(body: nil, message: message)
+      subject.approve(request_number).should match message
+    end
+
+    it 'has correct head format' do
+      ::GitReview::Local.any_instance.should_receive(:source_repo).
+          and_return('user/repo')
+      ::GitReview::Local.any_instance.should_receive(:source_branch).
+          and_return('branch')
+      subject.head.should == 'user:branch'
     end
 
   end
@@ -175,9 +227,9 @@ describe 'Provider: Github' do
 
     it 'creates Commit instances from the data it receives from GitHub' do
       client.should_receive(:pull_commits)
-        .with(head_repo, request_number).and_return([commit_hash])
+        .with(head_repo, request_number).and_return([github_commit_hash])
       com = subject.commits(request_number, head_repo).first
-      com.sha.should == commit_hash.sha
+      com.sha.should == github_commit_hash.sha
       com.should be_a(Commit)
     end
 
@@ -208,11 +260,11 @@ describe 'Provider: Github' do
 
     it 'creates Comment instances from the request comment data from GitHub' do
       client.should_receive(:issue_comments)
-        .with(head_repo, request_number).and_return([comment_hash])
+        .with(head_repo, request_number).and_return([github_comment_hash])
       client.should_receive(:review_comments)
-        .with(head_repo, request_number).and_return([comment_hash])
+        .with(head_repo, request_number).and_return([github_comment_hash])
       com = subject.request_comments(request_number, head_repo).first
-      com.body.should == comment_hash.body
+      com.body.should == github_comment_hash.body
       com.should be_a(Comment)
     end
 
@@ -232,9 +284,9 @@ describe 'Provider: Github' do
 
     it 'creates Comment instances from the commit comment data from GitHub' do
       client.should_receive(:commit_comments)
-        .with(head_repo, head_sha).and_return([comment_hash])
+        .with(head_repo, head_sha).and_return([github_comment_hash])
       com = subject.commit_comments(head_sha, head_repo).first
-      com.body.should == comment_hash.body
+      com.body.should == github_comment_hash.body
       com.should be_a(Comment)
     end
 

@@ -12,7 +12,7 @@ describe 'Commands' do
   before :each do
     provider.stub(:configure_access).and_return(user_login)
     request.inspect
-    provider.stub_chain(:client, :pull_request).and_return(request_hash)
+    provider.stub_chain(:client, :pull_request).and_return(github_request_hash)
     Request.stub(:from_github).and_return(request)
     subject.stub :puts
   end
@@ -27,8 +27,7 @@ describe 'Commands' do
     end
 
     it 'prints a list of all open requests' do
-      server.stub(:requests).and_return([req1, req2])
-      local.stub(:merged?).and_return(false)
+      server.stub(:pending_requests).and_return([req1, req2])
       subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
       subject.should_not_receive(:puts).with(/No pending requests/)
       req1.should_receive :summary
@@ -38,23 +37,15 @@ describe 'Commands' do
 
     it 'allows to sort the list by adding ' + '--reverse'.pink do
       requests = [req1, req2]
-      server.stub_chain(:requests, :reject).and_return(requests)
+      server.stub(:pending_requests).and_return(requests)
       Request.any_instance.stub :summary
       requests.stub(:sort_by!).and_return(requests)
       requests.should_receive :reverse!
       subject.list true
     end
 
-    it 'ignores closed requests and does not list them' do
-      server.stub(:requests).and_return([request])
-      local.stub(:merged?).and_return(true)
-      subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
-      subject.should_not_receive :print_request
-      subject.list
-    end
-
-    it 'does not print a list when there are no requests' do
-      server.stub(:requests).and_return([])
+    it 'does not print a list when there are no open requests' do
+      server.stub(:pending_requests).and_return([])
       subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
       subject.should_not_receive :print_request
       subject.list
@@ -165,19 +156,8 @@ describe 'Commands' do
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'posts an approving comment in your name to the request\'s page' do
-      server.should_receive(:add_comment).
-        with(head_repo, request_number, comment).and_return(body: comment)
-      subject.should_receive(:puts).with(/Successfully approved request./)
-      subject.approve request_number
-    end
-
-    it 'outputs any errors that might occur when trying to post a comment' do
-      message = 'fail'
-      server.should_receive(:add_comment).
-        with(head_repo, request_number, comment).
-        and_return(body: nil, message: message)
-      subject.should_receive(:puts).with(message)
+    it 'delegates approval of pull requests to providers' do
+      provider.should_receive(:approve).with(request_number, head_repo)
       subject.approve request_number
     end
 
@@ -199,7 +179,7 @@ describe 'Commands' do
       local.stub(:target).and_return(target_branch)
       msg = "Accept request ##{request_number} " +
         "and merge changes into \"#{target_branch}\""
-      subject.should_receive(:git_call).with("merge -m '#{msg}' #{head_sha}")
+      subject.should_receive(:git_call).with("merge --no-ff -m '#{msg}' #{head_sha}")
       subject.merge request_number
     end
 
@@ -224,11 +204,8 @@ describe 'Commands' do
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'closes an open request' do
-      server.should_receive(:close_pull_request).with(head_repo, request_number)
-      server.should_receive(:request_exists?).
-          with(request_number, state).and_return(false)
-      subject.should_receive(:puts).with(/Successfully closed request./)
+    it 'delegates close of pull requests to providers' do
+      provider.should_receive(:close).with(request_number, head_repo)
       subject.close request_number
     end
 

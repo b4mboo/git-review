@@ -59,7 +59,7 @@ describe 'Local' do
 
     it 'finds an existing remote for a request' do
       subject.stub(:server).and_return(server)
-      subject.should_receive(:repo_info_from_config)
+      server.should_receive(:repo_info_from_config)
         .and_return(head_repo.split('/'))
       server.should_receive(:url_for_remote).
         with(head_repo).and_return(remote_url)
@@ -70,7 +70,7 @@ describe 'Local' do
 
     it 'adds a new remote for a request if necessary' do
       subject.stub(:server).and_return(server)
-      subject.should_receive(:repo_info_from_config)
+      server.should_receive(:repo_info_from_config)
         .and_return(head_repo.split('/'))
       server.should_receive(:url_for_remote).
         with(head_repo).and_return(remote_url)

@@ -20,7 +20,7 @@ shared_context 'request_context' do
   let(:target_branch) { 'master' }
   let(:state) { 'open' }
 
-  let(:request_hash) {
+  let(:github_request_hash) {
     Hashie::Mash.new(
       html_url: html_url,
       number: request_number,
@@ -51,6 +51,39 @@ shared_context 'request_context' do
     )
   }
 
-  let(:request) { Request.from_github(::GitReview::Server.new, request_hash) }
+  let(:bitbucket_request_hash) {
+    Hashie::Mash.new(
+        id: request_number,
+        state: state,
+        title: title,
+        description: body,
+        updated_on: Time.now.to_s,
+        links: {
+            html: {
+                href: html_url
+            },
+            diff: {
+                href: 'patch url'
+            }
+        },
+        comments: 0,
+        source: {
+            commit: {
+                hash: head_sha
+            },
+            repository: {
+                name: head_label
+            },
+            branch: {
+                name: head_ref
+            }
+        },
+        author: {
+            username: user_login
+        }
+    )
+  }
+
+  let(:request) { Request.from_github(::GitReview::Server.new, github_request_hash) }
 
 end

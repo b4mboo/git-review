@@ -34,6 +34,12 @@ module GitReview
         end
       end
 
+      def pending_requests(repo = source_repo)
+        requests(repo).reject { |request|
+          local.merged? request.head.sha
+        }.sort_by!(&:number)
+      end
+
       # Determine whether a request for a specified number and state exists.
       def request_exists?(number, state = 'open', repo = source_repo)
         instance = request(number, repo)
@@ -58,7 +64,7 @@ module GitReview
 
       def send_pull_request(to_upstream = false)
         target_repo = local.target_repo(to_upstream)
-        head = local.head
+        head = server.head
         base = local.target_branch
         title, body = local.create_title_and_body(base)
 
@@ -78,11 +84,6 @@ module GitReview
         else
           puts "Pull request was not created for #{target_repo}."
         end
-      end
-
-      # @return [String] Current username
-      def login
-        settings.username
       end
 
       # @return [Array(String, String)] User and repo name from git
@@ -106,7 +107,7 @@ module GitReview
 
       # extract user and project name from repo URL.
       def url_matching(url)
-        matches = /#{server.name}\.#{server.tld}.(.*?)\/(.*)/.match(url)
+        matches = /#{server.name}\.#{server.tld}.*[:|\/](.*)\/(.*)/.match(url)
         matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
       end
 

@@ -18,8 +18,8 @@ describe 'Provider: Github - Request' do
   it 'allows to construct a collection of request instances from an Array' do
     test_number = 23
     test_number.should_not eq(request_number)
-    test_req = request_hash.merge(:number => test_number)
-    requests = Request.from_github(subject, [request_hash, test_req])
+    test_req = github_request_hash.merge(:number => test_number)
+    requests = Request.from_github(subject, [github_request_hash, test_req])
     req1 = requests.first
     req1.class.should eq(Request)
     req1.number.should eq(request_number)

@@ -26,7 +26,6 @@ class Request < Base
     text = "ID        : #{number}\n"
     text << "Label     : #{head.label}\n"
     text << "Updated   : #{updated_at.review_time}\n"
-    text << "Comments  : #{comments_count}\n"
     text << "\n#{title}\n\n"
     text << "#{body}\n\n" unless body.empty?
     text
@@ -34,80 +33,26 @@ class Request < Base
 
   # Collect the discussion details.
   def discussion
-    "Progress  :\n\n#{(commit_discussion + issue_discussion).join}\n"
-  end
-
-  def commit_discussion
-    discussion = ["Commits on pull request:\n\n"]
-    discussion += server.commits(number).collect { |commit|
-      # FIXME: Move into commit model.
-      # commit message
-      name = commit.committer.login
-      output = "\e[35m#{name}\e[m "
-      output << "committed \e[36m#{commit.sha[0..6]}\e[m "
-      output << "on #{commit.commit.committer.date.review_time}"
-      output << ":\n#{''.rjust(output.length + 1, "-")}\n"
-      output << "#{commit.commit.message}"
-      output << "\n\n"
-      result = [output]
-
-      # comments on commit
-      # TODO: See whether this can be queried all at once.
-      # TODO: See whether it makes sense to stop distinguishing between request
-      # and commit comments. Instead we could just list all comments and commits
-      # sorted by time. That would probably represent the timeline a bit better.
-      comments = server.commit_comments(commit.sha, commit.repo.name)
-      result + comments.collect { |comment|
-        # TODO: Move into comment model.
-        name = comment.user.login
-        output = "\e[35m#{name}\e[m "
-        output << "added a comment to \e[36m#{commit.sha[0..6]}\e[m"
-        output << " on #{comment.created_at.review_time}"
-        unless comment.created_at == comment.updated_at
-          output << " (updated on #{comment.updated_at.review_time})"
-        end
-        output << ":\n#{''.rjust(output.length + 1, "-")}\n"
-        output << comment.body
-        output << "\n\n"
-      }
+    text = "\nProgress  :\n\n"
+    activities = server.request_comments(number) + server.commits(number)
+    activities.sort_by(&:created_at).each { |activity|
+      text << activity.to_s
     }
-    discussion.compact.flatten unless discussion.empty?
+    text
   end
 
-  def issue_discussion
-    comments = server.issue_comments(number) + server.review_comments(number)
-    discussion = ["\nComments on pull request:\n\n"]
-    discussion += comments.collect { |comment|
-      # TODO: Move into comment model.
-      name = comment.user.login
-      output = "\e[35m#{name}\e[m "
-      output << "added a comment to \e[36m#{comment.id}\e[m"
-      output << " on #{comment.created_at.review_time}"
-      unless comment.created_at == comment.updated_at
-        output << " (updated on #{comment.updated_at.review_time})"
-      end
-      output << ":\n#{''.rjust(output.length + 1, "-")}\n"
-      output << comment.body
-      output << "\n\n"
-    }
-    discussion.compact.flatten unless discussion.empty?
-  end
-
-  # get the number of comments, including comments on commits
+  # get the number of comments
   def comments_count
-    commit_comments_count = server.commits(number).inject(0) do |sum, commit|
-      sum + commit.comment_count
-    end
-    comments + review_comments + commit_comments_count
+    comments + review_comments
   end
 
   # Construct a warning if someone deleted the source repo.
   def missing_repo_warning
-    text = "Sorry, #{self.head.user.login} deleted the source repository.\n"
+    text = "Sorry, #{head.user.login} deleted the source repository.\n"
     text << "git-review doesn't support this.\n"
     text << "Tell the contributor not to do this.\n\n"
     text << "You can still manually patch your repo by running:\n\n"
-    text << "  curl #{self.patch_url} | git am\n\n"
+    text << "  curl #{patch_url} | git am\n\n"
     text
   end
 

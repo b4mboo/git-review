@@ -6,6 +6,8 @@ describe Request do
 
   subject { request }
 
+  let(:server) { ::GitReview::Server.any_instance }
+
   before :each do
     ::GitReview::Provider::Github.any_instance.stub :configure_oauth
   end
@@ -23,13 +25,12 @@ describe Request do
   end
 
   it 'collects all relevant details ' do
-    subject.server.should_receive(:commits).with(request_number).and_return([])
     subject.details.should include(body)
   end
 
   it 'collects its discussions' do
-    subject.should_receive(:issue_discussion).and_return([''])
-    subject.should_receive(:commit_discussion).and_return([''])
+    server.should_receive(:request_comments).and_return([])
+    server.should_receive(:commits).and_return([])
     subject.discussion.should include('Progress')
   end
 
