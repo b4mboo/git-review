@@ -58,6 +58,11 @@ module GitReview
         'com'
       end
 
+      def pending_requests(repo = source_repo)
+        requests(repo).reject { |request|
+          local.merged? request.head.sha
+        }.sort_by!(&:number)
+      end
 
       private
 

@@ -27,8 +27,7 @@ describe 'Commands' do
     end
 
     it 'prints a list of all open requests' do
-      server.stub(:requests).and_return([req1, req2])
-      local.stub(:merged?).and_return(false)
+      server.stub(:pending_requests).and_return([req1, req2])
       subject.should_receive(:puts).with(/Pending requests for 'some_source'/)
       subject.should_not_receive(:puts).with(/No pending requests/)
       req1.should_receive :summary
@@ -38,23 +37,15 @@ describe 'Commands' do
 
     it 'allows to sort the list by adding ' + '--reverse'.pink do
       requests = [req1, req2]
-      server.stub_chain(:requests, :reject).and_return(requests)
+      server.stub(:pending_requests).and_return(requests)
       Request.any_instance.stub :summary
       requests.stub(:sort_by!).and_return(requests)
       requests.should_receive :reverse!
       subject.list true
     end
 
-    it 'ignores closed requests and does not list them' do
-      server.stub(:requests).and_return([request])
-      local.stub(:merged?).and_return(true)
-      subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
-      subject.should_not_receive :print_request
-      subject.list
-    end
-
-    it 'does not print a list when there are no requests' do
-      server.stub(:requests).and_return([])
+    it 'does not print a list when there are no open requests' do
+      server.stub(:pending_requests).and_return([])
       subject.should_receive(:puts).with(/No pending requests for 'some_source'/)
       subject.should_not_receive :print_request
       subject.list

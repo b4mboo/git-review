@@ -152,6 +152,15 @@ describe 'Provider: Github' do
       subject.create_request(head_repo, branch_name, head_ref, title, body)
     end
 
+    it 'only shows unmerged requests in pending_requests' do
+      client.should_receive(:pull_requests).with(head_repo).
+          and_return([request_hash])
+      ::GitReview::Local.any_instance.should_receive(:merged?).
+          with(head_sha).and_return(true)
+      requests = subject.pending_requests(head_repo)
+      requests.should be_empty
+    end
+
   end
 
 
