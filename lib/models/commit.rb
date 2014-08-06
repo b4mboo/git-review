@@ -4,8 +4,17 @@ class Commit < Base
         repo: Repository
 
   attr_accessor :sha,
-                :ref,
-                :label,
-                :comment_count
+                :comment_count,
+                :created_at,
+                :message
+
+  def to_s
+    text = "\e[35m#{user.login}\e[m "
+    text << "committed \e[36m#{sha[0..6]}\e[m "
+    text << "on #{created_at.review_time}"
+    text << ":\n#{''.rjust(text.length + 1, "-")}\n"
+    text << "#{message}"
+    text << "\n\n"
+  end
 
 end

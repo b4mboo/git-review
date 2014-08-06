@@ -23,10 +23,8 @@ module GitReview
       end
 
       def request_comments(number, repo = source_repo)
-        (
           Comment.from_github(server, client.issue_comments(repo, number)) +
           Comment.from_github(server, client.review_comments(repo, number))
-        ).sort_by(&:created_at)
       end
 
       def create_request(repo, base, head, title, body)
@@ -56,12 +54,6 @@ module GitReview
 
       def tld
         'com'
-      end
-
-      def pending_requests(repo = source_repo)
-        requests(repo).reject { |request|
-          local.merged? request.head.sha
-        }.sort_by!(&:number)
       end
 
       private

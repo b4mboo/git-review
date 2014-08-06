@@ -7,22 +7,15 @@ class Commit
   def self.from_github(server, response)
     # Use recursion to handle Arrays of responses.
     return response.collect{|r| from_github(server, r)} if response.is_a? Array
-    # FIXME: Get info from GitHub's API and adjust structure.
     self.new(
       server: server,
       sha: response.sha,
-      ref: response.ref,
-      label: response.label,
-      message: response.message,
+      message: response.commit.message,
       comment_count: response.commit.comment_count,
       user: {
-        login: response.user.login
+        login: response.author.login
       },
-      repo: {
-        # NOTE: This can become nil, if the repo has been deleted ever since.
-        owner: (response.repo ? response.repo.owner : nil),
-        name: (response.repo ? response.repo.name : nil)
-      }
+      created_at: response.commit.committer.date
     )
   end
 
