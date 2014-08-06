@@ -95,6 +95,11 @@ describe 'Provider base' do
       subject.url_matching(url).should == %w(foo bar)
     end
 
+    it 'extracts user and repo name from custom Github URL' do
+      url = 'git@github.com-baz:foo/bar.git'
+      subject.url_matching(url).should == %w(foo bar)
+    end
+
     it 'extracts user and repo name from a given GitHub HTTP URL' do
       url = 'https://github.com/foo/bar.git'
       subject.url_matching(url).should == %w(foo bar)

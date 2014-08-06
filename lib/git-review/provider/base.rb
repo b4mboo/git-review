@@ -106,7 +106,7 @@ module GitReview
 
       # extract user and project name from repo URL.
       def url_matching(url)
-        matches = /#{server.name}\.#{server.tld}.(.*?)\/(.*)/.match(url)
+        matches = /#{server.name}\.#{server.tld}.*[:|\/](.*)\/(.*)/.match(url)
         matches ? [matches[1], matches[2].sub(/\.git\z/, '')] : [nil, nil]
       end
 
