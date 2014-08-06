@@ -33,4 +33,13 @@ module Accessible
     end
   end
 
+  # Allow attributes to be accessed via methods like foo.bar instead of foo[:bar]
+  def method_missing(method, *args)
+    if args.empty?
+      self.send(:[], method.to_sym)
+    else
+      super
+    end
+  end
+
 end
