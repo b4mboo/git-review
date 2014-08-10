@@ -40,6 +40,16 @@ module GitReview
         Comment.from_github(server, client.commit_comments(repo, sha))
       end
 
+      def approve(number, repo = source_repo)
+        comment = 'Reviewed and approved.'
+        response = client.add_comment(repo, number, comment)
+        if response[:body] == comment
+          'Successfully approved request.'
+        else
+          response[:message]
+        end
+      end
+
       def url_for_request(repo, number)
         "https://#{name}.#{tld}/#{repo}/pull/#{number}"
       end

@@ -68,14 +68,8 @@ module GitReview
     def approve(number)
       request = server.request(number)
       repo = server.source_repo
-      # TODO: Make this configurable.
-      comment = 'Reviewed and approved.'
-      response = server.add_comment(repo, request.number, comment)
-      if response[:body] == comment
-        puts 'Successfully approved request.'
-      else
-        puts response[:message]
-      end
+      response = server.approve(request.number, repo)
+      puts response
     end
 
     # Accept a specified request by merging it into master.
