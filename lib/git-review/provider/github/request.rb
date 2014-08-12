@@ -28,7 +28,7 @@ class Request
         },
         repo: {
           # NOTE: This can become nil, if the repo has been deleted ever since.
-          owner: (response.head.repo ? response.head.repo.owner : nil),
+          owner: (response.head.repo ? response.head.repo.owner.login : nil),
           name: (response.head.repo ? response.head.repo.name : nil)
         }
       }

@@ -26,7 +26,6 @@ class Request < Base
     text = "ID        : #{number}\n"
     text << "Label     : #{head.label}\n"
     text << "Updated   : #{updated_at.review_time}\n"
-    text << "Comments  : #{comments_count}\n"
     text << "\n#{title}\n\n"
     text << "#{body}\n\n" unless body.empty?
     text
@@ -34,7 +33,7 @@ class Request < Base
 
   # Collect the discussion details.
   def discussion
-    text = "Progress  :\n\n"
+    text = "\nProgress  :\n\n"
     activities = server.request_comments(number) + server.commits(number)
     activities.sort_by(&:created_at).each { |activity|
       text << activity.to_s

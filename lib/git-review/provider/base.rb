@@ -34,6 +34,12 @@ module GitReview
         end
       end
 
+      def pending_requests(repo = source_repo)
+        requests(repo).reject { |request|
+          local.merged? request.head.sha
+        }.sort_by!(&:number)
+      end
+
       # Determine whether a request for a specified number and state exists.
       def request_exists?(number, state = 'open', repo = source_repo)
         instance = request(number, repo)
@@ -58,7 +64,7 @@ module GitReview
 
       def send_pull_request(to_upstream = false)
         target_repo = local.target_repo(to_upstream)
-        head = local.head
+        head = server.head
         base = local.target_branch
         title, body = local.create_title_and_body(base)
 

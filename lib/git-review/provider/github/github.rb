@@ -50,6 +50,23 @@ module GitReview
         end
       end
 
+      def close(number, repo = source_repo)
+        client.close_pull_request(repo, number)
+        unless server.request_exists?(number, 'open')
+          puts 'Successfully closed request.'
+        end
+      end
+
+      def remote_merge
+        # nothing to do for github
+      end
+
+      def head
+        # in the form of 'user:branch'
+        local = GitReview::Local.instance
+        "#{local.source_repo.split('/').first}:#{local.source_branch}"
+      end
+
       def url_for_request(repo, number)
         "https://#{name}.#{tld}/#{repo}/pull/#{number}"
       end

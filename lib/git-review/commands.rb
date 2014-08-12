@@ -78,7 +78,7 @@ module GitReview
       if request.head.repo
         message = "Accept request ##{request.number} " +
             "and merge changes into \"#{local.target}\""
-        command = "merge -m '#{message}' #{request.head.sha}"
+        command = "merge --no-ff -m '#{message}' #{request.head.sha}"
         puts
         puts "Request title:"
         puts "  #{request.title}"
@@ -87,6 +87,7 @@ module GitReview
         puts "  git #{command}"
         puts
         puts git_call(command)
+        puts server.remote_merge(number, server.source_repo)
       else
         puts request.missing_repo_warning
       end
@@ -95,11 +96,9 @@ module GitReview
     # Close a specified request.
     def close(number)
       request = server.request(number)
-      # FIXME: Move into request model.
-      server.close_pull_request(server.source_repo, request.number)
-      unless server.request_exists?(request.number, 'open')
-        puts 'Successfully closed request.'
-      end
+      repo = server.source_repo
+      response = server.close(request.number, repo)
+      puts response
     end
 
     # Prepare local repository to create a new request.
