@@ -11,7 +11,9 @@ class Commit < Base
   def to_s
     text = "\e[35m#{user.login}\e[m "
     text << "committed \e[36m#{sha[0..6]}\e[m "
-    text << "on #{created_at.review_time}"
+    if created_at
+      text << "on #{created_at.review_time}"
+    end
     text << ":\n#{''.rjust(text.length + 1, "-")}\n"
     text << "#{message}"
     text << "\n\n"

@@ -22,6 +22,11 @@ describe 'Provider: Bitbucket' do
     subject.stub :puts
     subject.stub :print
   end
+
+  context '# Authentication' do
+
+  end
+
   context '# Request' do
 
     it 'closes an open request' do
@@ -65,6 +70,17 @@ describe 'Provider: Bitbucket' do
     end
 
   end
+
+  context '# Commits' do
+
+  end
+
+  context '# Comments' do
+
+  end
+
+  context '# URLs' do
+
   end
 
 end

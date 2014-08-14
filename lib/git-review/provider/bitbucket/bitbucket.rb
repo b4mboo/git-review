@@ -1,5 +1,5 @@
 require 'faraday_middleware'
-require 'OAuth'
+require 'oauth'
 require 'bucketkit'
 
 module GitReview
