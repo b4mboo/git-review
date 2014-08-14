@@ -87,7 +87,6 @@ module GitReview
         puts "  git #{command}"
         puts
         puts git_call(command)
-        puts server.remote_merge(number, server.source_repo)
       else
         puts request.missing_repo_warning
       end

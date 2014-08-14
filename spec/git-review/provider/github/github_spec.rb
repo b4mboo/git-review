@@ -161,6 +161,23 @@ describe 'Provider: Github' do
       requests.should be_empty
     end
 
+    it 'closes an open request' do
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:close_pull_request).with(head_repo, request_number)
+      server.should_receive(:request_exists?).
+          with(request_number, state).and_return(false)
+      subject.close(request_number).should match /Successfully closed request./
+    end
+
+    it 'displays error if a request is not closed' do
+      message = 'fail'
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:close_pull_request).with(head_repo, request_number)
+      server.should_receive(:request_exists?).
+          with(request_number, state).and_return(message)
+      subject.close(request_number).should match /Failed to close request./
+    end
+
   end
 
 

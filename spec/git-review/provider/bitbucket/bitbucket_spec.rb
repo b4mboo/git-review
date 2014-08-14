@@ -22,6 +22,27 @@ describe 'Provider: Bitbucket' do
     subject.stub :puts
     subject.stub :print
   end
+  context '# Request' do
+
+    it 'closes an open request' do
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:merge_pull_request).
+          with(head_repo, request_number).
+          and_return(state: 'MERGED')
+      subject.close(request_number).should match /Successfully closed request./
+    end
+
+    it 'displays error if a request is not closed' do
+      message = 'fail'
+      subject.stub(:source_repo).and_return(head_repo)
+      client.should_receive(:merge_pull_request).
+          with(head_repo, request_number).
+          and_return(error: message)
+      subject.close(request_number).should match /Failed to close request./
+    end
+
+  end
+
   context '# Approvals' do
 
     before :each do

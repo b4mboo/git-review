@@ -52,8 +52,10 @@ module GitReview
 
       def close(number, repo = source_repo)
         client.close_pull_request(repo, number)
-        unless server.request_exists?(number, 'open')
-          puts 'Successfully closed request.'
+        if server.request_exists?(number, 'open')
+          'Failed to close request.'
+        else
+          'Successfully closed request.'
         end
       end
 

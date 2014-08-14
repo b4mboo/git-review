@@ -179,7 +179,7 @@ describe 'Commands' do
       local.stub(:target).and_return(target_branch)
       msg = "Accept request ##{request_number} " +
         "and merge changes into \"#{target_branch}\""
-      subject.should_receive(:git_call).with("merge -m '#{msg}' #{head_sha}")
+      subject.should_receive(:git_call).with("merge --no-ff -m '#{msg}' #{head_sha}")
       subject.merge request_number
     end
 
@@ -204,11 +204,8 @@ describe 'Commands' do
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'closes an open request' do
-      server.should_receive(:close_pull_request).with(head_repo, request_number)
-      server.should_receive(:request_exists?).
-          with(request_number, state).and_return(false)
-      subject.should_receive(:puts).with(/Successfully closed request./)
+    it 'delegates close of pull requests to providers' do
+      provider.should_receive(:close).with(request_number, head_repo)
       subject.close request_number
     end
 

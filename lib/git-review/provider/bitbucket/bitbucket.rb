@@ -46,15 +46,13 @@ module GitReview
       end
 
       def close(number, repo = source_repo)
-        "Closing pull request is not currently supported for BitBucket.\n" +
-        "Pull request is considered 'closed' once they have been merged."
-      end
-
-      def remote_merge(number, repo = source_repo)
+        # Closing pull request is not currently supported for BitBucket.
+        # Pull request is considered 'closed' once they have been merged.
         response = client.merge_pull_request(repo, number)
-        unless response.state == 'MERGED'
-          # TODO:
-          'Remote merge/accept failed.'
+        if response[:state] == 'MERGED'
+          'Successfully closed request.'
+        else
+          'Failed to close request.'
         end
       end
 
