@@ -41,15 +41,8 @@ describe 'Provider: Bitbucket' do
       subject.close(request_number).should match /Failed to close request./
     end
 
-  end
-
-  context '# Approvals' do
-
-    before :each do
-      subject.stub(:source_repo).and_return(head_repo)
-    end
-
     it 'posts an approving comment in your name to the request\'s page' do
+      subject.stub(:source_repo).and_return(head_repo)
       client.should_receive(:approve_pull_request).
           with(head_repo, request_number).and_return(approved: true)
       subject.approve(request_number).should match /Successfully approved request./
@@ -57,6 +50,7 @@ describe 'Provider: Bitbucket' do
 
     it 'outputs any errors that might occur when trying to post a comment' do
       message = 'fail'
+      subject.stub(:source_repo).and_return(head_repo)
       client.should_receive(:approve_pull_request).
           with(head_repo, request_number).
           and_return(error: {message: message})
