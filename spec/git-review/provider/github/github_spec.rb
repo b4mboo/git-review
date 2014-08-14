@@ -196,6 +196,14 @@ describe 'Provider: Github' do
       subject.approve(request_number).should match message
     end
 
+    it 'has correct head format' do
+      ::GitReview::Local.any_instance.should_receive(:source_repo).
+          and_return('user/repo')
+      ::GitReview::Local.any_instance.should_receive(:source_branch).
+          and_return('branch')
+      subject.head.should == 'user:branch'
+    end
+
   end
 
 

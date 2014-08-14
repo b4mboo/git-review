@@ -45,7 +45,7 @@ describe 'Provider base' do
     new_number = request_number + 1
 
     local.stub(:target_repo).and_return('parent:repo')
-    local.stub(:head).and_return('local:repo')
+    server.stub(:head).and_return('local:repo')
     local.stub(:target_branch).and_return(target_branch)
     local.stub(:create_title_and_body).and_return([title, body])
     subject.stub(:latest_request_number).and_return(request_number)
@@ -61,7 +61,7 @@ describe 'Provider base' do
 
   it 'checks if the pull request is indeed created' do
     local.stub(:target_repo).and_return('parent:repo')
-    local.stub(:head).and_return('local:repo')
+    server.stub(:head).and_return('local:repo')
     local.stub(:target_branch).and_return(target_branch)
     local.stub(:create_title_and_body).and_return([title, body])
     subject.stub(:latest_request_number).and_return(request_number)

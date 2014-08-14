@@ -57,6 +57,14 @@ describe 'Provider: Bitbucket' do
       subject.approve(request_number).should match message
     end
 
+    it 'has correct head format' do
+      ::GitReview::Local.any_instance.should_not_receive(:source_repo)
+      ::GitReview::Local.any_instance.should_receive(:source_branch).
+          and_return('branch')
+      subject.head.should == 'branch'
+    end
+
+  end
   end
 
 end
