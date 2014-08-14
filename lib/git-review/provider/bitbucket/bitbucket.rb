@@ -38,10 +38,10 @@ module GitReview
 
       def approve(number, repo = source_repo)
         response = client.approve_pull_request(repo, number)
-        if response.approved
+        if response[:approved]
           'Successfully approved request.'
         else
-          response.error.message
+          response[:error][:message]
         end
       end
 

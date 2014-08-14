@@ -264,4 +264,28 @@ describe 'Provider: Github' do
 
   end
 
+  context '# Approvals' do
+
+    let(:comment) { 'Reviewed and approved.' }
+
+    before :each do
+      subject.stub(:source_repo).and_return(head_repo)
+    end
+
+    it 'posts an approving comment in your name to the request\'s page' do
+      client.should_receive(:add_comment).
+          with(head_repo, request_number, comment).and_return(body: comment)
+      subject.approve(request_number).should match /Successfully approved request./
+    end
+
+    it 'outputs any errors that might occur when trying to post a comment' do
+      message = 'fail'
+      client.should_receive(:add_comment).
+          with(head_repo, request_number, comment).
+          and_return(body: nil, message: message)
+      subject.approve(request_number).should match message
+    end
+
+  end
+
 end

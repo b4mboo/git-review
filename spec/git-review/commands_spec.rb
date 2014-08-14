@@ -156,19 +156,8 @@ describe 'Commands' do
         to raise_error(::GitReview::InvalidRequestIDError)
     end
 
-    it 'posts an approving comment in your name to the request\'s page' do
-      server.should_receive(:add_comment).
-        with(head_repo, request_number, comment).and_return(body: comment)
-      subject.should_receive(:puts).with(/Successfully approved request./)
-      subject.approve request_number
-    end
-
-    it 'outputs any errors that might occur when trying to post a comment' do
-      message = 'fail'
-      server.should_receive(:add_comment).
-        with(head_repo, request_number, comment).
-        and_return(body: nil, message: message)
-      subject.should_receive(:puts).with(message)
+    it 'delegates approval of pull requests to providers' do
+      provider.should_receive(:approve).with(request_number, head_repo)
       subject.approve request_number
     end
 
