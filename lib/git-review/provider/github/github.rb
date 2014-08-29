@@ -1,3 +1,4 @@
+require 'octokit'
 require 'net/http'
 require 'net/https'
 require 'yajl'

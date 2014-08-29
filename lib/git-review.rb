@@ -8,8 +8,6 @@ require 'time'
 require 'tempfile'
 # Open a browser in 'browse' command.
 require 'launchy'
-# Provide access to GitHub's API.
-require 'octokit'
 
 ## Internal dependencies
 
