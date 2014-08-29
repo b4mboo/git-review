@@ -96,7 +96,7 @@ module GitReview
         prepare_username
         prepare_password
         prepare_description
-        authorize
+        authorize!
       end
 
       def print_auth_message
@@ -127,7 +127,7 @@ module GitReview
         @description = user_input unless user_input.empty?
       end
 
-      def authorize
+      def authorize!
         get_consumer_token
         get_access_token
         save_oauth_token
