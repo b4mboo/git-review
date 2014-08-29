@@ -100,36 +100,31 @@ module GitReview
       end
 
       def print_auth_message
-        puts "Requesting a OAuth token for git-review."
-        puts "This procedure will grant access to your public and private "\
-        "repositories."
-        puts "You can revoke this authorization by visiting the following page: "\
-        "https://bitbucket.org/account/user/USERNAME/api"
+        puts 'Requesting an OAuth token for git-review.'
+        puts 'This procedure will grant access to your repositories.'
+        puts 'You can revoke this authorization by visiting the following page:'
+        puts 'https://bitbucket.org/account/user/USERNAME/api'
       end
 
       def prepare_username
-        print "Please enter your BitBucket's username: "
+        print 'Please enter your BitBucket username: '
         @username = STDIN.gets.chomp
       end
 
       def prepare_password
-        print "Please enter your BitBucket's password for #{@username} "\
-        "(it won't be stored anywhere): "
+        print "Please enter your BitBucket password for #{@username} "\
+        '(it won\'t be stored anywhere): '
         @password = STDIN.noecho(&:gets).chomp
       end
 
-      def prepare_description(chosen_description=nil)
-        if chosen_description
-          @description = chosen_description
-        else
-          @description = "git-review - #{Socket.gethostname}"
-          puts "Please enter a description to associate to this token, it will "\
-          "make easier to find it inside of BitBucket's application page."
-          puts "Press enter to accept the proposed description"
-          print "Description [#{@description}]:"
-          user_description = STDIN.gets.chomp
-          @description = user_description.empty? ? @description : user_description
-        end
+      def prepare_description
+        @description = "git-review - #{Socket.gethostname}"
+        puts 'Please enter a description to associate to this token.'
+        puts 'It will make it easier to identify it on BitBucket.'
+        puts 'Press enter to continue with the proposed description.'
+        print "Description [#{@description}]:"
+        user_input = STDIN.gets.chomp
+        @description = user_input unless user_input.empty?
       end
 
       def authorize

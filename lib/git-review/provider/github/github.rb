@@ -140,11 +140,6 @@ module GitReview
         @password = STDIN.noecho(&:gets).chomp
       end
 
-      def prepare_otp
-        print 'Please enter your One-Time-Password for GitHub\'s 2FA: '
-        @otp = STDIN.noecho(&:gets).chomp
-      end
-
       def prepare_description
         @description = "git-review - #{Socket.gethostname}"
         puts 'Please enter a description to associate to this token.'
@@ -153,6 +148,11 @@ module GitReview
         print "Description [#{@description}]:"
         user_input = STDIN.gets.chomp
         @description = user_input unless user_input.empty?
+      end
+
+      def prepare_otp
+        print 'Please enter your One-Time-Password for GitHub\'s 2FA: '
+        @otp = STDIN.noecho(&:gets).chomp
       end
 
       def request_oauth_token(client)
