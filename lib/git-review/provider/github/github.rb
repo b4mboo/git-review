@@ -60,10 +60,6 @@ module GitReview
         end
       end
 
-      def remote_merge
-        # nothing to do for github
-      end
-
       def head
         # in the form of 'user:branch'
         local = GitReview::Local.instance
