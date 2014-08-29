@@ -85,8 +85,8 @@ module GitReview
       def configure_access
         configure_oauth unless authenticated?
         @client = Bucketkit::Client.new(
-            login: settings.bitbucket_username,
-            oauth_tokens: oauth_tokens
+          login: settings.bitbucket_username,
+          oauth_tokens: oauth_tokens
         )
         @client.login
       end
@@ -138,10 +138,8 @@ module GitReview
         @connection.basic_auth @username, @password
         response = @connection.post "/1.0/users/#{@username}/consumers" do |req|
           req.body = Yajl.dump(
-              {
-                  :name => 'git-review',
-                  :description => @description
-              }
+            :name => 'git-review',
+            :description => @description
           )
         end
         @consumer_key = response.body['key']
@@ -150,11 +148,10 @@ module GitReview
 
       def get_access_token
         consumer = OAuth::Consumer.new(
-            @consumer_key, @consumer_secret,
-            {
-                :site => 'https://bitbucket.org/!api/1.0',
-                :authorize_path => '/oauth/authenticate'
-            }
+          @consumer_key, @consumer_secret, {
+            :site => 'https://bitbucket.org/!api/1.0',
+            :authorize_path => '/oauth/authenticate'
+          }
         )
         request_token = consumer.get_request_token
         puts "You will be directed to BitBucket's website for authorization."
@@ -192,21 +189,21 @@ module GitReview
 
       def authenticated?
         settings.bitbucket_consumer_key &&
-            settings.bitbucket_consumer_secret &&
-            settings.bitbucket_token &&
-            settings.bitbucket_token_secret
+          settings.bitbucket_consumer_secret &&
+          settings.bitbucket_token &&
+          settings.bitbucket_token_secret
       end
 
       def oauth_tokens
         @oauth_tokens ||=
-            if authenticated?
-              {
-                  :consumer_key => settings.bitbucket_consumer_key,
-                  :consumer_secret => settings.bitbucket_consumer_secret,
-                  :token => settings.bitbucket_token,
-                  :token_secret => settings.bitbucket_token_secret
-              }
-            end
+          if authenticated?
+            {
+              :consumer_key => settings.bitbucket_consumer_key,
+              :consumer_secret => settings.bitbucket_consumer_secret,
+              :token => settings.bitbucket_token,
+              :token_secret => settings.bitbucket_token_secret
+            }
+          end
       end
 
     end
