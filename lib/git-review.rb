@@ -36,13 +36,14 @@ require_relative 'models/request'
 require_relative 'models/comment'
 
 # Communicate with providers and load provider specific model extensions.
-# Require GH specific model extensions.
 require_relative 'git-review/provider/base'
+# Require GitHub specific model extensions.
 require_relative 'git-review/provider/github/github'
 require_relative 'git-review/provider/github/request'
 require_relative 'git-review/provider/github/commit'
 require_relative 'git-review/provider/github/comment'
+# Require BitBucket specific model extensions.
 require_relative 'git-review/provider/bitbucket/bitbucket'
-require_relative 'git-review/provider/bitbucket/commit'
 require_relative 'git-review/provider/bitbucket/request'
+require_relative 'git-review/provider/bitbucket/commit'
 require_relative 'git-review/provider/bitbucket/comment'
