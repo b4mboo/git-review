@@ -154,10 +154,11 @@ module GitReview
           }
         )
         request_token = consumer.get_request_token
-        puts "You will be directed to BitBucket's website for authorization."
-        puts "You can also visit #{request_token.authorize_url}."
-        Launchy.open(request_token.authorize_url)
-        puts "After you've authorized the token, enter the verifier code below:"
+        url = request_token.authorize_url
+        puts 'You will be directed to BitBucket\'s website for authorization.'
+        puts "You can also visit #{url}."
+        Launchy.open url
+        puts 'After authorizing the token, enter the verifier code below:'
         verifier = STDIN.gets.chomp
         access_token = request_token.get_access_token(:oauth_verifier => verifier)
         @token = access_token.token
@@ -172,7 +173,7 @@ module GitReview
         settings.bitbucket_token_secret = @token_secret
         settings.bitbucket_username = @username
         settings.save!
-        puts "OAuth token successfully created.\n"
+        puts 'OAuth token successfully created.'
       end
 
       def connection
