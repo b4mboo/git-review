@@ -35,9 +35,10 @@ module GitReview
       end
 
       def pending_requests(repo = source_repo)
-        requests(repo).reject { |request|
+        pending = requests(repo).reject do |request|
           local.merged? request.head.sha
-        }.sort_by!(&:number)
+        end
+        pending.sort_by!(&:number)
       end
 
       # Determine whether a request for a specified number and state exists.

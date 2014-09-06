@@ -48,7 +48,7 @@ describe 'Provider: Bitbucket' do
       subject.stub(:prepare_description)
       subject.should_receive(:prepare_username)
       subject.should_receive(:prepare_password)
-      subject.should_receive(:authorize)
+      subject.should_receive(:authorize!)
       subject.send :configure_oauth
     end
 

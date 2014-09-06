@@ -85,8 +85,8 @@ module GitReview
       def configure_access
         configure_oauth unless authenticated?
         @client = Bucketkit::Client.new(
-            login: settings.bitbucket_username,
-            oauth_tokens: oauth_tokens
+          login: settings.bitbucket_username,
+          oauth_tokens: oauth_tokens
         )
         @client.login
       end
@@ -96,43 +96,38 @@ module GitReview
         prepare_username
         prepare_password
         prepare_description
-        authorize
+        authorize!
       end
 
       def print_auth_message
-        puts "Requesting a OAuth token for git-review."
-        puts "This procedure will grant access to your public and private "\
-        "repositories."
-        puts "You can revoke this authorization by visiting the following page: "\
-        "https://bitbucket.org/account/user/USERNAME/api"
+        puts 'Requesting an OAuth token for git-review.'
+        puts 'This procedure will grant access to your repositories.'
+        puts 'You can revoke this authorization by visiting the following page:'
+        puts 'https://bitbucket.org/account/user/USERNAME/api'
       end
 
       def prepare_username
-        print "Please enter your BitBucket's username: "
+        print 'Please enter your BitBucket username: '
         @username = STDIN.gets.chomp
       end
 
       def prepare_password
-        print "Please enter your BitBucket's password for #{@username} "\
-        "(it won't be stored anywhere): "
+        print "Please enter your BitBucket password for #{@username} "\
+        '(it won\'t be stored anywhere): '
         @password = STDIN.noecho(&:gets).chomp
       end
 
-      def prepare_description(chosen_description=nil)
-        if chosen_description
-          @description = chosen_description
-        else
-          @description = "git-review - #{Socket.gethostname}"
-          puts "Please enter a description to associate to this token, it will "\
-          "make easier to find it inside of BitBucket's application page."
-          puts "Press enter to accept the proposed description"
-          print "Description [#{@description}]:"
-          user_description = STDIN.gets.chomp
-          @description = user_description.empty? ? @description : user_description
-        end
+      def prepare_description
+        @description = "git-review - #{Socket.gethostname}"
+        puts 'Please enter a description to associate to this token.'
+        puts 'It will make it easier to identify it on BitBucket.'
+        puts 'Press enter to continue with the proposed description.'
+        print "Description [#{@description}]:"
+        user_input = STDIN.gets.chomp
+        @description = user_input unless user_input.empty?
       end
 
-      def authorize
+      def authorize!
         get_consumer_token
         get_access_token
         save_oauth_token
@@ -143,10 +138,8 @@ module GitReview
         @connection.basic_auth @username, @password
         response = @connection.post "/1.0/users/#{@username}/consumers" do |req|
           req.body = Yajl.dump(
-              {
-                  :name => 'git-review',
-                  :description => @description
-              }
+            :name => 'git-review',
+            :description => @description
           )
         end
         @consumer_key = response.body['key']
@@ -155,17 +148,17 @@ module GitReview
 
       def get_access_token
         consumer = OAuth::Consumer.new(
-            @consumer_key, @consumer_secret,
-            {
-                :site => 'https://bitbucket.org/!api/1.0',
-                :authorize_path => '/oauth/authenticate'
-            }
+          @consumer_key, @consumer_secret, {
+            :site => 'https://bitbucket.org/!api/1.0',
+            :authorize_path => '/oauth/authenticate'
+          }
         )
         request_token = consumer.get_request_token
-        puts "You will be directed to BitBucket's website for authorization."
-        puts "You can also visit #{request_token.authorize_url}."
-        Launchy.open(request_token.authorize_url)
-        puts "After you've authorized the token, enter the verifier code below:"
+        url = request_token.authorize_url
+        puts 'You will be directed to BitBucket\'s website for authorization.'
+        puts "You can also visit #{url}."
+        Launchy.open url
+        puts 'After authorizing the token, enter the verifier code below:'
         verifier = STDIN.gets.chomp
         access_token = request_token.get_access_token(:oauth_verifier => verifier)
         @token = access_token.token
@@ -180,7 +173,7 @@ module GitReview
         settings.bitbucket_token_secret = @token_secret
         settings.bitbucket_username = @username
         settings.save!
-        puts "OAuth token successfully created.\n"
+        puts 'OAuth token successfully created.'
       end
 
       def connection
@@ -197,21 +190,21 @@ module GitReview
 
       def authenticated?
         settings.bitbucket_consumer_key &&
-            settings.bitbucket_consumer_secret &&
-            settings.bitbucket_token &&
-            settings.bitbucket_token_secret
+          settings.bitbucket_consumer_secret &&
+          settings.bitbucket_token &&
+          settings.bitbucket_token_secret
       end
 
       def oauth_tokens
         @oauth_tokens ||=
-            if authenticated?
-              {
-                  :consumer_key => settings.bitbucket_consumer_key,
-                  :consumer_secret => settings.bitbucket_consumer_secret,
-                  :token => settings.bitbucket_token,
-                  :token_secret => settings.bitbucket_token_secret
-              }
-            end
+          if authenticated?
+            {
+              :consumer_key => settings.bitbucket_consumer_key,
+              :consumer_secret => settings.bitbucket_consumer_secret,
+              :token => settings.bitbucket_token,
+              :token_secret => settings.bitbucket_token_secret
+            }
+          end
       end
 
     end

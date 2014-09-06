@@ -33,12 +33,9 @@ class Request < Base
 
   # Collect the discussion details.
   def discussion
-    text = "\nProgress  :\n\n"
     activities = server.request_comments(number) + server.commits(number)
-    activities.sort_by(&:created_at).each { |activity|
-      text << activity.to_s
-    }
-    text
+    activities.sort_by!(&:created_at)
+    "\nProgress  :\n\n#{activities.join}"
   end
 
   # get the number of comments
