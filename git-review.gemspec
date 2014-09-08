@@ -24,4 +24,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'hashie'
   s.add_runtime_dependency 'gli', '~> 2.8.0'
   s.add_runtime_dependency 'octokit', '~> 2.7.2'
+  s.add_runtime_dependency 'gitlab', '~> 3.0.0'
 end

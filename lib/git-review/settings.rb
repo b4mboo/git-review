@@ -18,7 +18,7 @@ module GitReview
       if args.empty?
         config.send(method)
       else
-        config.send(method, args.shift)
+        config.send(method, *args)
       end
     end
 
