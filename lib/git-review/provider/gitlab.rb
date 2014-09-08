@@ -341,7 +341,7 @@ class Request
       body: '',
       head: commit_info,
       state: self.state_from_gitlab(request.state),
-      updated_at: Time.new(request.author.created_at),
+      updated_at: Time.new(request.updated_at),
       html_url: url
     )
   end
