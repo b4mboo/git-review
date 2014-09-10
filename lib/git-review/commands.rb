@@ -7,12 +7,7 @@ module GitReview
 
     # List all pending requests.
     def list(reverse = false)
-      requests = server.requests.reject do |request|
-        # Find only pending (= unmerged) requests and output summary.
-        # Explicitly look for local changes git does not yet know about.
-        # TODO: Isn't this a bit confusing? Maybe display pending pushes?
-        local.merged? request.head.sha
-      end
+      requests = server.pending_requests
       source = local.source
       if requests.empty?
         puts "No pending requests for '#{source}'."
@@ -73,14 +68,8 @@ module GitReview
     def approve(number)
       request = server.request(number)
       repo = server.source_repo
-      # TODO: Make this configurable.
-      comment = 'Reviewed and approved.'
-      response = server.add_comment(repo, request.number, comment)
-      if response[:body] == comment
-        puts 'Successfully approved request.'
-      else
-        puts response[:message]
-      end
+      response = server.approve(request.number, repo)
+      puts response
     end
 
     # Accept a specified request by merging it into master.
@@ -89,7 +78,7 @@ module GitReview
       if request.head.repo
         message = "Accept request ##{request.number} " +
             "and merge changes into \"#{local.target}\""
-        command = "merge -m '#{message}' #{request.head.sha}"
+        command = "merge --no-ff -m '#{message}' #{request.head.sha}"
         puts
         puts "Request title:"
         puts "  #{request.title}"
@@ -106,11 +95,9 @@ module GitReview
     # Close a specified request.
     def close(number)
       request = server.request(number)
-      # FIXME: Move into request model.
-      server.close_pull_request(server.source_repo, request.number)
-      unless server.request_exists?(request.number, 'open')
-        puts 'Successfully closed request.'
-      end
+      repo = server.source_repo
+      response = server.close(request.number, repo)
+      puts response
     end
 
     # Prepare local repository to create a new request.

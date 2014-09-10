@@ -60,4 +60,9 @@ describe 'Accessible module' do
     subject.baz.berk.should == test_string
   end
 
+  it 'allows accessing attributes(not attr_accessor) via method call' do
+    subject = Foo.new(qux: test_string)
+    subject.qux.should == test_string
+  end
+
 end

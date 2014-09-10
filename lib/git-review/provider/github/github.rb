@@ -1,3 +1,4 @@
+require 'octokit'
 require 'net/http'
 require 'net/https'
 require 'yajl'
@@ -23,10 +24,8 @@ module GitReview
       end
 
       def request_comments(number, repo = source_repo)
-        (
           Comment.from_github(server, client.issue_comments(repo, number)) +
           Comment.from_github(server, client.review_comments(repo, number))
-        ).sort_by(&:created_at)
       end
 
       def create_request(repo, base, head, title, body)
@@ -40,6 +39,31 @@ module GitReview
 
       def commit_comments(sha, repo = source_repo)
         Comment.from_github(server, client.commit_comments(repo, sha))
+      end
+
+      def approve(number, repo = source_repo)
+        comment = 'Reviewed and approved.'
+        response = client.add_comment(repo, number, comment)
+        if response[:body] == comment
+          'Successfully approved request.'
+        else
+          response[:message]
+        end
+      end
+
+      def close(number, repo = source_repo)
+        client.close_pull_request(repo, number)
+        if server.request_exists?(number, 'open')
+          'Failed to close request.'
+        else
+          'Successfully closed request.'
+        end
+      end
+
+      def head
+        # in the form of 'user:branch'
+        local = GitReview::Local.instance
+        "#{local.source_repo.split('/').first}:#{local.source_branch}"
       end
 
       def url_for_request(repo, number)
@@ -58,6 +82,9 @@ module GitReview
         'com'
       end
 
+      def login
+        settings.username
+      end
 
       private
 
@@ -109,11 +136,6 @@ module GitReview
         @password = STDIN.noecho(&:gets).chomp
       end
 
-      def prepare_otp
-        print 'Please enter your One-Time-Password for GitHub\'s 2FA: '
-        @otp = STDIN.noecho(&:gets).chomp
-      end
-
       def prepare_description
         @description = "git-review - #{Socket.gethostname}"
         puts 'Please enter a description to associate to this token.'
@@ -122,6 +144,11 @@ module GitReview
         print "Description [#{@description}]:"
         user_input = STDIN.gets.chomp
         @description = user_input unless user_input.empty?
+      end
+
+      def prepare_otp
+        print 'Please enter your One-Time-Password for GitHub\'s 2FA: '
+        @otp = STDIN.noecho(&:gets).chomp
       end
 
       def request_oauth_token(client)

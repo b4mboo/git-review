@@ -18,8 +18,8 @@ describe 'Provider: Github - Comment' do
   it 'allows to construct a collection of comment instances from an Array' do
     test_body = 'new body'
     test_body.should_not eq(comment_body)
-    test_comment = comment_hash.merge(:body => comment_body)
-    comments = Comment.from_github(subject, [comment_hash, test_comment])
+    test_comment = github_comment_hash.merge(:body => comment_body)
+    comments = Comment.from_github(subject, [github_comment_hash, test_comment])
     comment1 = comments.first
     comment1.class.should eq(Comment)
     comment1.body.should eq(comment_body)
