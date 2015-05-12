@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.homepage = 'http://github.com/b4mboo/git-review'
   s.email = 'bamberger.dominik@gmail.com'
   s.authors = ['Dominik Bamberger']
+  s.license = "MIT"
 
   s.files = %w( LICENSE )
   s.files += Dir.glob('lib/**/*')
